@@ -1,0 +1,118 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    // CLIENTES
+    match /clientes/{clienteId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated()
+        && hasRequiredFields(['razaoSocial', 'createdAt']);
+      allow update: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+
+    // ORCAMENTOS
+    match /orcamentos/{orcamentoId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated()
+        && hasRequiredFields(['numero', 'versao', 'tipo', 'clienteId', 'clienteNome', 'status', 'dataEmissao', 'dataValidade', 'valorTotal', 'createdAt']);
+      allow update: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+
+    // SERVICOS
+    match /servicos/{servicoId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated()
+        && hasRequiredFields(['descricao', 'ativo', 'ordem', 'createdAt']);
+      allow update: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+
+    // CATEGORIAS DE ITEM
+    match /categoriasItem/{categoriaId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated()
+        && hasRequiredFields(['nome', 'ordem', 'ativo', 'createdAt']);
+      allow update: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+
+    // ITENS DE SERVICO
+    match /itensServico/{itemId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated()
+        && hasRequiredFields(['categoriaId', 'descricao', 'unidade', 'ativo', 'ordem', 'createdAt']);
+      allow update: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+
+    // LIMITACOES
+    match /limitacoes/{limitacaoId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated()
+        && hasRequiredFields(['texto', 'ordem', 'ativo', 'createdAt']);
+      allow update: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+
+    // PALAVRAS-CHAVE
+    match /palavrasChave/{palavraId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated()
+        && hasRequiredFields(['palavra', 'prazoDias', 'ativo', 'createdAt']);
+      allow update: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+
+    // NOTIFICACOES
+    match /notificacoes/{notificacaoId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated()
+        && hasRequiredFields(['orcamentoId', 'orcamentoNumero', 'clienteId', 'clienteNome', 'itemDescricao', 'palavraChave', 'dataVencimento', 'lida', 'createdAt']);
+      allow update: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+
+    // CONFIGURACOES GERAIS (documento unico - nao permitir delete)
+    match /configuracoesGerais/{docId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated()
+        && hasRequiredFields(['diasValidadeOrcamento', 'nomeEmpresa', 'cnpjEmpresa', 'enderecoEmpresa', 'telefoneEmpresa']);
+      allow update: if isAuthenticated();
+      allow delete: if false;
+    }
+
+    // HISTORICO DE VALORES (imutavel - somente leitura e criacao)
+    match /historicoValores/{historicoId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated()
+        && hasRequiredFields(['itemServicoId', 'descricao', 'dataVigencia', 'valorUnitario', 'valorMaoDeObraUnitario', 'valorCusto', 'valorMaoDeObraCusto', 'createdAt']);
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // HISTORICO DE CONFIGURACOES (imutavel - somente leitura e criacao)
+    match /historicoConfiguracoes/{historicoId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated()
+        && hasRequiredFields(['dataVigencia', 'custoFixoMensal', 'impostoMaterial', 'impostoServico', 'createdAt']);
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // REGRA PADRAO - NEGAR TUDO
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
