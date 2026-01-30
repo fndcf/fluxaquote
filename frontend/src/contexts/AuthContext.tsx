@@ -53,7 +53,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
             nomeEmpresa: me.nomeEmpresa,
           });
         } catch (error) {
-          console.error('Erro ao buscar tenant info:', error);
           setTenantInfo(null);
         } finally {
           setTenantLoading(false);

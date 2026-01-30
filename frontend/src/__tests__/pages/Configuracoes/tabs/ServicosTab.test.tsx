@@ -210,7 +210,7 @@ describe('ServicosTab', () => {
         expect(screen.getByText('Novo(a) Serviço')).toBeInTheDocument();
       });
 
-      const textarea = screen.getByPlaceholderText(/Ex: Assessoria/);
+      const textarea = screen.getByRole('textbox');
       fireEvent.change(textarea, { target: { value: 'Descrição válida com mais de 10 caracteres' } });
 
       const cadastrarButton = screen.getByRole('button', { name: 'Cadastrar' });
@@ -228,7 +228,7 @@ describe('ServicosTab', () => {
         expect(screen.getByText('Novo(a) Serviço')).toBeInTheDocument();
       });
 
-      const textarea = screen.getByPlaceholderText(/Ex: Assessoria/);
+      const textarea = screen.getByRole('textbox');
       fireEvent.change(textarea, { target: { value: 'Novo serviço de manutenção' } });
 
       fireEvent.click(screen.getByRole('button', { name: 'Cadastrar' }));
@@ -254,7 +254,7 @@ describe('ServicosTab', () => {
         expect(screen.getByText('Novo(a) Serviço')).toBeInTheDocument();
       });
 
-      const textarea = screen.getByPlaceholderText(/Ex: Assessoria/);
+      const textarea = screen.getByRole('textbox');
       fireEvent.change(textarea, { target: { value: 'Novo serviço de manutenção' } });
 
       fireEvent.click(screen.getByRole('button', { name: 'Cadastrar' }));
@@ -278,7 +278,7 @@ describe('ServicosTab', () => {
         expect(screen.getByText('Novo(a) Serviço')).toBeInTheDocument();
       });
 
-      const textarea = screen.getByPlaceholderText(/Ex: Assessoria/);
+      const textarea = screen.getByRole('textbox');
       fireEvent.change(textarea, { target: { value: 'Novo serviço de manutenção' } });
 
       fireEvent.click(screen.getByRole('button', { name: 'Cadastrar' }));
@@ -503,7 +503,7 @@ describe('ServicosTab', () => {
         expect(screen.getByText('Novo(a) Serviço')).toBeInTheDocument();
       });
 
-      const textarea = screen.getByPlaceholderText(/Ex: Assessoria/);
+      const textarea = screen.getByRole('textbox');
       fireEvent.change(textarea, { target: { value: '   ' } });
 
       const cadastrarButton = screen.getByRole('button', { name: 'Cadastrar' });
@@ -519,7 +519,7 @@ describe('ServicosTab', () => {
         expect(screen.getByText('Novo(a) Serviço')).toBeInTheDocument();
       });
 
-      const textarea = screen.getByPlaceholderText(/Ex: Assessoria/);
+      const textarea = screen.getByRole('textbox');
       fireEvent.change(textarea, { target: { value: '123456789' } });
 
       const cadastrarButton = screen.getByRole('button', { name: 'Cadastrar' });
@@ -541,7 +541,7 @@ describe('ServicosTab', () => {
         expect(screen.getByText('Novo(a) Serviço')).toBeInTheDocument();
       });
 
-      const textarea = screen.getByPlaceholderText(/Ex: Assessoria/);
+      const textarea = screen.getByRole('textbox');
       fireEvent.change(textarea, { target: { value: 'Texto de teste' } });
 
       // Fecha modal
@@ -551,7 +551,7 @@ describe('ServicosTab', () => {
       fireEvent.click(screen.getByRole('button', { name: '+ Novo Serviço' }));
 
       await waitFor(() => {
-        const newTextarea = screen.getByPlaceholderText(/Ex: Assessoria/);
+        const newTextarea = screen.getByRole('textbox');
         expect(newTextarea).toHaveValue('');
       });
     });
@@ -571,7 +571,7 @@ describe('ServicosTab', () => {
         expect(screen.getByText('Novo(a) Serviço')).toBeInTheDocument();
       });
 
-      const textarea = screen.getByPlaceholderText(/Ex: Assessoria/);
+      const textarea = screen.getByRole('textbox');
       fireEvent.change(textarea, { target: { value: 'Texto de teste para erro' } });
       fireEvent.click(screen.getByRole('button', { name: 'Cadastrar' }));
 

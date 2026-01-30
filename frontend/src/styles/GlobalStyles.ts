@@ -8,14 +8,14 @@ export const GlobalStyles = createGlobalStyle`
   }
 
   :root {
-    --primary: #FF6B35;
-    --primary-dark: #E55A2B;
-    --primary-light: #FF8C5A;
-    --secondary: #1A1A2E;
-    --secondary-light: #16213E;
+    --primary: #059669;
+    --primary-dark: #047857;
+    --primary-light: #10B981;
+    --secondary: #0F172A;
+    --secondary-light: #1E293B;
     --background: #F5F5F5;
     --surface: #FFFFFF;
-    --text-primary: #1A1A2E;
+    --text-primary: #0F172A;
     --text-secondary: #666666;
     --text-light: #999999;
     --success: #4CAF50;

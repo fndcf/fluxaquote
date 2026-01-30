@@ -41,8 +41,6 @@ import {
   useToggleItemServico,
   useExcluirItemServico,
 } from '../../hooks/useItensServico';
-import { useBuscarCnpjBrasilAPI } from '../../hooks/useClientes';
-
 // Mock dos hooks de palavras-chave
 vi.mock('../../hooks/usePalavrasChave', () => ({
   usePalavrasChave: vi.fn(),
@@ -92,11 +90,6 @@ vi.mock('../../hooks/useItensServico', () => ({
   useAtualizarItemServico: vi.fn(),
   useToggleItemServico: vi.fn(),
   useExcluirItemServico: vi.fn(),
-}));
-
-// Mock dos hooks de clientes
-vi.mock('../../hooks/useClientes', () => ({
-  useBuscarCnpjBrasilAPI: vi.fn(),
 }));
 
 const createWrapper = () => {
@@ -241,11 +234,6 @@ describe('Configuracoes', () => {
     vi.mocked(useToggleItemServico).mockReturnValue(mockMutations as any);
     vi.mocked(useExcluirItemServico).mockReturnValue(mockMutations as any);
 
-    // Mock buscar CNPJ
-    vi.mocked(useBuscarCnpjBrasilAPI).mockReturnValue({
-      mutateAsync: vi.fn(),
-      isLoading: false,
-    } as any);
   });
 
   describe('Renderização básica', () => {
@@ -560,19 +548,6 @@ describe('Configuracoes', () => {
       });
     });
 
-    it('deve mostrar botão Buscar CNPJ', () => {
-      render(<Configuracoes />, { wrapper: createWrapper() });
-
-      expect(screen.getByText('Buscar CNPJ')).toBeInTheDocument();
-    });
-
-    it('deve desabilitar botão Buscar CNPJ quando CNPJ tem menos de 14 dígitos', () => {
-      render(<Configuracoes />, { wrapper: createWrapper() });
-
-      // O CNPJ mockado tem 14 dígitos então deve estar habilitado
-      const buscarButton = screen.getByText('Buscar CNPJ');
-      expect(buscarButton).not.toBeDisabled();
-    });
   });
 
   describe('Ações de edição - Palavras-chave', () => {
@@ -694,7 +669,8 @@ describe('Configuracoes', () => {
         expect(screen.getByText('Nova Palavra-chave')).toBeInTheDocument();
       });
 
-      const palavraInput = screen.getByPlaceholderText('Ex: extintor, mangueira, alarme');
+      const palavraLabel = screen.getByText('Palavra-chave');
+      const palavraInput = palavraLabel.closest('div')!.querySelector('input')!;
       const prazoInput = screen.getByPlaceholderText('Ex: 345');
       fireEvent.change(palavraInput, { target: { value: 'teste' } });
       fireEvent.change(prazoInput, { target: { value: '30' } });
@@ -907,9 +883,11 @@ describe('Configuracoes', () => {
         expect(screen.getByText('Novo Item de Serviço')).toBeInTheDocument();
       });
 
-      // Use placeholders to find inputs
-      const descricaoInput = screen.getByPlaceholderText(/Fornecimento e instalação de bomba/);
-      const unidadeInput = screen.getByPlaceholderText('Ex: UN, M, M2, CJ, VB');
+      // Find inputs by label text
+      const descricaoLabel = screen.getByText('Descrição do Item/Serviço');
+      const descricaoInput = descricaoLabel.closest('div')!.querySelector('textarea')!;
+      const unidadeLabel = screen.getByText('Unidade de Medida');
+      const unidadeInput = unidadeLabel.closest('div')!.querySelector('input')!;
       fireEvent.change(descricaoInput, { target: { value: 'Novo Item Teste Descrição' } });
       fireEvent.change(unidadeInput, { target: { value: 'UN' } });
 

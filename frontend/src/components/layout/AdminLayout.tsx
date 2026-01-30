@@ -4,6 +4,7 @@ import styled from "styled-components";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTenant } from "../../hooks/useTenant";
 import { useConfiguracoesGerais } from "../../hooks/useConfiguracoesGerais";
+import { buildColorVariables } from "../../utils/colorUtils";
 import { Modal, Button } from "../ui";
 import { NotificacaoDropdown } from "../notificacoes/NotificacaoDropdown";
 
@@ -194,6 +195,7 @@ export function AdminLayout() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const logoSrc = configuracoes?.logoUrl || "/fluxaquote-logo.png";
+  const colorOverrides = buildColorVariables(configuracoes?.corPrimaria, configuracoes?.corSecundaria);
 
   const handleLogout = async () => {
     await signOut();
@@ -203,7 +205,7 @@ export function AdminLayout() {
   const isActive = (path: string) => location.pathname === buildPath(path);
 
   return (
-    <Container>
+    <Container style={colorOverrides || undefined}>
       <Header>
         <Logo onClick={() => navigate(buildPath("/dashboard"))}>
           <LogoImage src={logoSrc} alt={nomeEmpresa || "FluxaQuote"} />

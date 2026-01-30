@@ -28,6 +28,16 @@ vi.mock('../../../hooks/useNotificacoes', () => ({
   useMarcarTodasNotificacoesComoLidas: vi.fn(),
 }));
 
+// Mock do useAuth (usado por useTenant)
+vi.mock('../../../contexts/AuthContext', () => ({
+  useAuth: () => ({
+    user: { email: 'test@test.com' },
+    tenantInfo: { tenantId: 't1', slug: 'test-company', role: 'admin', nomeEmpresa: 'Test Company' },
+    loading: false,
+    tenantLoading: false,
+  }),
+}));
+
 const createWrapper = () => {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -299,7 +309,7 @@ describe('NotificacaoDropdown', () => {
     fireEvent.click(screen.getByTitle('Notificações'));
     fireEvent.click(screen.getByText(/Cliente Teste - Orç\.\s+\d+/));
 
-    expect(mockNavigate).toHaveBeenCalledWith('/orcamentos?id=orc-1');
+    expect(mockNavigate).toHaveBeenCalledWith('/test-company/orcamentos?id=orc-1');
   });
 
   it('deve marcar como lida ao clicar em notificação não lida', () => {
@@ -319,7 +329,7 @@ describe('NotificacaoDropdown', () => {
 
     // Notificação 2 já está lida
     expect(mockMarcarLida.mutate).not.toHaveBeenCalled();
-    expect(mockNavigate).toHaveBeenCalledWith('/orcamentos?id=orc-2');
+    expect(mockNavigate).toHaveBeenCalledWith('/test-company/orcamentos?id=orc-2');
   });
 
   it('deve navegar para página de notificações ao clicar em ver todas', () => {
@@ -328,7 +338,7 @@ describe('NotificacaoDropdown', () => {
     fireEvent.click(screen.getByTitle('Notificações'));
     fireEvent.click(screen.getByText('Ver todas as notificações'));
 
-    expect(mockNavigate).toHaveBeenCalledWith('/notificacoes');
+    expect(mockNavigate).toHaveBeenCalledWith('/test-company/notificacoes');
   });
 
   it('deve mostrar palavras-chave nas notificações', () => {

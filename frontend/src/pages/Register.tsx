@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { authService } from '../services/authService';
-import { useAuth } from '../contexts/AuthContext';
 
 const Container = styled.div`
   min-height: 100vh;
@@ -155,7 +154,6 @@ export function Register() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { signIn } = useAuth();
   const navigate = useNavigate();
 
   const slugPreview = useMemo(() => generateSlugPreview(nomeEmpresa), [nomeEmpresa]);
@@ -177,18 +175,17 @@ export function Register() {
     setLoading(true);
 
     try {
-      const result = await authService.register({
+      await authService.register({
         nomeEmpresa,
         email,
         telefone,
         senha,
       });
 
-      // Auto-login após registro
-      await signIn(email, senha);
-      navigate(`/${result.slug}/dashboard`);
-    } catch (err: any) {
-      const message = err?.response?.data?.message || 'Erro ao criar conta. Tente novamente.';
+      navigate('/login');
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { message?: string } } };
+      const message = axiosErr?.response?.data?.message || 'Erro ao criar conta. Tente novamente.';
       setError(message);
     } finally {
       setLoading(false);

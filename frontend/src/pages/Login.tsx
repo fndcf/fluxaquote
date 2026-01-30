@@ -225,8 +225,13 @@ export function Login() {
     try {
       const slug = await signIn(email, password);
       navigate(`/${slug}/dashboard`);
-    } catch {
-      setError("Email ou senha incorretos");
+    } catch (err: unknown) {
+      const firebaseError = err as { code?: string };
+      if (firebaseError.code === "auth/user-disabled") {
+        setError("Sua conta ainda não foi ativada. Aguarde a aprovação do administrador.");
+      } else {
+        setError("Email ou senha incorretos");
+      }
     } finally {
       setLoading(false);
     }

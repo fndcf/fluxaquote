@@ -6,16 +6,10 @@ import {
   useConfiguracoesGerais,
   useAtualizarConfiguracoesGerais,
 } from '../../../../hooks/useConfiguracoesGerais';
-import { useBuscarCnpjBrasilAPI } from '../../../../hooks/useClientes';
-
 // Mock dos hooks
 vi.mock('../../../../hooks/useConfiguracoesGerais', () => ({
   useConfiguracoesGerais: vi.fn(),
   useAtualizarConfiguracoesGerais: vi.fn(),
-}));
-
-vi.mock('../../../../hooks/useClientes', () => ({
-  useBuscarCnpjBrasilAPI: vi.fn(),
 }));
 
 const createWrapper = () => {
@@ -37,7 +31,6 @@ const mockConfiguracoesGerais = {
 };
 
 const mockMutateAsync = vi.fn();
-const mockBuscarCnpjMutateAsync = vi.fn();
 
 describe('EmpresaTab', () => {
   beforeEach(() => {
@@ -50,11 +43,6 @@ describe('EmpresaTab', () => {
 
     vi.mocked(useAtualizarConfiguracoesGerais).mockReturnValue({
       mutateAsync: mockMutateAsync,
-      isLoading: false,
-    } as any);
-
-    vi.mocked(useBuscarCnpjBrasilAPI).mockReturnValue({
-      mutateAsync: mockBuscarCnpjMutateAsync,
       isLoading: false,
     } as any);
   });
@@ -212,111 +200,6 @@ describe('EmpresaTab', () => {
     });
   });
 
-  describe('Buscar CNPJ', () => {
-    it('deve buscar e preencher dados do CNPJ', async () => {
-      mockBuscarCnpjMutateAsync.mockResolvedValue({
-        razao_social: 'Empresa Brasil LTDA',
-        logradouro: 'Av. Paulista',
-        numero: '1000',
-        complemento: 'Sala 101',
-        bairro: 'Bela Vista',
-        municipio: 'São Paulo',
-        uf: 'SP',
-        cep: '01310-100',
-        telefone: '1133334444',
-        email: 'contato@empresabrasil.com.br',
-      });
-
-      render(<EmpresaTab />, { wrapper: createWrapper() });
-
-      const cnpjInput = screen.getByDisplayValue('12.345.678/0001-90');
-      fireEvent.change(cnpjInput, { target: { value: '11222333000181' } });
-
-      const buscarButton = screen.getByRole('button', { name: 'Buscar CNPJ' });
-      fireEvent.click(buscarButton);
-
-      await waitFor(() => {
-        expect(screen.getByText('Dados preenchidos automaticamente!')).toBeInTheDocument();
-        expect(screen.getByDisplayValue('Empresa Brasil LTDA')).toBeInTheDocument();
-        expect(screen.getByDisplayValue('contato@empresabrasil.com.br')).toBeInTheDocument();
-      });
-    });
-
-    it('deve mostrar erro quando CNPJ não encontrado', async () => {
-      mockBuscarCnpjMutateAsync.mockResolvedValue(null);
-
-      render(<EmpresaTab />, { wrapper: createWrapper() });
-
-      const cnpjInput = screen.getByDisplayValue('12.345.678/0001-90');
-      fireEvent.change(cnpjInput, { target: { value: '11222333000181' } });
-
-      const buscarButton = screen.getByRole('button', { name: 'Buscar CNPJ' });
-      fireEvent.click(buscarButton);
-
-      await waitFor(() => {
-        expect(screen.getByText('CNPJ não encontrado na base da Receita Federal')).toBeInTheDocument();
-      });
-    });
-
-    it('deve mostrar erro ao falhar busca do CNPJ', async () => {
-      mockBuscarCnpjMutateAsync.mockRejectedValue(new Error('Erro de API'));
-
-      render(<EmpresaTab />, { wrapper: createWrapper() });
-
-      const cnpjInput = screen.getByDisplayValue('12.345.678/0001-90');
-      fireEvent.change(cnpjInput, { target: { value: '11222333000181' } });
-
-      const buscarButton = screen.getByRole('button', { name: 'Buscar CNPJ' });
-      fireEvent.click(buscarButton);
-
-      await waitFor(() => {
-        expect(screen.getByText('Erro ao buscar CNPJ')).toBeInTheDocument();
-      });
-    });
-
-    it('deve mostrar mensagem de buscando ao iniciar busca', async () => {
-      let resolvePromise: (value: any) => void;
-      const promise = new Promise((resolve) => {
-        resolvePromise = resolve;
-      });
-      mockBuscarCnpjMutateAsync.mockReturnValue(promise);
-
-      render(<EmpresaTab />, { wrapper: createWrapper() });
-
-      const cnpjInput = screen.getByDisplayValue('12.345.678/0001-90');
-      fireEvent.change(cnpjInput, { target: { value: '11222333000181' } });
-
-      const buscarButton = screen.getByRole('button', { name: 'Buscar CNPJ' });
-      fireEvent.click(buscarButton);
-
-      expect(screen.getByText('Buscando dados do CNPJ...')).toBeInTheDocument();
-
-      resolvePromise!({ razao_social: 'Teste' });
-    });
-
-    it('deve desabilitar botão buscar quando carregando', () => {
-      vi.mocked(useBuscarCnpjBrasilAPI).mockReturnValue({
-        mutateAsync: mockBuscarCnpjMutateAsync,
-        isLoading: true,
-      } as any);
-
-      render(<EmpresaTab />, { wrapper: createWrapper() });
-
-      const buscarButton = screen.getByRole('button', { name: 'Buscando...' });
-      expect(buscarButton).toBeDisabled();
-    });
-
-    it('deve desabilitar botão buscar quando CNPJ incompleto', () => {
-      render(<EmpresaTab />, { wrapper: createWrapper() });
-
-      const cnpjInput = screen.getByDisplayValue('12.345.678/0001-90');
-      fireEvent.change(cnpjInput, { target: { value: '123' } });
-
-      const buscarButton = screen.getByRole('button', { name: 'Buscar CNPJ' });
-      expect(buscarButton).toBeDisabled();
-    });
-  });
-
   describe('Cancelar alterações', () => {
     it('deve restaurar valores originais ao cancelar', async () => {
       render(<EmpresaTab />, { wrapper: createWrapper() });
@@ -349,63 +232,6 @@ describe('EmpresaTab', () => {
     });
   });
 
-  describe('Preenchimento com Brasil API', () => {
-    it('deve preencher endereço completo sem complemento', async () => {
-      mockBuscarCnpjMutateAsync.mockResolvedValue({
-        razao_social: 'Empresa Test LTDA',
-        logradouro: 'Rua Teste',
-        numero: '100',
-        complemento: '',
-        bairro: 'Centro',
-        municipio: 'Rio de Janeiro',
-        uf: 'RJ',
-        cep: '20000-000',
-        telefone: '',
-        email: '',
-      });
-
-      render(<EmpresaTab />, { wrapper: createWrapper() });
-
-      const cnpjInput = screen.getByDisplayValue('12.345.678/0001-90');
-      fireEvent.change(cnpjInput, { target: { value: '11222333000181' } });
-
-      const buscarButton = screen.getByRole('button', { name: 'Buscar CNPJ' });
-      fireEvent.click(buscarButton);
-
-      await waitFor(() => {
-        expect(screen.getByDisplayValue(/Rua Teste, 100, Centro - Rio de Janeiro\/RJ/)).toBeInTheDocument();
-      });
-    });
-
-    it('deve manter valores anteriores quando API não retorna dados', async () => {
-      mockBuscarCnpjMutateAsync.mockResolvedValue({
-        razao_social: '',
-        logradouro: '',
-        numero: '',
-        complemento: '',
-        bairro: '',
-        municipio: '',
-        uf: '',
-        cep: '',
-        telefone: '',
-        email: '',
-      });
-
-      render(<EmpresaTab />, { wrapper: createWrapper() });
-
-      const cnpjInput = screen.getByDisplayValue('12.345.678/0001-90');
-      fireEvent.change(cnpjInput, { target: { value: '11222333000181' } });
-
-      const buscarButton = screen.getByRole('button', { name: 'Buscar CNPJ' });
-      fireEvent.click(buscarButton);
-
-      await waitFor(() => {
-        // Nome original deve ser mantido pois razao_social está vazio
-        expect(screen.getByDisplayValue('FLAMA Proteção')).toBeInTheDocument();
-      });
-    });
-  });
-
   describe('Valores default para diasValidadeOrcamento', () => {
     it('deve usar 30 como valor default quando vazio', () => {
       render(<EmpresaTab />, { wrapper: createWrapper() });
@@ -415,6 +241,218 @@ describe('EmpresaTab', () => {
 
       // Ao limpar, deve usar 30 como default (parseInt('') || 30)
       expect(screen.getByDisplayValue('30')).toBeInTheDocument();
+    });
+  });
+
+  describe('Configurações de Parcelamento', () => {
+    it('deve renderizar título e descrição de parcelamento', () => {
+      render(<EmpresaTab />, { wrapper: createWrapper() });
+
+      expect(screen.getByText('Configurações de Parcelamento')).toBeInTheDocument();
+      expect(
+        screen.getByText(/Configure as regras de parcelamento/)
+      ).toBeInTheDocument();
+    });
+
+    it('deve renderizar os 4 campos de parcelamento', () => {
+      render(<EmpresaTab />, { wrapper: createWrapper() });
+
+      expect(screen.getByText('Máximo de Parcelas')).toBeInTheDocument();
+      expect(screen.getByText('Valor Mínimo por Parcela (R$)')).toBeInTheDocument();
+      expect(screen.getByText('Juros a partir da parcela')).toBeInTheDocument();
+      expect(screen.getByText('Taxa de Juros por Parcela (%)')).toBeInTheDocument();
+    });
+
+    it('deve preencher campos com valores existentes', () => {
+      vi.mocked(useConfiguracoesGerais).mockReturnValue({
+        data: {
+          ...mockConfiguracoesGerais,
+          parcelamentoMaxParcelas: 10,
+          parcelamentoValorMinimo: 500,
+          parcelamentoJurosAPartirDe: 4,
+          parcelamentoTaxaJuros: 3.5,
+        },
+        isLoading: false,
+      } as any);
+
+      render(<EmpresaTab />, { wrapper: createWrapper() });
+
+      expect(screen.getByDisplayValue('10')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('500')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('4')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('3.5')).toBeInTheDocument();
+    });
+
+    it('deve usar valores default quando não configurados', () => {
+      render(<EmpresaTab />, { wrapper: createWrapper() });
+
+      // Default values: 6 parcelas, 1000 mínimo, 3 juros, 2.5 taxa
+      expect(screen.getByDisplayValue('6')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('1000')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('3')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('2.5')).toBeInTheDocument();
+    });
+
+    it('deve atualizar campo máximo de parcelas', () => {
+      render(<EmpresaTab />, { wrapper: createWrapper() });
+
+      const label = screen.getByText('Máximo de Parcelas');
+      const formGroup = label.closest('div');
+      const input = formGroup?.querySelector('input');
+
+      fireEvent.change(input!, { target: { value: '12' } });
+
+      expect(screen.getByDisplayValue('12')).toBeInTheDocument();
+    });
+
+    it('deve atualizar campo valor mínimo por parcela', () => {
+      render(<EmpresaTab />, { wrapper: createWrapper() });
+
+      const label = screen.getByText('Valor Mínimo por Parcela (R$)');
+      const formGroup = label.closest('div');
+      const input = formGroup?.querySelector('input');
+
+      fireEvent.change(input!, { target: { value: '2000' } });
+
+      expect(screen.getByDisplayValue('2000')).toBeInTheDocument();
+    });
+
+    it('deve atualizar campo juros a partir da parcela', () => {
+      render(<EmpresaTab />, { wrapper: createWrapper() });
+
+      const label = screen.getByText('Juros a partir da parcela');
+      const formGroup = label.closest('div');
+      const input = formGroup?.querySelector('input');
+
+      fireEvent.change(input!, { target: { value: '5' } });
+
+      expect(screen.getByDisplayValue('5')).toBeInTheDocument();
+    });
+
+    it('deve atualizar campo taxa de juros', () => {
+      render(<EmpresaTab />, { wrapper: createWrapper() });
+
+      const label = screen.getByText('Taxa de Juros por Parcela (%)');
+      const formGroup = label.closest('div');
+      const input = formGroup?.querySelector('input');
+
+      fireEvent.change(input!, { target: { value: '4.5' } });
+
+      expect(screen.getByDisplayValue('4.5')).toBeInTheDocument();
+    });
+
+    it('deve mostrar textos de ajuda para parcelamento', () => {
+      render(<EmpresaTab />, { wrapper: createWrapper() });
+
+      expect(screen.getByText('Número máximo de parcelas permitidas')).toBeInTheDocument();
+      expect(screen.getByText('Valor mínimo de cada parcela')).toBeInTheDocument();
+      expect(screen.getByText('A partir de qual parcela aplicar juros')).toBeInTheDocument();
+      expect(screen.getByText('Percentual de juros por parcela após o limite')).toBeInTheDocument();
+    });
+
+    it('deve marcar form como dirty ao alterar parcelamento', () => {
+      render(<EmpresaTab />, { wrapper: createWrapper() });
+
+      const salvarButton = screen.getByRole('button', { name: 'Salvar Alterações' });
+      expect(salvarButton).toBeDisabled();
+
+      const label = screen.getByText('Máximo de Parcelas');
+      const formGroup = label.closest('div');
+      const input = formGroup?.querySelector('input');
+
+      fireEvent.change(input!, { target: { value: '8' } });
+
+      expect(salvarButton).not.toBeDisabled();
+    });
+
+    it('deve salvar configurações de parcelamento', async () => {
+      mockMutateAsync.mockResolvedValue({});
+
+      render(<EmpresaTab />, { wrapper: createWrapper() });
+
+      const label = screen.getByText('Máximo de Parcelas');
+      const formGroup = label.closest('div');
+      const input = formGroup?.querySelector('input');
+
+      fireEvent.change(input!, { target: { value: '8' } });
+
+      const salvarButton = screen.getByRole('button', { name: 'Salvar Alterações' });
+      fireEvent.click(salvarButton);
+
+      await waitFor(() => {
+        expect(mockMutateAsync).toHaveBeenCalledWith(
+          expect.objectContaining({
+            parcelamentoMaxParcelas: 8,
+          })
+        );
+      });
+    });
+  });
+
+  describe('Custo Fixo da Empresa', () => {
+    it('deve renderizar título e descrição', () => {
+      render(<EmpresaTab />, { wrapper: createWrapper() });
+
+      expect(screen.getByText('Custo Fixo da Empresa')).toBeInTheDocument();
+      expect(
+        screen.getByText(/Configure o custo fixo mensal/)
+      ).toBeInTheDocument();
+    });
+
+    it('deve renderizar campo de custo fixo mensal', () => {
+      render(<EmpresaTab />, { wrapper: createWrapper() });
+
+      expect(screen.getByText('Custo Fixo Mensal (R$)')).toBeInTheDocument();
+      expect(screen.getByText('Valor usado para calcular o lucro líquido nos relatórios')).toBeInTheDocument();
+    });
+
+    it('deve preencher com valor existente', () => {
+      vi.mocked(useConfiguracoesGerais).mockReturnValue({
+        data: {
+          ...mockConfiguracoesGerais,
+          custoFixoMensal: 5000,
+        },
+        isLoading: false,
+      } as any);
+
+      render(<EmpresaTab />, { wrapper: createWrapper() });
+
+      expect(screen.getByDisplayValue('5000')).toBeInTheDocument();
+    });
+
+    it('deve atualizar campo custo fixo mensal', () => {
+      render(<EmpresaTab />, { wrapper: createWrapper() });
+
+      const label = screen.getByText('Custo Fixo Mensal (R$)');
+      const formGroup = label.closest('div');
+      const input = formGroup?.querySelector('input');
+
+      fireEvent.change(input!, { target: { value: '7500' } });
+
+      expect(screen.getByDisplayValue('7500')).toBeInTheDocument();
+    });
+
+    it('deve salvar custo fixo junto com outros dados', async () => {
+      mockMutateAsync.mockResolvedValue({});
+
+      render(<EmpresaTab />, { wrapper: createWrapper() });
+
+      const label = screen.getByText('Custo Fixo Mensal (R$)');
+      const formGroup = label.closest('div');
+      const input = formGroup?.querySelector('input');
+
+      fireEvent.change(input!, { target: { value: '8000' } });
+
+      const salvarButton = screen.getByRole('button', { name: 'Salvar Alterações' });
+      fireEvent.click(salvarButton);
+
+      await waitFor(() => {
+        expect(mockMutateAsync).toHaveBeenCalledWith(
+          expect.objectContaining({
+            custoFixoMensal: 8000,
+          })
+        );
+      });
     });
   });
 

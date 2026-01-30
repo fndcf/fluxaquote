@@ -11,6 +11,7 @@ import {
   ServicosTab,
   CategoriasTab,
   LimitacoesTab,
+  LayoutTab,
 } from "./tabs";
 import { Container, PageHeader, TabsContainer, Tab } from "./styles";
 import Footer from "@/components/layout/Footer";
@@ -20,7 +21,8 @@ type TabType =
   | "palavras"
   | "servicos"
   | "categorias"
-  | "limitacoes";
+  | "limitacoes"
+  | "layout";
 
 export function Configuracoes() {
   const [activeTab, setActiveTab] = useState<TabType>("empresa");
@@ -87,6 +89,12 @@ export function Configuracoes() {
         >
           Observações
         </Tab>
+        <Tab
+          $active={activeTab === "layout"}
+          onClick={() => setActiveTab("layout")}
+        >
+          Layout
+        </Tab>
       </TabsContainer>
 
       {activeTab === "empresa" && <EmpresaTab />}
@@ -94,6 +102,7 @@ export function Configuracoes() {
       {activeTab === "servicos" && <ServicosTab />}
       {activeTab === "categorias" && <CategoriasTab />}
       {activeTab === "limitacoes" && <LimitacoesTab />}
+      {activeTab === "layout" && <LayoutTab />}
       {/* Footer */}
       <Footer />
     </Container>

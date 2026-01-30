@@ -34,6 +34,16 @@ vi.mock('../../hooks/useNotificacoes', () => ({
   useNotificacaoResumo: vi.fn(),
 }));
 
+// Mock do useAuth (usado por useTenant)
+vi.mock('../../contexts/AuthContext', () => ({
+  useAuth: () => ({
+    user: { email: 'test@test.com' },
+    tenantInfo: { tenantId: 't1', slug: 'test-company', role: 'admin', nomeEmpresa: 'Test Company' },
+    loading: false,
+    tenantLoading: false,
+  }),
+}));
+
 const createWrapper = () => {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -325,7 +335,7 @@ describe('NotificacoesPage', () => {
 
       fireEvent.click(screen.getByText('Cliente Teste'));
 
-      expect(mockNavigate).toHaveBeenCalledWith('/orcamentos?id=orc-1');
+      expect(mockNavigate).toHaveBeenCalledWith('/test-company/orcamentos?id=orc-1');
     });
 
     it('deve marcar como lida ao clicar em notificação não lida', () => {

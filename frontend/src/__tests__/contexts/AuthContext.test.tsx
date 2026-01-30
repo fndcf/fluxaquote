@@ -3,15 +3,25 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AuthProvider, useAuth } from '../../contexts/AuthContext';
 
+// Mock do authService
+const mockGetMe = vi.fn();
+vi.mock('../../services/authService', () => ({
+  authService: {
+    getMe: (...args: any[]) => mockGetMe(...args),
+  },
+}));
+
 // Mock do Firebase Auth
 const mockOnAuthStateChanged = vi.fn();
 const mockSignInWithEmailAndPassword = vi.fn();
 const mockSignOut = vi.fn();
+const mockSendPasswordResetEmail = vi.fn();
 
 vi.mock('firebase/auth', () => ({
   signInWithEmailAndPassword: (...args: any[]) => mockSignInWithEmailAndPassword(...args),
   signOut: (...args: any[]) => mockSignOut(...args),
   onAuthStateChanged: (...args: any[]) => mockOnAuthStateChanged(...args),
+  sendPasswordResetEmail: (...args: any[]) => mockSendPasswordResetEmail(...args),
 }));
 
 vi.mock('../../services/firebase', () => ({
@@ -22,14 +32,19 @@ vi.mock('../../services/firebase', () => ({
 
 // Componente de teste para acessar o contexto
 function TestComponent() {
-  const { user, loading, signIn, signOut } = useAuth();
+  const { user, loading, tenantInfo, tenantLoading, signIn, signOut, resetPassword } = useAuth();
 
   return (
     <div>
       <span data-testid="loading">{loading.toString()}</span>
+      <span data-testid="tenantLoading">{tenantLoading.toString()}</span>
       <span data-testid="user">{user ? user.email : 'null'}</span>
-      <button onClick={() => signIn('test@test.com', 'password')}>Login</button>
+      <span data-testid="tenantSlug">{tenantInfo?.slug || 'null'}</span>
+      <span data-testid="tenantNome">{tenantInfo?.nomeEmpresa || 'null'}</span>
+      <span data-testid="tenantRole">{tenantInfo?.role || 'null'}</span>
+      <button onClick={() => signIn('test@test.com', 'password').catch(() => {})}>Login</button>
       <button onClick={() => signOut()}>Logout</button>
+      <button onClick={() => resetPassword('test@test.com')}>Reset</button>
     </div>
   );
 }
@@ -47,8 +62,14 @@ function TestComponentWithoutProvider() {
 describe('AuthContext', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetMe.mockResolvedValue({
+      tenantId: 'tenant-1',
+      slug: 'empresa-teste',
+      role: 'admin',
+      nomeEmpresa: 'Empresa Teste',
+    });
     // Por padrão, simula que não há usuário logado
-    mockOnAuthStateChanged.mockImplementation((_auth, callback) => {
+    mockOnAuthStateChanged.mockImplementation((_auth: any, callback: any) => {
       callback(null);
       return vi.fn(); // unsubscribe
     });
@@ -66,8 +87,7 @@ describe('AuthContext', () => {
     });
 
     it('deve iniciar com loading true e depois false', async () => {
-      mockOnAuthStateChanged.mockImplementation((_auth, callback) => {
-        // Simula delay assíncrono
+      mockOnAuthStateChanged.mockImplementation((_auth: any, callback: any) => {
         setTimeout(() => callback(null), 0);
         return vi.fn();
       });
@@ -83,10 +103,10 @@ describe('AuthContext', () => {
       });
     });
 
-    it('deve atualizar user quando onAuthStateChanged é chamado', async () => {
+    it('deve atualizar user quando onAuthStateChanged é chamado com usuário', async () => {
       const mockUser = { email: 'test@test.com', uid: '123' };
 
-      mockOnAuthStateChanged.mockImplementation((_auth, callback) => {
+      mockOnAuthStateChanged.mockImplementation((_auth: any, callback: any) => {
         callback(mockUser);
         return vi.fn();
       });
@@ -102,7 +122,68 @@ describe('AuthContext', () => {
       });
     });
 
-    it('deve chamar signInWithEmailAndPassword no signIn', async () => {
+    it('deve buscar tenant info quando usuário está logado', async () => {
+      const mockUser = { email: 'test@test.com', uid: '123' };
+
+      mockOnAuthStateChanged.mockImplementation((_auth: any, callback: any) => {
+        callback(mockUser);
+        return vi.fn();
+      });
+
+      render(
+        <AuthProvider>
+          <TestComponent />
+        </AuthProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('tenantSlug').textContent).toBe('empresa-teste');
+        expect(screen.getByTestId('tenantNome').textContent).toBe('Empresa Teste');
+        expect(screen.getByTestId('tenantRole').textContent).toBe('admin');
+      });
+    });
+
+    it('deve limpar tenantInfo quando não há usuário', async () => {
+      mockOnAuthStateChanged.mockImplementation((_auth: any, callback: any) => {
+        callback(null);
+        return vi.fn();
+      });
+
+      render(
+        <AuthProvider>
+          <TestComponent />
+        </AuthProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('tenantSlug').textContent).toBe('null');
+      });
+    });
+
+    it('deve lidar com erro ao buscar tenant info', async () => {
+      const mockUser = { email: 'test@test.com', uid: '123' };
+      mockGetMe.mockRejectedValue(new Error('Erro de rede'));
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      mockOnAuthStateChanged.mockImplementation((_auth: any, callback: any) => {
+        callback(mockUser);
+        return vi.fn();
+      });
+
+      render(
+        <AuthProvider>
+          <TestComponent />
+        </AuthProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('tenantSlug').textContent).toBe('null');
+      });
+
+      consoleSpy.mockRestore();
+    });
+
+    it('deve chamar signInWithEmailAndPassword e getMe no signIn', async () => {
       mockSignInWithEmailAndPassword.mockResolvedValue({ user: {} });
 
       render(
@@ -123,9 +204,10 @@ describe('AuthContext', () => {
         'test@test.com',
         'password'
       );
+      expect(mockGetMe).toHaveBeenCalled();
     });
 
-    it('deve chamar firebaseSignOut no signOut', async () => {
+    it('deve chamar firebaseSignOut e limpar tenantInfo no signOut', async () => {
       mockSignOut.mockResolvedValue(undefined);
 
       render(
@@ -144,9 +226,31 @@ describe('AuthContext', () => {
       expect(mockSignOut).toHaveBeenCalled();
     });
 
+    it('deve chamar sendPasswordResetEmail no resetPassword', async () => {
+      mockSendPasswordResetEmail.mockResolvedValue(undefined);
+
+      render(
+        <AuthProvider>
+          <TestComponent />
+        </AuthProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('loading').textContent).toBe('false');
+      });
+
+      const resetButton = screen.getByText('Reset');
+      await userEvent.click(resetButton);
+
+      expect(mockSendPasswordResetEmail).toHaveBeenCalledWith(
+        expect.anything(),
+        'test@test.com'
+      );
+    });
+
     it('deve chamar unsubscribe ao desmontar', async () => {
       const unsubscribeMock = vi.fn();
-      mockOnAuthStateChanged.mockImplementation((_auth, callback) => {
+      mockOnAuthStateChanged.mockImplementation((_auth: any, callback: any) => {
         callback(null);
         return unsubscribeMock;
       });
@@ -165,11 +269,8 @@ describe('AuthContext', () => {
 
   describe('useAuth', () => {
     it('deve lançar erro quando usado fora do AuthProvider', () => {
-      // Nota: O comportamento atual retorna objeto vazio, não lança erro
-      // O teste verifica o comportamento real do código
       render(<TestComponentWithoutProvider />);
 
-      // Se a implementação lançar erro, verifica a mensagem
       const errorElement = screen.queryByTestId('error');
       if (errorElement) {
         expect(errorElement.textContent).toContain('useAuth deve ser usado dentro de um AuthProvider');
@@ -186,6 +287,7 @@ describe('AuthContext', () => {
       await waitFor(() => {
         expect(screen.getByTestId('loading')).toBeInTheDocument();
         expect(screen.getByTestId('user')).toBeInTheDocument();
+        expect(screen.getByTestId('tenantSlug')).toBeInTheDocument();
       });
     });
   });

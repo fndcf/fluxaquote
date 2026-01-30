@@ -1,16 +1,33 @@
-# FLAMA - Sistema de Orçamentos
+# FluxaQuote - Sistema de Orçamentos
 
-Sistema completo de gestão de orçamentos para empresas de proteção contra incêndio. Desenvolvido com React + TypeScript no frontend e Node.js + Express + Firebase no backend.
+Sistema multi-tenant de gestão de orçamentos com personalização visual por empresa (white-label). Desenvolvido com React + TypeScript no frontend e Node.js + Express + Firebase no backend.
 
 ## Funcionalidades
 
+### Multi-Tenancy
+
+- **Registro de empresas**: Cada empresa cria sua conta com slug único (URL própria)
+- **Isolamento de dados**: Subcollections no Firestore por tenant
+- **URLs slug-based**: `/:slug/dashboard`, `/:slug/clientes`, etc.
+- **Custom Claims**: tenantId no token Firebase para autenticação segura
+- **Landing page pública**: Home page com CTA para registro e login
+
+### White-Label (Personalização Visual)
+
+- **Cores personalizáveis**: Cada empresa configura suas cores primária e secundária
+- **Paletas predefinidas**: 12 combinações prontas para uso
+- **Pré-visualização em tempo real**: Preview de header e botões antes de salvar
+- **Logo da empresa**: Upload de logo (PNG/JPG/WEBP, max 500KB) armazenado como base64
+- **PDFs personalizados**: Cores e logo da empresa aplicados nos PDFs gerados
+- **CSS Variables override**: Cores aplicadas via CSS custom properties no container autenticado
+
 ### Gestão de Orçamentos
 
-- **Orçamento Completo**: Detalhamento por serviços, categorias, separação de mão de obra e materiais, limites de escopo selecionáveis e observações para escrita, formas de pagamento com parcelamentos, opções de entrada personalizada, **desconto para pagamento à vista** e prazos de execução e vistoria.
+- **Orçamento Completo**: Detalhamento por serviços, categorias, separação de mão de obra e materiais, limites de escopo selecionáveis e observações, formas de pagamento com parcelamentos, opções de entrada personalizada, **desconto para pagamento à vista** e prazos de execução
 - **Versionamento**: Controle de versões dos orçamentos
 - **Status**: Acompanhamento (aberto, aceito, recusado, expirado)
 - **Duplicação**: Criação de novos orçamentos baseados em existentes
-- **Geração de PDF**: Exportação profissional dos orçamentos
+- **Geração de PDF**: Exportação profissional com cores e logo da empresa
 
 ### Gestão de Clientes
 
@@ -20,12 +37,14 @@ Sistema completo de gestão de orçamentos para empresas de proteção contra in
 
 ### Configurações do Sistema
 
-- **Serviços**: Tipos de serviços oferecidos
+- **Layout**: Cores primária/secundária, paletas predefinidas, pré-visualização
+- **Empresa**: Dados gerais (CNPJ, endereço, validade), upload de logo
+- **Serviços**: Tipos de serviços oferecidos (ordenáveis)
 - **Categorias de Itens**: Agrupamento de itens por categoria
-- **Itens de Serviço**: Descrições pré-definidas com unidades de medida, valor do material, valor da mão de obra, custo do material e custo da mão de abro
-- **Limitações**: Textos padrão de limitações/ressalvas
+- **Itens de Serviço**: Descrições pré-definidas com unidades de medida, valor do material, valor da mão de obra, custo do material e custo da mão de obra
+- **Observações**: Textos padrão de limitações/ressalvas (ordenáveis)
 - **Palavras-chave**: Monitoramento de prazos com notificações
-- **Dados da Empresa**: Configurações gerais (CNPJ, endereço, validade), parametrização de validade da proposta, valor mínimo do parcelamento, taxa de juros e parcela mínima
+- **Parcelamento**: Valor mínimo, taxa de juros, parcela máxima
 
 ### Condições de Pagamento
 
@@ -47,6 +66,7 @@ Sistema completo de gestão de orçamentos para empresas de proteção contra in
 - Gráficos de desempenho
 - Filtros por período
 - Estudo de lucro para propostas aceitas
+- Histórico de valores de itens e configurações
 
 ## Tecnologias
 
@@ -88,49 +108,54 @@ Sistema completo de gestão de orçamentos para empresas de proteção contra in
 ## Estrutura do Projeto
 
 ```
-flama/
+fluxaquote/
 ├── backend/
 │   └── src/
 │       ├── __tests__/          # Testes unitários (Jest)
 │       │   ├── controllers/    # Testes de controllers
 │       │   ├── services/       # Testes de services
-│       │   ├── repositories/   # Testes de repositories
-│       │   ├── middlewares/    # Testes de middlewares
+│       │   ├── utils/          # Testes de utilitários
+│       │   ├── validations/    # Testes de validações
 │       │   └── mocks/          # Dados mock para testes
 │       ├── config/             # Configuração do Firebase
 │       ├── controllers/        # Controladores HTTP
-│       ├── events/             # Sistema de eventos
+│       ├── events/             # Sistema de eventos (EventBus)
 │       ├── middlewares/        # CORS, auth, errors
 │       ├── models/             # Interfaces TypeScript
-│       ├── repositories/       # Acesso a dados (Firestore)
+│       ├── repositories/       # Acesso a dados (Firestore, factory por tenant)
 │       ├── routes/             # Definição de rotas
-│       ├── services/           # Lógica de negócio
-│       └── utils/              # Utilitários (logger, errors)
+│       ├── services/           # Lógica de negócio (factory por tenant)
+│       ├── utils/              # Utilitários (logger, errors, tenantDb)
+│       └── validations/        # Schemas Zod
 │
 ├── frontend/
 │   └── src/
 │       ├── __tests__/          # Testes unitários (Vitest)
 │       │   ├── components/     # Testes de componentes
 │       │   ├── contexts/       # Testes de contextos
-│       │   ├── hooks/          # Testes de hooks
 │       │   ├── pages/          # Testes de páginas
-│       │   └── services/       # Testes de serviços
+│       │   ├── services/       # Testes de serviços
+│       │   ├── styles/         # Testes de tema
+│       │   └── utils/          # Testes de utilitários
 │       ├── components/         # Componentes React
-│       │   ├── auth/           # Autenticação
+│       │   ├── auth/           # Autenticação (PrivateRoute)
 │       │   ├── clientes/       # Componentes de clientes
-│       │   ├── layout/         # Layout administrativo
+│       │   ├── layout/         # Layout administrativo (slug-aware)
 │       │   ├── notificacoes/   # Notificações
-│       │   ├── orcamentos/     # Orçamentos e PDF
+│       │   ├── orcamentos/     # Orçamentos, Modal e PDF
 │       │   └── ui/             # Componentes genéricos
-│       ├── contexts/           # Contextos React (Auth)
+│       ├── contexts/           # Contextos React (Auth, Tenant)
 │       ├── hooks/              # Hooks customizados
 │       ├── pages/              # Páginas da aplicação
+│       │   ├── Configuracoes/  # Tabs: Empresa, Layout, Serviços, etc.
+│       │   └── ...             # Home, Login, Register, Dashboard, etc.
 │       ├── services/           # Comunicação com API
-│       ├── styles/             # Estilos globais
+│       ├── styles/             # Estilos globais e tema
 │       ├── types/              # Tipos TypeScript
-│       └── utils/              # Funções utilitárias
+│       └── utils/              # Utilitários (colorUtils, constants)
 │
 ├── firebase.json               # Configuração Firebase
+├── firestore.rules             # Regras de segurança (tenant-scoped)
 └── .firebaserc                 # Projeto Firebase
 ```
 
@@ -278,39 +303,49 @@ npm run test:coverage       # Com cobertura
 
 O projeto mantém uma cobertura de testes abrangente:
 
-### Backend (462 testes)
+### Backend (600 testes, 31 suites)
 
 | Métrica    | Cobertura |
 | ---------- | --------- |
-| Statements | 97.36%    |
-| Branches   | 88.20%    |
-| Functions  | 99.42%    |
-| Lines      | 98.88%    |
+| Statements | 97.89%    |
+| Branches   | 88.94%    |
+| Functions  | 98.19%    |
+| Lines      | 98.38%    |
 
-- **Controllers**: 100% de cobertura (todos os endpoints)
-- **Services**: 100% de cobertura (lógica de negócio)
-- **Middlewares**: 100% de cobertura (auth e error handling)
-- **Utils**: 100% de cobertura (logger, errors, constants)
+- **Controllers**: 100% de cobertura (todos os endpoints, incluindo auth)
+- **Services**: 96%+ de cobertura (lógica de negócio, factory pattern)
+- **Middlewares**: 100% de cobertura (auth com tenant, error handling)
+- **Utils**: 100% de cobertura (logger, errors, constants, tenantDb, requestContext)
+- **Validations**: 100% de cobertura (Zod schemas)
 - **Events**: 100% de cobertura (EventBus)
 
-### Frontend (60 testes)
+### Frontend (1163 testes, 65 suites)
 
 | Métrica    | Cobertura |
 | ---------- | --------- |
-| Statements | 93.08%    |
-| Branches   | 84.72%    |
-| Functions  | 82.25%    |
-| Lines      | 93.08%    |
+| Statements | 94.13%    |
+| Branches   | 88.08%    |
+| Functions  | 84.91%    |
+| Lines      | 94.13%    |
 
-- **Componentes**: OrcamentoModal, ClienteModal, NotificacaoDropdown, OrcamentoPDF
-- **Páginas**: Login, Dashboard, Clientes, Orçamentos, Notificações, Relatórios, Configurações
-- **Hooks**: useClientes, useOrcamentos, useServicos, useNotificacoes (com paginação), useLimitacoes, usePalavrasChave
-- **Contextos**: AuthContext
-- **Serviços**: Todos os serviços de API com 100% de cobertura
+- **Componentes**: OrcamentoModal, OrcamentoCompletoSections, ClienteModal, NotificacaoDropdown, OrcamentoPDF, AdminLayout
+- **Páginas**: Home, Login, Register, Dashboard, Clientes, Orçamentos, Notificações, Relatórios, Configurações (todas as tabs)
+- **Contextos**: AuthContext, TenantContext
+- **Serviços**: Todos os serviços de API com 100% de cobertura (incluindo authService)
+- **Utils**: colorUtils, constants com 95%+ de cobertura
+- **Styles**: Theme com 100% de cobertura
 
 ## API Endpoints
 
-### Endpoints Principais
+### Autenticação (público)
+
+| Método | Endpoint                    | Descrição                   |
+| ------ | --------------------------- | --------------------------- |
+| POST   | `/api/auth/register`        | Registrar empresa + usuário |
+| GET    | `/api/auth/check-slug/:slug`| Verificar disponibilidade   |
+| GET    | `/api/auth/me`              | Dados do tenant do usuário  |
+
+### Endpoints Principais (autenticado, tenant-scoped)
 
 | Método   | Endpoint                    | Descrição                |
 | -------- | --------------------------- | ------------------------ |
@@ -320,9 +355,10 @@ O projeto mantém uma cobertura de testes abrangente:
 | GET/POST | `/api/servicos`             | Configuração de serviços |
 | GET/POST | `/api/categorias-item`      | Categorias de itens      |
 | GET/POST | `/api/itens-servico`        | Itens de serviço         |
-| GET/POST | `/api/limitacoes`           | Limitações padrão        |
+| GET/POST | `/api/limitacoes`           | Observações padrão       |
 | GET/POST | `/api/palavras-chave`       | Palavras-chave           |
-| GET/POST | `/api/configuracoes-gerais` | Configurações gerais     |
+| GET/PUT  | `/api/configuracoes-gerais` | Configurações gerais     |
+| GET      | `/api/historico-valores`    | Histórico de valores     |
 
 ### Endpoints de Notificações (com Paginação)
 
@@ -350,22 +386,49 @@ O projeto mantém uma cobertura de testes abrangente:
 
 ### Backend
 
-- **Repository Pattern**: Abstração do acesso a dados
+- **Multi-Tenant Factory Pattern**: Repositories e Services criados por tenant via factory functions
+- **Subcollections**: Dados isolados em `tenants/{tenantId}/collection/{docId}`
+- **Repository Pattern**: Abstração do acesso a dados (scoped por tenant)
 - **Service Layer**: Separação da lógica de negócio
-- **Controller Layer**: Tratamento de requisições HTTP
+- **Controller Layer**: Tratamento de requisições HTTP com extração de tenantId
 - **Cursor-based Pagination**: Paginação eficiente com Firestore
-- **Event Bus**: Comunicação entre serviços (notificações)
+- **Event Bus**: Comunicação entre serviços (notificações com tenantId)
 - **Zod Validation**: Validação de schemas de entrada
 - **Error Handling**: Classes de erro customizadas
+- **Custom Claims**: tenantId/slug/role no token Firebase Auth
 
 ### Frontend
 
-- **Context API**: Estado global (autenticação)
-- **Custom Hooks**: Lógica reutilizável
+- **Context API**: Estado global (AuthContext + TenantContext)
+- **Slug-aware Routing**: Todas as rotas internas prefixadas com `/:slug`
+- **CSS Variables Override**: Cores do tenant aplicadas via style no container
+- **Custom Hooks**: Lógica reutilizável (useTenant, useConfiguracoesGerais, etc.)
 - **React Query**: Cache e sincronização com servidor
 - **useInfiniteQuery**: Paginação infinita para notificações
-- **Styled Components**: Estilos encapsulados
-- **Discriminated Unions**: Tipos seguros para orçamentos
+- **Styled Components**: Estilos encapsulados com theme system
+- **Discriminated Unions**: Tipos seguros para orçamentos (simples/completo)
+
+### Firestore - Estrutura de Dados
+
+```
+tenants/{tenantId}/clientes/{clienteId}
+tenants/{tenantId}/orcamentos/{orcamentoId}
+tenants/{tenantId}/servicos/{servicoId}
+tenants/{tenantId}/categoriasItem/{categoriaId}
+tenants/{tenantId}/itensServico/{itemId}
+tenants/{tenantId}/limitacoes/{limitacaoId}
+tenants/{tenantId}/palavrasChave/{palavraId}
+tenants/{tenantId}/notificacoes/{notificacaoId}
+tenants/{tenantId}/configuracoes/{docId}
+tenants/{tenantId}/contadores/{contadorId}
+tenants/{tenantId}/historicoValoresItens/{historicoId}
+tenants/{tenantId}/historicoConfiguracoes/{historicoId}
+
+# Collections globais
+tenants/{tenantId}          # Dados do tenant (slug, nomeEmpresa, ownerId)
+slugs/{slug}                # Lookup reverso slug → tenantId
+userTenants/{uid}           # Mapeamento userId → tenantId + slug + role
+```
 
 ## Scripts Disponíveis
 
@@ -417,4 +480,4 @@ Verificar se `FRONTEND_URL` no backend corresponde à URL do frontend.
 
 ## Licença
 
-Projeto privado - FLAMA Sistemas de Proteção.
+Projeto privado - FluxaQuote.

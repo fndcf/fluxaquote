@@ -1,15 +1,3 @@
-// Dados da Empresa
-export const EMPRESA = {
-  nome: "FLAMA Sistemas de Proteção",
-  cnpj: "54.513.212/0001-00",
-  endereco: "Rua José Apelian, 196, Savoy",
-  cidade: "Itanhaém",
-  estado: "SP",
-  cep: "11742-630",
-  telefones: ["13 99173-7341", "13 3411-5455"],
-  email: "", // Adicionar quando tiver
-};
-
 // Status do Orçamento
 export const STATUS_ORCAMENTO = {
   aberto: { label: "Em Aberto", color: "#FFC107" },
@@ -17,9 +5,6 @@ export const STATUS_ORCAMENTO = {
   recusado: { label: "Recusado", color: "#F44336" },
   expirado: { label: "Expirado", color: "#9E9E9E" },
 };
-
-// Validade padrão do orçamento (em dias)
-export const VALIDADE_ORCAMENTO_DIAS = 30;
 
 // Formatação de moeda
 export const formatCurrency = (value: number): string => {
@@ -46,7 +31,7 @@ export const formatCNPJ = (cnpj: string): string => {
   const cleaned = cnpj.replace(/\D/g, "");
   return cleaned.replace(
     /^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,
-    "$1.$2.$3/$4-$5"
+    "$1.$2.$3/$4-$5",
   );
 };
 
@@ -79,7 +64,7 @@ export const formatPhone = (phone: string): string => {
 export const formatOrcamentoNumero = (
   numero: number,
   dataEmissao: Date | string,
-  versao: number = 0
+  versao: number = 0,
 ): string => {
   const ano = new Date(dataEmissao).getFullYear().toString().slice(-2);
   const numeroFormatado = String(numero).padStart(4, "0");
@@ -91,7 +76,7 @@ export const formatOrcamentoNumero = (
 // Exemplo: #260084 (ano 2026, número 84)
 export const formatOrcamentoNumeroSimples = (
   numero: number,
-  dataEmissao: Date | string | undefined | null
+  dataEmissao: Date | string | undefined | null,
 ): string => {
   // Se dataEmissao for inválida, retorna apenas o número
   if (!dataEmissao) {

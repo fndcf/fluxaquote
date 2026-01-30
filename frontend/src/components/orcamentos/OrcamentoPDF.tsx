@@ -11,21 +11,13 @@ import { Orcamento, ConfiguracoesGerais } from "../../types";
 import { configuracoesGeraisService } from "../../services/configuracoesGeraisService";
 import { logger } from "../../utils/logger";
 import { formatOrcamentoNumero } from "../../utils/constants";
-
-// Cores do tema
-const COLORS = {
-  primary: "#CC0000",
-  primaryLight: "#fee2e2",
-  dark: "#1a1a1a",
-  gray: "#666666",
-  lightGray: "#f8f8f8",
-  border: "#e0e0e0",
-};
+import { getPdfColors, PdfColors } from "../../utils/colorUtils";
 
 // Logo padrão da plataforma (servido de /public)
 const DEFAULT_LOGO_URL = "/fluxaquote-logo.png";
 
-const styles = StyleSheet.create({
+function createBaseStyles(COLORS: PdfColors) {
+  return StyleSheet.create({
   page: {
     paddingTop: 10,
     paddingLeft: 40,
@@ -334,6 +326,7 @@ const styles = StyleSheet.create({
     color: COLORS.gray,
   },
 });
+}
 
 const formatCurrency = (value: number): string => {
   return new Intl.NumberFormat("pt-BR", {
@@ -438,7 +431,8 @@ interface OrcamentoPDFProps {
 }
 
 // Estilos adicionais para orçamento completo
-const stylesCompleto = StyleSheet.create({
+function createCompletoStyles(COLORS: PdfColors) {
+  return StyleSheet.create({
   // Tabela com colunas M.O. e Material - Novo layout
   colItem: {
     width: 30,
@@ -834,12 +828,17 @@ const stylesCompleto = StyleSheet.create({
     marginTop: 4,
   },
 });
+}
 
 // Componente PDF para orçamento completo
 export function OrcamentoCompletoPDFDocument({
   orcamento,
   configuracoes,
 }: OrcamentoPDFProps) {
+  const pdfColors = getPdfColors(configuracoes);
+  const styles = createBaseStyles(pdfColors);
+  const stylesCompleto = createCompletoStyles(pdfColors);
+
   const numeroOrcamentoFormatado = formatOrcamentoNumero(
     orcamento.numero,
     orcamento.dataEmissao,
@@ -932,7 +931,7 @@ export function OrcamentoCompletoPDFDocument({
               fontSize: 10,
               fontWeight: "bold",
               marginBottom: 10,
-              color: COLORS.dark,
+              color: pdfColors.dark,
             }}
           >
             À
@@ -1704,7 +1703,8 @@ export async function gerarPDFOrcamento(orcamento: Orcamento): Promise<void> {
 }
 
 // Estilos específicos para o PDF de execução
-const stylesExecucao = StyleSheet.create({
+function createExecucaoStyles(COLORS: PdfColors) {
+  return StyleSheet.create({
   page: {
     paddingTop: 10,
     paddingLeft: 40,
@@ -1867,15 +1867,19 @@ const stylesExecucao = StyleSheet.create({
     lineHeight: 1.4,
   },
 });
+}
 
 // Componente PDF de Execução (para orçamentos aceitos)
-function OrdemExecucaoPDFDocument({
+export function OrdemExecucaoPDFDocument({
   orcamento,
   configuracoes,
 }: {
   orcamento: Orcamento;
   configuracoes?: ConfiguracoesGerais;
 }) {
+  const pdfColors = getPdfColors(configuracoes);
+  const stylesExecucao = createExecucaoStyles(pdfColors);
+
   const formatDate = (date: Date | string) => {
     const d = new Date(date);
     return d.toLocaleDateString("pt-BR");

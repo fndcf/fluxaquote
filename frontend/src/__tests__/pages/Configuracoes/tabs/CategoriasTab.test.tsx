@@ -232,7 +232,7 @@ describe('CategoriasTab', () => {
         expect(screen.getByText('Nova Categoria')).toBeInTheDocument();
       });
 
-      const input = screen.getByPlaceholderText(/Ex: Bomba de Incêndio/);
+      const input = screen.getByRole('textbox');
       fireEvent.change(input, { target: { value: 'Nova Categoria Teste' } });
 
       const cadastrarButton = screen.getByRole('button', { name: 'Cadastrar' });
@@ -250,7 +250,7 @@ describe('CategoriasTab', () => {
         expect(screen.getByText('Nova Categoria')).toBeInTheDocument();
       });
 
-      const input = screen.getByPlaceholderText(/Ex: Bomba de Incêndio/);
+      const input = screen.getByRole('textbox');
       fireEvent.change(input, { target: { value: 'Categoria Nova' } });
 
       fireEvent.click(screen.getByRole('button', { name: 'Cadastrar' }));
@@ -276,7 +276,7 @@ describe('CategoriasTab', () => {
         expect(screen.getByText('Nova Categoria')).toBeInTheDocument();
       });
 
-      const input = screen.getByPlaceholderText(/Ex: Bomba de Incêndio/);
+      const input = screen.getByRole('textbox');
       fireEvent.change(input, { target: { value: 'Categoria Nova' } });
 
       fireEvent.click(screen.getByRole('button', { name: 'Cadastrar' }));
@@ -538,10 +538,12 @@ describe('CategoriasTab', () => {
         expect(screen.getByText('Novo Item de Serviço')).toBeInTheDocument();
       });
 
-      const descricaoTextarea = screen.getByPlaceholderText(/Ex: Fornecimento e instalação/);
+      const descricaoLabel = screen.getByText('Descrição do Item/Serviço');
+      const descricaoTextarea = descricaoLabel.closest('div')!.querySelector('textarea')!;
       fireEvent.change(descricaoTextarea, { target: { value: 'Descricao do item de servico novo' } });
 
-      const unidadeInput = screen.getByPlaceholderText(/Ex: UN, M, M2/);
+      const unidadeLabel = screen.getByText('Unidade de Medida');
+      const unidadeInput = unidadeLabel.closest('div')!.querySelector('input')!;
       fireEvent.change(unidadeInput, { target: { value: 'un' } });
 
       fireEvent.click(screen.getByRole('button', { name: 'Cadastrar' }));
@@ -591,10 +593,12 @@ describe('CategoriasTab', () => {
         expect(screen.getByText('Novo Item de Serviço')).toBeInTheDocument();
       });
 
-      const descricaoTextarea = screen.getByPlaceholderText(/Ex: Fornecimento e instalação/);
+      const descricaoLabel = screen.getByText('Descrição do Item/Serviço');
+      const descricaoTextarea = descricaoLabel.closest('div')!.querySelector('textarea')!;
       fireEvent.change(descricaoTextarea, { target: { value: 'Descricao do item' } });
 
-      const unidadeInput = screen.getByPlaceholderText(/Ex: UN, M, M2/);
+      const unidadeLabel = screen.getByText('Unidade de Medida');
+      const unidadeInput = unidadeLabel.closest('div')!.querySelector('input')!;
       fireEvent.change(unidadeInput, { target: { value: 'un' } });
 
       fireEvent.click(screen.getByRole('button', { name: 'Cadastrar' }));
@@ -622,7 +626,8 @@ describe('CategoriasTab', () => {
         expect(screen.getByText('Novo Item de Serviço')).toBeInTheDocument();
       });
 
-      const descricaoTextarea = screen.getByPlaceholderText(/Ex: Fornecimento e instalação/);
+      const descricaoLabel = screen.getByText('Descrição do Item/Serviço');
+      const descricaoTextarea = descricaoLabel.closest('div')!.querySelector('textarea')!;
       fireEvent.change(descricaoTextarea, { target: { value: 'abc' } });
 
       const cadastrarButton = screen.getByRole('button', { name: 'Cadastrar' });
@@ -645,7 +650,8 @@ describe('CategoriasTab', () => {
         expect(screen.getByText('Novo Item de Serviço')).toBeInTheDocument();
       });
 
-      const descricaoTextarea = screen.getByPlaceholderText(/Ex: Fornecimento e instalação/);
+      const descricaoLabel = screen.getByText('Descrição do Item/Serviço');
+      const descricaoTextarea = descricaoLabel.closest('div')!.querySelector('textarea')!;
       fireEvent.change(descricaoTextarea, { target: { value: 'Descricao completa do item' } });
 
       const cadastrarButton = screen.getByRole('button', { name: 'Cadastrar' });

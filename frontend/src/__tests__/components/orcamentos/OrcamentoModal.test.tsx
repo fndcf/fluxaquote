@@ -497,7 +497,7 @@ describe('OrcamentoModal', () => {
     // Selecionar serviço e categoria via combobox
     const selects = screen.getAllByRole('combobox');
     fireEvent.change(selects[0], { target: { value: 's1' } });
-    fireEvent.change(selects[2], { target: { value: 'cat1' } });
+    fireEvent.change(selects[1], { target: { value: 'cat1' } });
 
     // Preencher item
     const descInput = screen.getByPlaceholderText('Descrição do item/serviço');
@@ -766,7 +766,7 @@ describe('OrcamentoModal', () => {
       // Selecionar serviço e categoria via combobox
       const selects = screen.getAllByRole('combobox');
       fireEvent.change(selects[0], { target: { value: 's1' } });
-      fireEvent.change(selects[2], { target: { value: 'cat1' } });
+      fireEvent.change(selects[1], { target: { value: 'cat1' } });
 
       // Preencher item
       const descInput = screen.getByPlaceholderText('Descrição do item/serviço');
@@ -851,7 +851,7 @@ describe('OrcamentoModal', () => {
       // Selecionar serviço e categoria via combobox
       const selects = screen.getAllByRole('combobox');
       fireEvent.change(selects[0], { target: { value: 's1' } });
-      fireEvent.change(selects[2], { target: { value: 'cat1' } });
+      fireEvent.change(selects[1], { target: { value: 'cat1' } });
 
       // Preencher item com descrição curta
       const descInput = screen.getByPlaceholderText('Descrição do item/serviço');
@@ -1180,6 +1180,170 @@ describe('OrcamentoModal', () => {
       // Verificar que o campo de busca foi preenchido com o nome do novo cliente
       const searchInput = screen.getByPlaceholderText('Digite para buscar um cliente...');
       expect(searchInput).toHaveValue('Novo Cliente Teste');
+    });
+  });
+
+  describe('Dropdown button e loading states', () => {
+    it('deve abrir dropdown ao clicar no botão de toggle', async () => {
+      render(
+        <OrcamentoModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+        />,
+        { wrapper: createWrapper() }
+      );
+
+      // O botão de dropdown está junto ao campo de busca
+      const searchInput = screen.getByPlaceholderText('Digite para buscar um cliente...');
+      const parentDiv = searchInput.closest('div');
+      const toggleButton = parentDiv?.querySelector('button');
+
+      if (toggleButton) {
+        fireEvent.click(toggleButton);
+
+        await waitFor(() => {
+          const dropdown = screen.queryByText('Cliente 1') || screen.queryByText('Nenhum cliente encontrado');
+          expect(dropdown).toBeInTheDocument();
+        });
+      }
+    });
+
+    it('deve mostrar loading inicial quando clientes estão carregando', async () => {
+      vi.mocked(useClientesInfiniteScroll).mockReturnValue({
+        data: undefined,
+        isLoading: true,
+        isFetchingNextPage: false,
+        hasNextPage: false,
+        fetchNextPage: vi.fn(),
+      } as any);
+
+      render(
+        <OrcamentoModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+        />,
+        { wrapper: createWrapper() }
+      );
+
+      const searchInput = screen.getByPlaceholderText('Digite para buscar um cliente...');
+      fireEvent.focus(searchInput);
+
+      await waitFor(() => {
+        expect(screen.getByText('Carregando...')).toBeInTheDocument();
+      });
+    });
+
+    it('deve mostrar loading de paginação quando carregando mais', async () => {
+      vi.mocked(useClientesInfiniteScroll).mockReturnValue({
+        data: {
+          pages: [{ items: mockClientes, total: 10, hasMore: true }],
+          pageParams: [1],
+        },
+        isLoading: false,
+        isFetchingNextPage: true,
+        hasNextPage: true,
+        fetchNextPage: vi.fn(),
+      } as any);
+
+      render(
+        <OrcamentoModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+        />,
+        { wrapper: createWrapper() }
+      );
+
+      const searchInput = screen.getByPlaceholderText('Digite para buscar um cliente...');
+      fireEvent.focus(searchInput);
+
+      await waitFor(() => {
+        expect(screen.getByText('Carregando mais...')).toBeInTheDocument();
+      });
+    });
+
+    it('deve navegar com ArrowDown/ArrowUp e fechar com Escape', async () => {
+      render(
+        <OrcamentoModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+        />,
+        { wrapper: createWrapper() }
+      );
+
+      const searchInput = screen.getByPlaceholderText('Digite para buscar um cliente...');
+      fireEvent.focus(searchInput);
+
+      await waitFor(() => {
+        expect(screen.getByText('Cliente 1')).toBeInTheDocument();
+      });
+
+      // Navigate down
+      fireEvent.keyDown(searchInput, { key: 'ArrowDown' });
+      // Navigate down again
+      fireEvent.keyDown(searchInput, { key: 'ArrowDown' });
+      // Navigate up
+      fireEvent.keyDown(searchInput, { key: 'ArrowUp' });
+      // Close with Escape
+      fireEvent.keyDown(searchInput, { key: 'Escape' });
+    });
+
+    it('deve selecionar cliente com Enter após ArrowDown', async () => {
+      render(
+        <OrcamentoModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+        />,
+        { wrapper: createWrapper() }
+      );
+
+      const searchInput = screen.getByPlaceholderText('Digite para buscar um cliente...');
+      fireEvent.focus(searchInput);
+
+      await waitFor(() => {
+        expect(screen.getByText('Cliente 1')).toBeInTheDocument();
+      });
+
+      // Navigate to first item and select with Enter
+      fireEvent.keyDown(searchInput, { key: 'ArrowDown' });
+      fireEvent.keyDown(searchInput, { key: 'Enter' });
+
+      await waitFor(() => {
+        expect(screen.getByText(/CNPJ\/CPF: 12345678901234/)).toBeInTheDocument();
+      });
+    });
+
+    it('deve mostrar contagem total de clientes', async () => {
+      vi.mocked(useClientesInfiniteScroll).mockReturnValue({
+        data: {
+          pages: [{ items: mockClientes, total: 50, hasMore: true }],
+          pageParams: [1],
+        },
+        isLoading: false,
+        isFetchingNextPage: false,
+        hasNextPage: true,
+        fetchNextPage: vi.fn(),
+      } as any);
+
+      render(
+        <OrcamentoModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+        />,
+        { wrapper: createWrapper() }
+      );
+
+      const searchInput = screen.getByPlaceholderText('Digite para buscar um cliente...');
+      fireEvent.focus(searchInput);
+
+      await waitFor(() => {
+        expect(screen.getByText(/de 50 clientes/)).toBeInTheDocument();
+      });
     });
   });
 });

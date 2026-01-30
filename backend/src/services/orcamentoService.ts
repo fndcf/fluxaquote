@@ -24,7 +24,6 @@ function detectarTipoPessoa(documento: string): TipoPessoa {
 }
 
 // Helper para comparar valores de forma profunda (para detectar mudanças reais)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function isEqual(a: any, b: any): boolean {
   // Se ambos são null/undefined
   if (a == null && b == null) return true;
@@ -383,7 +382,7 @@ export function createOrcamentoService(tenantId: string) {
     // prazoExecucaoServicos - pode ser null para remover
     if (data.prazoExecucaoServicos !== undefined) {
       if (data.prazoExecucaoServicos !== orcamento.prazoExecucaoServicos) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         updateData.prazoExecucaoServicos = data.prazoExecucaoServicos
           ? data.prazoExecucaoServicos
           : (FieldValue.delete() as any);
@@ -455,7 +454,7 @@ export function createOrcamentoService(tenantId: string) {
     if (data.introducao !== undefined) {
       const novaIntro = data.introducao?.trim() || "";
       if (novaIntro !== (orcamento.introducao || "")) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         updateData.introducao = novaIntro ? novaIntro : (FieldValue.delete() as any);
       }
     }
@@ -464,7 +463,7 @@ export function createOrcamentoService(tenantId: string) {
     if (data.observacoes !== undefined) {
       const novaObs = data.observacoes?.trim() || "";
       if (novaObs !== (orcamento.observacoes || "")) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         updateData.observacoes = novaObs ? novaObs : (FieldValue.delete() as any);
       }
     }
@@ -481,7 +480,7 @@ export function createOrcamentoService(tenantId: string) {
       const novoValor = data.consultor?.trim() || '';
       const valorAtual = orcamento.consultor || '';
       if (novoValor !== valorAtual) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         updateData.consultor = novoValor ? novoValor : (FieldValue.delete() as any);
       }
     }
@@ -490,7 +489,7 @@ export function createOrcamentoService(tenantId: string) {
       const novoValor = data.contato?.trim() || '';
       const valorAtual = orcamento.contato || '';
       if (novoValor !== valorAtual) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         updateData.contato = novoValor ? novoValor : (FieldValue.delete() as any);
       }
     }
@@ -499,7 +498,7 @@ export function createOrcamentoService(tenantId: string) {
       const novoValor = data.email?.trim() || '';
       const valorAtual = orcamento.email || '';
       if (novoValor !== valorAtual) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         updateData.email = novoValor ? novoValor : (FieldValue.delete() as any);
       }
     }
@@ -508,7 +507,7 @@ export function createOrcamentoService(tenantId: string) {
       const novoValor = data.telefone?.trim() || '';
       const valorAtual = orcamento.telefone || '';
       if (novoValor !== valorAtual) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         updateData.telefone = novoValor ? novoValor : (FieldValue.delete() as any);
       }
     }
@@ -517,7 +516,7 @@ export function createOrcamentoService(tenantId: string) {
       const novoValor = data.enderecoServico?.trim() || '';
       const valorAtual = orcamento.enderecoServico || '';
       if (novoValor !== valorAtual) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         updateData.enderecoServico = novoValor ? novoValor : (FieldValue.delete() as any);
       }
     }

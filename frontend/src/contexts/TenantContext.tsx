@@ -43,7 +43,6 @@ export function TenantProvider({ children }: TenantProviderProps) {
           role: me.role,
         });
       } catch (error) {
-        console.error('Erro ao buscar dados do tenant:', error);
         setTenantData(null);
       } finally {
         setLoading(false);

@@ -8,11 +8,14 @@ import { AdminLayout } from '../../components/layout/AdminLayout';
 // Mock do useAuth
 const mockSignOut = vi.fn();
 const mockNavigate = vi.fn();
-const mockLocation = { pathname: '/' };
+const mockLocation = { pathname: '/test-company/dashboard' };
 
 vi.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({
     user: { email: 'test@test.com' },
+    tenantInfo: { tenantId: 't1', slug: 'test-company', role: 'admin', nomeEmpresa: 'Test Company' },
+    loading: false,
+    tenantLoading: false,
     signOut: mockSignOut,
   }),
 }));
@@ -25,6 +28,19 @@ vi.mock('react-router-dom', async () => {
     useLocation: () => mockLocation,
   };
 });
+
+// Mock do useConfiguracoesGerais
+vi.mock('../../hooks/useConfiguracoesGerais', () => ({
+  useConfiguracoesGerais: vi.fn(() => ({
+    data: null,
+    isLoading: false,
+  })),
+}));
+
+// Mock do buildColorVariables
+vi.mock('../../utils/colorUtils', () => ({
+  buildColorVariables: vi.fn(() => null),
+}));
 
 // Mock dos hooks de notificações
 vi.mock('../../hooks/useNotificacoes', () => ({
@@ -93,13 +109,13 @@ const createWrapper = () => {
 describe('AdminLayout', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockLocation.pathname = '/';
+    mockLocation.pathname = '/test-company/dashboard';
   });
 
   it('deve renderizar o layout corretamente', () => {
     render(<AdminLayout />, { wrapper: createWrapper() });
 
-    expect(screen.getByText('FLAMA')).toBeInTheDocument();
+    expect(screen.getByAltText('Test Company')).toBeInTheDocument();
     expect(screen.getByText('Painel')).toBeInTheDocument();
     expect(screen.getByText('Clientes')).toBeInTheDocument();
     expect(screen.getByText('Orçamentos')).toBeInTheDocument();
@@ -112,32 +128,32 @@ describe('AdminLayout', () => {
     expect(screen.getByText('test@test.com')).toBeInTheDocument();
   });
 
-  it('deve navegar para home ao clicar no logo', async () => {
+  it('deve navegar para dashboard ao clicar no logo', async () => {
     render(<AdminLayout />, { wrapper: createWrapper() });
 
-    await userEvent.click(screen.getByText('FLAMA'));
-    expect(mockNavigate).toHaveBeenCalledWith('/');
+    await userEvent.click(screen.getByAltText('Test Company'));
+    expect(mockNavigate).toHaveBeenCalledWith('/test-company/dashboard');
   });
 
   it('deve navegar para Painel ao clicar no botão', async () => {
     render(<AdminLayout />, { wrapper: createWrapper() });
 
     await userEvent.click(screen.getByText('Painel'));
-    expect(mockNavigate).toHaveBeenCalledWith('/');
+    expect(mockNavigate).toHaveBeenCalledWith('/test-company/dashboard');
   });
 
   it('deve navegar para Clientes ao clicar no botão', async () => {
     render(<AdminLayout />, { wrapper: createWrapper() });
 
     await userEvent.click(screen.getByText('Clientes'));
-    expect(mockNavigate).toHaveBeenCalledWith('/clientes');
+    expect(mockNavigate).toHaveBeenCalledWith('/test-company/clientes');
   });
 
   it('deve navegar para Orçamentos ao clicar no botão', async () => {
     render(<AdminLayout />, { wrapper: createWrapper() });
 
     await userEvent.click(screen.getByText('Orçamentos'));
-    expect(mockNavigate).toHaveBeenCalledWith('/orcamentos');
+    expect(mockNavigate).toHaveBeenCalledWith('/test-company/orcamentos');
   });
 
   it('deve abrir dropdown de notificações ao clicar no ícone', async () => {
@@ -155,7 +171,7 @@ describe('AdminLayout', () => {
     render(<AdminLayout />, { wrapper: createWrapper() });
 
     await userEvent.click(screen.getByTitle('Configurações'));
-    expect(mockNavigate).toHaveBeenCalledWith('/configuracoes');
+    expect(mockNavigate).toHaveBeenCalledWith('/test-company/configuracoes');
   });
 
   it('deve mostrar modal de logout ao clicar em Sair', async () => {
@@ -205,8 +221,8 @@ describe('AdminLayout', () => {
     expect(screen.getByText('3')).toBeInTheDocument();
   });
 
-  it('deve marcar Painel como ativo quando pathname é /', () => {
-    mockLocation.pathname = '/';
+  it('deve marcar Painel como ativo quando pathname é /test-company/dashboard', () => {
+    mockLocation.pathname = '/test-company/dashboard';
 
     render(<AdminLayout />, { wrapper: createWrapper() });
 
@@ -214,16 +230,16 @@ describe('AdminLayout', () => {
     expect(screen.getByText('Painel')).toBeInTheDocument();
   });
 
-  it('deve marcar Clientes como ativo quando pathname é /clientes', () => {
-    mockLocation.pathname = '/clientes';
+  it('deve marcar Clientes como ativo quando pathname é /test-company/clientes', () => {
+    mockLocation.pathname = '/test-company/clientes';
 
     render(<AdminLayout />, { wrapper: createWrapper() });
 
     expect(screen.getByText('Clientes')).toBeInTheDocument();
   });
 
-  it('deve marcar Orçamentos como ativo quando pathname é /orcamentos', () => {
-    mockLocation.pathname = '/orcamentos';
+  it('deve marcar Orçamentos como ativo quando pathname é /test-company/orcamentos', () => {
+    mockLocation.pathname = '/test-company/orcamentos';
 
     render(<AdminLayout />, { wrapper: createWrapper() });
 

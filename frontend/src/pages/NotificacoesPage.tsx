@@ -394,13 +394,27 @@ export function NotificacoesPage() {
 
   // Infinite scroll - carregar mais quando chegar no final da lista
   const handleScroll = useCallback(() => {
-    if (!listRef.current || !getHasNextPage() || getIsFetchingNext()) return;
+    if (!listRef.current) return;
+
+    const hasNext =
+      activeTab === "vencidas" ? hasNextVencidas :
+      activeTab === "proximas" ? hasNextProximas :
+      hasNextTodas;
+
+    const isFetching =
+      activeTab === "vencidas" ? isFetchingVencidas :
+      activeTab === "proximas" ? isFetchingProximas :
+      isFetchingTodas;
+
+    if (!hasNext || isFetching) return;
 
     const { scrollTop, scrollHeight, clientHeight } = listRef.current;
     if (scrollHeight - scrollTop - clientHeight < 100) {
-      handleFetchNextPage();
+      if (activeTab === "vencidas") fetchNextVencidas();
+      else if (activeTab === "proximas") fetchNextProximas();
+      else fetchNextTodas();
     }
-  }, [activeTab, hasNextTodas, hasNextVencidas, hasNextProximas, isFetchingTodas, isFetchingVencidas, isFetchingProximas]);
+  }, [activeTab, hasNextTodas, hasNextVencidas, hasNextProximas, isFetchingTodas, isFetchingVencidas, isFetchingProximas, fetchNextTodas, fetchNextVencidas, fetchNextProximas]);
 
   useEffect(() => {
     const listElement = listRef.current;

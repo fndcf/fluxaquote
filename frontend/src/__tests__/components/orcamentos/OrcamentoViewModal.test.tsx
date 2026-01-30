@@ -19,6 +19,16 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
+// Mock do useAuth (usado por useTenant)
+vi.mock('../../../contexts/AuthContext', () => ({
+  useAuth: () => ({
+    user: { email: 'test@test.com' },
+    tenantInfo: { tenantId: 't1', slug: 'test-company', role: 'admin', nomeEmpresa: 'Test Company' },
+    loading: false,
+    tenantLoading: false,
+  }),
+}));
+
 const mockOnClose = vi.fn();
 const mockOnEdit = vi.fn();
 const mockOnDuplicate = vi.fn();
@@ -217,7 +227,7 @@ describe('OrcamentoViewModal', () => {
 
     fireEvent.click(screen.getByText('Ir para Orçamentos'));
     expect(mockOnClose).toHaveBeenCalled();
-    expect(mockNavigate).toHaveBeenCalledWith('/orcamentos');
+    expect(mockNavigate).toHaveBeenCalledWith('/test-company/orcamentos');
   });
 
   it('deve chamar gerarPDFOrcamento ao clicar em Gerar PDF', async () => {
@@ -303,7 +313,7 @@ describe('OrcamentoViewModal', () => {
 
     fireEvent.click(screen.getByText('Editar'));
     expect(mockOnClose).toHaveBeenCalled();
-    expect(mockNavigate).toHaveBeenCalledWith('/orcamentos?action=edit&id=o1');
+    expect(mockNavigate).toHaveBeenCalledWith('/test-company/orcamentos?action=edit&id=o1');
   });
 
   it('deve navegar para página de orçamentos com ação de duplicar quando onDuplicate não é fornecido', () => {
@@ -318,7 +328,7 @@ describe('OrcamentoViewModal', () => {
 
     fireEvent.click(screen.getByText('Duplicar'));
     expect(mockOnClose).toHaveBeenCalled();
-    expect(mockNavigate).toHaveBeenCalledWith('/orcamentos?action=duplicate&id=o1');
+    expect(mockNavigate).toHaveBeenCalledWith('/test-company/orcamentos?action=duplicate&id=o1');
   });
 
   it('deve exibir endereço completo do cliente', () => {

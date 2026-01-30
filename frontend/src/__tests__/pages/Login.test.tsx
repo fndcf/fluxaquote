@@ -11,6 +11,7 @@ const mockNavigate = vi.fn();
 vi.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({
     signIn: mockSignIn,
+    resetPassword: vi.fn(),
   }),
 }));
 
@@ -34,7 +35,7 @@ describe('Login Page', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText('FLAMA')).toBeInTheDocument();
+    expect(screen.getByText('FluxaQuote')).toBeInTheDocument();
     expect(screen.getByText('Sistema de Orçamentos')).toBeInTheDocument();
     expect(screen.getByLabelText('Email')).toBeInTheDocument();
     expect(screen.getByLabelText('Senha')).toBeInTheDocument();
@@ -80,8 +81,8 @@ describe('Login Page', () => {
     });
   });
 
-  it('deve navegar para home após login bem sucedido', async () => {
-    mockSignIn.mockResolvedValue(undefined);
+  it('deve navegar para dashboard do tenant após login bem sucedido', async () => {
+    mockSignIn.mockResolvedValue('minha-empresa');
 
     render(
       <MemoryRouter>
@@ -98,7 +99,7 @@ describe('Login Page', () => {
     await userEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/');
+      expect(mockNavigate).toHaveBeenCalledWith('/minha-empresa/dashboard');
     });
   });
 

@@ -83,7 +83,7 @@ describe('LimitacoesTab', () => {
     it('deve renderizar título e descrição', () => {
       render(<LimitacoesTab />, { wrapper: createWrapper() });
 
-      expect(screen.getByText('Observações e Limitações')).toBeInTheDocument();
+      expect(screen.getByText('Observações')).toBeInTheDocument();
       expect(screen.getByText(/Cadastre os parágrafos de observações/)).toBeInTheDocument();
     });
 
@@ -146,7 +146,7 @@ describe('LimitacoesTab', () => {
         expect(screen.getByText('Nova Observação')).toBeInTheDocument();
       });
 
-      const textarea = screen.getByPlaceholderText(/O Contratante deverá/);
+      const textarea = screen.getByRole('textbox');
       fireEvent.change(textarea, { target: { value: 'Texto curto' } });
 
       const cadastrarButton = screen.getByRole('button', { name: 'Cadastrar' });
@@ -162,7 +162,7 @@ describe('LimitacoesTab', () => {
         expect(screen.getByText('Nova Observação')).toBeInTheDocument();
       });
 
-      const textarea = screen.getByPlaceholderText(/O Contratante deverá/);
+      const textarea = screen.getByRole('textbox');
       fireEvent.change(textarea, { target: { value: 'Este texto tem mais de vinte caracteres para teste' } });
 
       const cadastrarButton = screen.getByRole('button', { name: 'Cadastrar' });
@@ -180,7 +180,7 @@ describe('LimitacoesTab', () => {
         expect(screen.getByText('Nova Observação')).toBeInTheDocument();
       });
 
-      const textarea = screen.getByPlaceholderText(/O Contratante deverá/);
+      const textarea = screen.getByRole('textbox');
       fireEvent.change(textarea, { target: { value: 'Esta é uma nova observação com mais de vinte caracteres' } });
 
       fireEvent.click(screen.getByRole('button', { name: 'Cadastrar' }));
@@ -206,7 +206,7 @@ describe('LimitacoesTab', () => {
         expect(screen.getByText('Nova Observação')).toBeInTheDocument();
       });
 
-      const textarea = screen.getByPlaceholderText(/O Contratante deverá/);
+      const textarea = screen.getByRole('textbox');
       fireEvent.change(textarea, { target: { value: 'Esta é uma nova observação com mais de vinte caracteres' } });
 
       fireEvent.click(screen.getByRole('button', { name: 'Cadastrar' }));
@@ -436,7 +436,7 @@ describe('LimitacoesTab', () => {
         expect(screen.getByText('Nova Observação')).toBeInTheDocument();
       });
 
-      const textarea = screen.getByPlaceholderText(/O Contratante deverá/);
+      const textarea = screen.getByRole('textbox');
       fireEvent.change(textarea, { target: { value: 'Texto temporário' } });
 
       fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
@@ -445,7 +445,7 @@ describe('LimitacoesTab', () => {
       fireEvent.click(screen.getByText('+ Nova Observação'));
 
       await waitFor(() => {
-        const newTextarea = screen.getByPlaceholderText(/O Contratante deverá/);
+        const newTextarea = screen.getByRole('textbox');
         expect(newTextarea).toHaveValue('');
       });
     });
@@ -474,7 +474,7 @@ describe('LimitacoesTab', () => {
         expect(screen.getByText('Nova Observação')).toBeInTheDocument();
       });
 
-      const textarea = screen.getByPlaceholderText(/O Contratante deverá/);
+      const textarea = screen.getByRole('textbox');
       fireEvent.change(textarea, { target: { value: '                              ' } });
 
       const cadastrarButton = screen.getByRole('button', { name: 'Cadastrar' });

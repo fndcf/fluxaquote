@@ -10,6 +10,8 @@ const defaultConfiguracoes: ConfiguracoesGerais = {
   telefoneEmpresa: '',
   emailEmpresa: '',
   logoUrl: '',
+  corPrimaria: '',
+  corSecundaria: '',
 };
 
 export function createConfiguracoesGeraisRepository(tenantId: string) {

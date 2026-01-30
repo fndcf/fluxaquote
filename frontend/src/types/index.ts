@@ -192,6 +192,9 @@ export interface ConfiguracoesGerais {
   // Impostos para cálculo de lucro
   impostoMaterial?: number; // Percentual de imposto sobre material (ex: 10%)
   impostoServico?: number; // Percentual de imposto sobre serviço/mão de obra (ex: 15%)
+  // Cores do layout (personalizáveis por tenant)
+  corPrimaria?: string;
+  corSecundaria?: string;
 }
 
 // Interface da Notificação

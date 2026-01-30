@@ -1,7 +1,7 @@
 {
-  "name": "flama-backend",
+  "name": "fluxaquote-backend",
   "version": "1.0.0",
-  "description": "Backend do Sistema de Orçamentos - FLAMA Sistemas de Proteção",
+  "description": "Backend do Sistema de Orçamentos - FluxaQuote",
   "main": "dist/index.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",

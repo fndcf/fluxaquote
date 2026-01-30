@@ -133,7 +133,6 @@ describe('ItensCompleto', () => {
         { wrapper: createWrapper() }
       );
 
-      expect(screen.getByText('Etapa')).toBeInTheDocument();
       expect(screen.getByText('Categoria')).toBeInTheDocument();
       expect(screen.getByText('Descrição')).toBeInTheDocument();
       expect(screen.getByText('Qtd')).toBeInTheDocument();
@@ -185,26 +184,6 @@ describe('ItensCompleto', () => {
   });
 
   describe('Interação com campos', () => {
-    it('deve chamar onItemChange ao alterar etapa', () => {
-      render(
-        <ItensCompleto
-          itens={[createMockItem()]}
-          categorias={mockCategorias}
-          errors={{}}
-          onItemChange={mockOnItemChange}
-          onAddItem={mockOnAddItem}
-          onRemoveItem={mockOnRemoveItem}
-        />,
-        { wrapper: createWrapper() }
-      );
-
-      const selects = screen.getAllByRole('combobox');
-      // Primeiro select é etapa
-      fireEvent.change(selects[0], { target: { value: 'comercial' } });
-
-      expect(mockOnItemChange).toHaveBeenCalledWith(0, 'etapa', 'comercial');
-    });
-
     it('deve chamar onItemChange ao alterar categoria', () => {
       render(
         <ItensCompleto
@@ -219,8 +198,8 @@ describe('ItensCompleto', () => {
       );
 
       const selects = screen.getAllByRole('combobox');
-      // Segundo select é categoria
-      fireEvent.change(selects[1], { target: { value: 'cat1' } });
+      // Primeiro select é categoria (etapa was removed)
+      fireEvent.change(selects[0], { target: { value: 'cat1' } });
 
       expect(mockOnItemChange).toHaveBeenCalledWith(0, 'categoriaId', 'cat1');
     });
@@ -776,25 +755,6 @@ describe('ItensCompleto', () => {
       );
 
       expect(screen.getByText('Quantidade inválida')).toBeInTheDocument();
-    });
-  });
-
-  describe('Opções de etapa', () => {
-    it('deve exibir opções de etapa no select', () => {
-      render(
-        <ItensCompleto
-          itens={[createMockItem()]}
-          categorias={mockCategorias}
-          errors={{}}
-          onItemChange={mockOnItemChange}
-          onAddItem={mockOnAddItem}
-          onRemoveItem={mockOnRemoveItem}
-        />,
-        { wrapper: createWrapper() }
-      );
-
-      expect(screen.getByText('Residencial')).toBeInTheDocument();
-      expect(screen.getByText('Comercial')).toBeInTheDocument();
     });
   });
 

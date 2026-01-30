@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   OrcamentoCompletoPDFDocument,
+  OrdemExecucaoPDFDocument,
   gerarPDFOrcamento,
   gerarPDFExecucao,
 } from "../../../components/orcamentos/OrcamentoPDF";
@@ -22,6 +23,19 @@ vi.mock("@react-pdf/renderer", async () => {
     })),
   };
 });
+
+// Mock do configuracoesGeraisService
+vi.mock("../../../services/configuracoesGeraisService", () => ({
+  configuracoesGeraisService: {
+    buscar: vi.fn().mockResolvedValue({
+      nomeEmpresa: "FluxaQuote Test",
+      cnpjEmpresa: "",
+      enderecoEmpresa: "",
+      telefoneEmpresa: "",
+      diasValidadeOrcamento: 30,
+    }),
+  },
+}));
 
 // Mock URL.createObjectURL e revokeObjectURL que não existem no JSDOM
 const mockCreateObjectURL = vi.fn().mockReturnValue("blob:test-url");
@@ -162,7 +176,7 @@ describe("OrcamentoPDF", () => {
         mockOrcamento.dataEmissao,
         mockOrcamento.versao
       ).replace("#", "");
-      expect(downloadName).toBe(`Orçamento Flama-${expectedNumero}.pdf`);
+      expect(downloadName).toBe(`Orçamento FluxaQuote Test-${expectedNumero}.pdf`);
 
       createElementSpy.mockRestore();
       appendChildSpy.mockRestore();
@@ -1322,6 +1336,296 @@ describe("OrcamentoPDF", () => {
       createElementSpy.mockRestore();
       appendChildSpy.mockRestore();
       removeChildSpy.mockRestore();
+    });
+  });
+
+  describe("OrdemExecucaoPDFDocument", () => {
+    const mockOrcamentoExecucao = {
+      id: "o4",
+      numero: 4,
+      versao: 0,
+      tipo: "completo" as const,
+      clienteId: "c1",
+      clienteNome: "Empresa Execução LTDA",
+      clienteCnpj: "12345678901234",
+      clienteTipoPessoa: "juridica" as const,
+      clienteEndereco: "Rua Execução, 100",
+      clienteCidade: "São Paulo",
+      clienteEstado: "SP",
+      clienteCep: "01234567",
+      clienteTelefone: "11966666666",
+      clienteEmail: "exec@email.com",
+      status: "aceito" as const,
+      dataAceite: "2024-01-20T00:00:00.000Z",
+      valorTotal: 3000,
+      valorTotalMaoDeObra: 1200,
+      valorTotalMaterial: 1800,
+      dataEmissao: "2024-01-15T00:00:00.000Z",
+      dataValidade: "2024-02-15T00:00:00.000Z",
+      servicoDescricao: "Instalação de sistema de incêndio",
+      itensCompleto: [
+        {
+          etapa: "residencial" as const,
+          categoriaId: "cat1",
+          categoriaNome: "Extintores",
+          descricao: "Extintor ABC 6kg",
+          unidade: "UN",
+          quantidade: 5,
+          valorUnitarioMaoDeObra: 50,
+          valorUnitarioMaterial: 100,
+          valorTotalMaoDeObra: 250,
+          valorTotalMaterial: 500,
+          valorTotal: 750,
+        },
+        {
+          etapa: "comercial" as const,
+          categoriaId: "cat2",
+          categoriaNome: "Hidrantes",
+          descricao: "Hidrante de parede",
+          unidade: "UN",
+          quantidade: 2,
+          valorUnitarioMaoDeObra: 100,
+          valorUnitarioMaterial: 200,
+          valorTotalMaoDeObra: 200,
+          valorTotalMaterial: 400,
+          valorTotal: 600,
+        },
+      ],
+      contato: "Pedro Contato",
+      observacoes: "Observações da execução",
+      createdAt: new Date("2024-01-15T00:00:00.000Z"),
+    };
+
+    it("deve renderizar documento de execução corretamente", () => {
+      expect(() => {
+        OrdemExecucaoPDFDocument({
+          orcamento: mockOrcamentoExecucao as Orcamento,
+        });
+      }).not.toThrow();
+    });
+
+    it("deve renderizar com cliente pessoa física", () => {
+      const orcamentoPF = {
+        ...mockOrcamentoExecucao,
+        clienteTipoPessoa: "fisica" as const,
+        clienteCnpj: "12345678901",
+      };
+      expect(() => {
+        OrdemExecucaoPDFDocument({ orcamento: orcamentoPF as Orcamento });
+      }).not.toThrow();
+    });
+
+    it("deve renderizar sem endereço", () => {
+      const orcamento = {
+        ...mockOrcamentoExecucao,
+        clienteEndereco: undefined,
+        clienteCidade: undefined,
+        clienteEstado: undefined,
+        clienteCep: undefined,
+      };
+      expect(() => {
+        OrdemExecucaoPDFDocument({ orcamento: orcamento as Orcamento });
+      }).not.toThrow();
+    });
+
+    it("deve renderizar sem CNPJ", () => {
+      const orcamento = {
+        ...mockOrcamentoExecucao,
+        clienteCnpj: undefined,
+      };
+      expect(() => {
+        OrdemExecucaoPDFDocument({ orcamento: orcamento as unknown as Orcamento });
+      }).not.toThrow();
+    });
+
+    it("deve renderizar sem telefone e email", () => {
+      const orcamento = {
+        ...mockOrcamentoExecucao,
+        clienteTelefone: undefined,
+        clienteEmail: undefined,
+      };
+      expect(() => {
+        OrdemExecucaoPDFDocument({ orcamento: orcamento as Orcamento });
+      }).not.toThrow();
+    });
+
+    it("deve renderizar sem contato", () => {
+      const orcamento = {
+        ...mockOrcamentoExecucao,
+        contato: undefined,
+      };
+      expect(() => {
+        OrdemExecucaoPDFDocument({ orcamento: orcamento as Orcamento });
+      }).not.toThrow();
+    });
+
+    it("deve renderizar sem dataAceite (usa data atual)", () => {
+      const orcamento = {
+        ...mockOrcamentoExecucao,
+        dataAceite: undefined,
+      };
+      expect(() => {
+        OrdemExecucaoPDFDocument({ orcamento: orcamento as Orcamento });
+      }).not.toThrow();
+    });
+
+    it("deve renderizar apenas com itens residenciais", () => {
+      const orcamento = {
+        ...mockOrcamentoExecucao,
+        itensCompleto: mockOrcamentoExecucao.itensCompleto.filter(
+          (i) => i.etapa === "residencial"
+        ),
+      };
+      expect(() => {
+        OrdemExecucaoPDFDocument({ orcamento: orcamento as Orcamento });
+      }).not.toThrow();
+    });
+
+    it("deve renderizar apenas com itens comerciais", () => {
+      const orcamento = {
+        ...mockOrcamentoExecucao,
+        itensCompleto: mockOrcamentoExecucao.itensCompleto.filter(
+          (i) => i.etapa === "comercial"
+        ),
+      };
+      expect(() => {
+        OrdemExecucaoPDFDocument({ orcamento: orcamento as Orcamento });
+      }).not.toThrow();
+    });
+
+    it("deve renderizar sem itens", () => {
+      const orcamento = {
+        ...mockOrcamentoExecucao,
+        itensCompleto: [],
+      };
+      expect(() => {
+        OrdemExecucaoPDFDocument({ orcamento: orcamento as Orcamento });
+      }).not.toThrow();
+    });
+
+    it("deve renderizar com itensCompleto undefined", () => {
+      const orcamento = {
+        ...mockOrcamentoExecucao,
+        itensCompleto: undefined,
+      };
+      expect(() => {
+        OrdemExecucaoPDFDocument({ orcamento: orcamento as Orcamento });
+      }).not.toThrow();
+    });
+
+    it("deve renderizar com configurações da empresa", () => {
+      const configuracoes = {
+        nomeEmpresa: "Empresa Custom",
+        cnpjEmpresa: "12345678901234",
+        enderecoEmpresa: "Av Custom, 100",
+        telefoneEmpresa: "11955555555",
+        emailEmpresa: "custom@email.com",
+        diasValidadeOrcamento: 30,
+        corPrimaria: "#2563EB",
+        corSecundaria: "#1E293B",
+        logoUrl: "data:image/png;base64,test",
+      };
+      expect(() => {
+        OrdemExecucaoPDFDocument({
+          orcamento: mockOrcamentoExecucao as Orcamento,
+          configuracoes: configuracoes as any,
+        });
+      }).not.toThrow();
+    });
+
+    it("deve renderizar com múltiplas categorias na mesma etapa", () => {
+      const orcamento = {
+        ...mockOrcamentoExecucao,
+        itensCompleto: [
+          ...mockOrcamentoExecucao.itensCompleto,
+          {
+            etapa: "residencial" as const,
+            categoriaId: "cat3",
+            categoriaNome: "Alarmes",
+            descricao: "Alarme de incêndio",
+            unidade: "UN",
+            quantidade: 3,
+            valorUnitarioMaoDeObra: 80,
+            valorUnitarioMaterial: 150,
+            valorTotalMaoDeObra: 240,
+            valorTotalMaterial: 450,
+            valorTotal: 690,
+          },
+        ],
+      };
+      expect(() => {
+        OrdemExecucaoPDFDocument({ orcamento: orcamento as Orcamento });
+      }).not.toThrow();
+    });
+
+    it("deve renderizar com endereço de serviço separado", () => {
+      const orcamento = {
+        ...mockOrcamentoExecucao,
+        enderecoServico: "Rua do Serviço, 200",
+      };
+      expect(() => {
+        OrdemExecucaoPDFDocument({ orcamento: orcamento as Orcamento });
+      }).not.toThrow();
+    });
+
+    it("deve renderizar com telefone e email do orçamento (override do cliente)", () => {
+      const orcamento = {
+        ...mockOrcamentoExecucao,
+        telefone: "11944444444",
+        email: "override@email.com",
+      };
+      expect(() => {
+        OrdemExecucaoPDFDocument({ orcamento: orcamento as Orcamento });
+      }).not.toThrow();
+    });
+
+    it("deve renderizar sem observações", () => {
+      const orcamento = {
+        ...mockOrcamentoExecucao,
+        observacoes: undefined,
+      };
+      expect(() => {
+        OrdemExecucaoPDFDocument({ orcamento: orcamento as Orcamento });
+      }).not.toThrow();
+    });
+
+    it("deve renderizar com empresa sem telefone (footer)", () => {
+      const configuracoes = {
+        nomeEmpresa: "Empresa Sem Tel",
+        cnpjEmpresa: "",
+        enderecoEmpresa: "",
+        telefoneEmpresa: "",
+        emailEmpresa: "",
+        diasValidadeOrcamento: 30,
+      };
+      expect(() => {
+        OrdemExecucaoPDFDocument({
+          orcamento: mockOrcamentoExecucao as Orcamento,
+          configuracoes: configuracoes as any,
+        });
+      }).not.toThrow();
+    });
+
+    it("deve renderizar com cidade sem estado", () => {
+      const orcamento = {
+        ...mockOrcamentoExecucao,
+        clienteCidade: "Campinas",
+        clienteEstado: undefined,
+      };
+      expect(() => {
+        OrdemExecucaoPDFDocument({ orcamento: orcamento as Orcamento });
+      }).not.toThrow();
+    });
+
+    it("deve renderizar com estado sem cidade", () => {
+      const orcamento = {
+        ...mockOrcamentoExecucao,
+        clienteCidade: undefined,
+        clienteEstado: "MG",
+      };
+      expect(() => {
+        OrdemExecucaoPDFDocument({ orcamento: orcamento as Orcamento });
+      }).not.toThrow();
     });
   });
 });
