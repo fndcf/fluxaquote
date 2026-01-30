@@ -182,7 +182,7 @@ export function Register() {
         senha,
       });
 
-      navigate('/login');
+      navigate('/login', { state: { registroSucesso: true } });
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { message?: string } } };
       const message = axiosErr?.response?.data?.message || 'Erro ao criar conta. Tente novamente.';

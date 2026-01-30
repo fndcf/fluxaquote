@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import styled from "styled-components";
 import { useAuth } from "../contexts/AuthContext";
 import { Modal, Button as UIButton } from "../components/ui";
@@ -120,6 +120,15 @@ const ErrorMessage = styled.p`
   border-radius: 8px;
 `;
 
+const SuccessMessage = styled.p`
+  color: var(--success);
+  font-size: 0.875rem;
+  text-align: center;
+  background: rgba(76, 175, 80, 0.1);
+  padding: 10px;
+  border-radius: 8px;
+`;
+
 const ForgotPasswordLink = styled.div`
   text-align: center;
   margin-top: -8px;
@@ -216,6 +225,8 @@ export function Login() {
 
   const { signIn, resetPassword } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const registroSucesso = (location.state as { registroSucesso?: boolean })?.registroSucesso;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -271,6 +282,11 @@ export function Login() {
         </Logo>
 
         <Form onSubmit={handleSubmit}>
+          {registroSucesso && (
+            <SuccessMessage>
+              Conta criada com sucesso! Faça login para acessar o sistema.
+            </SuccessMessage>
+          )}
           {error && <ErrorMessage>{error}</ErrorMessage>}
 
           <InputGroup>
