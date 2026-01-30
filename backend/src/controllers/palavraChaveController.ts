@@ -1,10 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
-import { palavraChaveService } from '../services/palavraChaveService';
+import { createPalavraChaveService } from '../services/palavraChaveService';
+import { AuthRequest } from '../middlewares/authMiddleware';
+import { getTenantId } from '../utils/requestContext';
 
 export const palavraChaveController = {
   async listar(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const palavrasChave = await palavraChaveService.listar();
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createPalavraChaveService(tenantId);
+      const palavrasChave = await service.listar();
       res.json(palavrasChave);
     } catch (error) {
       next(error);
@@ -13,7 +17,9 @@ export const palavraChaveController = {
 
   async listarAtivas(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const palavrasChave = await palavraChaveService.listarAtivas();
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createPalavraChaveService(tenantId);
+      const palavrasChave = await service.listarAtivas();
       res.json(palavrasChave);
     } catch (error) {
       next(error);
@@ -22,8 +28,10 @@ export const palavraChaveController = {
 
   async buscarPorId(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createPalavraChaveService(tenantId);
       const { id } = req.params;
-      const palavraChave = await palavraChaveService.buscarPorId(id);
+      const palavraChave = await service.buscarPorId(id);
       res.json(palavraChave);
     } catch (error) {
       next(error);
@@ -32,8 +40,10 @@ export const palavraChaveController = {
 
   async criar(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createPalavraChaveService(tenantId);
       const { palavra, prazoDias, ativo } = req.body;
-      const palavraChave = await palavraChaveService.criar({ palavra, prazoDias, ativo });
+      const palavraChave = await service.criar({ palavra, prazoDias, ativo });
       res.status(201).json(palavraChave);
     } catch (error) {
       next(error);
@@ -42,9 +52,11 @@ export const palavraChaveController = {
 
   async atualizar(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createPalavraChaveService(tenantId);
       const { id } = req.params;
       const { palavra, prazoDias, ativo } = req.body;
-      const palavraChave = await palavraChaveService.atualizar(id, { palavra, prazoDias, ativo });
+      const palavraChave = await service.atualizar(id, { palavra, prazoDias, ativo });
       res.json(palavraChave);
     } catch (error) {
       next(error);
@@ -53,8 +65,10 @@ export const palavraChaveController = {
 
   async excluir(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createPalavraChaveService(tenantId);
       const { id } = req.params;
-      await palavraChaveService.excluir(id);
+      await service.excluir(id);
       res.status(204).send();
     } catch (error) {
       next(error);
@@ -63,8 +77,10 @@ export const palavraChaveController = {
 
   async toggleAtivo(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createPalavraChaveService(tenantId);
       const { id } = req.params;
-      const palavraChave = await palavraChaveService.toggleAtivo(id);
+      const palavraChave = await service.toggleAtivo(id);
       res.json(palavraChave);
     } catch (error) {
       next(error);

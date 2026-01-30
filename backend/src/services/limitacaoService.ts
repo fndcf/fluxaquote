@@ -1,34 +1,36 @@
-import { limitacaoRepository } from '../repositories/limitacaoRepository';
+import { createLimitacaoRepository } from '../repositories/limitacaoRepository';
 import { Limitacao } from '../models';
 import { AppError, ValidationError, NotFoundError } from '../utils/errors';
 
-export const limitacaoService = {
-  async listar(): Promise<Limitacao[]> {
-    return limitacaoRepository.findAll();
-  },
+export function createLimitacaoService(tenantId: string) {
+  const limitacaoRepo = createLimitacaoRepository(tenantId);
 
-  async listarAtivas(): Promise<Limitacao[]> {
-    return limitacaoRepository.findAtivas();
-  },
+  const listar = async (): Promise<Limitacao[]> => {
+    return limitacaoRepo.findAll();
+  };
 
-  async buscarPorId(id: string): Promise<Limitacao> {
+  const listarAtivas = async (): Promise<Limitacao[]> => {
+    return limitacaoRepo.findAtivas();
+  };
+
+  const buscarPorId = async (id: string): Promise<Limitacao> => {
     if (!id) {
       throw new ValidationError('ID é obrigatório');
     }
 
-    const limitacao = await limitacaoRepository.findById(id);
+    const limitacao = await limitacaoRepo.findById(id);
     if (!limitacao) {
       throw new NotFoundError('Limitação não encontrada');
     }
 
     return limitacao;
-  },
+  };
 
-  async buscarPorIds(ids: string[]): Promise<Limitacao[]> {
-    return limitacaoRepository.findByIds(ids);
-  },
+  const buscarPorIds = async (ids: string[]): Promise<Limitacao[]> => {
+    return limitacaoRepo.findByIds(ids);
+  };
 
-  async criar(data: { texto: string; ativo?: boolean }): Promise<Limitacao> {
+  const criar = async (data: { texto: string; ativo?: boolean }): Promise<Limitacao> => {
     if (!data.texto || data.texto.trim().length < 20) {
       throw new ValidationError('Texto deve ter pelo menos 20 caracteres');
     }
@@ -38,29 +40,29 @@ export const limitacaoService = {
     }
 
     // Verificar se já existe uma limitação com o mesmo texto
-    const existente = await limitacaoRepository.findByTexto(data.texto.trim());
+    const existente = await limitacaoRepo.findByTexto(data.texto.trim());
     if (existente) {
       throw new AppError('Já existe uma limitação com este texto', 409);
     }
 
-    const ordem = await limitacaoRepository.getNextOrdem();
+    const ordem = await limitacaoRepo.getNextOrdem();
 
-    return limitacaoRepository.create({
+    return limitacaoRepo.create({
       texto: data.texto.trim(),
       ativo: data.ativo !== undefined ? data.ativo : true,
       ordem,
     });
-  },
+  };
 
-  async atualizar(
+  const atualizar = async (
     id: string,
     data: { texto?: string; ativo?: boolean; ordem?: number }
-  ): Promise<Limitacao> {
+  ): Promise<Limitacao> => {
     if (!id) {
       throw new ValidationError('ID é obrigatório');
     }
 
-    const existente = await limitacaoRepository.findById(id);
+    const existente = await limitacaoRepo.findById(id);
     if (!existente) {
       throw new NotFoundError('Limitação não encontrada');
     }
@@ -75,7 +77,7 @@ export const limitacaoService = {
 
     // Verificar se o novo texto já existe em outra limitação
     if (data.texto !== undefined) {
-      const duplicado = await limitacaoRepository.findByTexto(data.texto.trim());
+      const duplicado = await limitacaoRepo.findByTexto(data.texto.trim());
       if (duplicado && duplicado.id !== id) {
         throw new AppError('Já existe uma limitação com este texto', 409);
       }
@@ -86,29 +88,40 @@ export const limitacaoService = {
     if (data.ativo !== undefined) updateData.ativo = data.ativo;
     if (data.ordem !== undefined) updateData.ordem = data.ordem;
 
-    const updated = await limitacaoRepository.update(id, updateData);
+    const updated = await limitacaoRepo.update(id, updateData);
     if (!updated) {
       throw new Error('Erro ao atualizar limitação');
     }
 
     return updated;
-  },
+  };
 
-  async excluir(id: string): Promise<void> {
+  const excluir = async (id: string): Promise<void> => {
     if (!id) {
       throw new ValidationError('ID é obrigatório');
     }
 
-    const existente = await limitacaoRepository.findById(id);
+    const existente = await limitacaoRepo.findById(id);
     if (!existente) {
       throw new NotFoundError('Limitação não encontrada');
     }
 
-    await limitacaoRepository.delete(id);
-  },
+    await limitacaoRepo.delete(id);
+  };
 
-  async toggleAtivo(id: string): Promise<Limitacao> {
-    const existente = await this.buscarPorId(id);
-    return this.atualizar(id, { ativo: !existente.ativo });
-  },
-};
+  const toggleAtivo = async (id: string): Promise<Limitacao> => {
+    const existente = await buscarPorId(id);
+    return atualizar(id, { ativo: !existente.ativo });
+  };
+
+  return {
+    listar,
+    listarAtivas,
+    buscarPorId,
+    buscarPorIds,
+    criar,
+    atualizar,
+    excluir,
+    toggleAtivo,
+  };
+}

@@ -1,10 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
-import { limitacaoService } from '../services/limitacaoService';
+import { createLimitacaoService } from '../services/limitacaoService';
+import { AuthRequest } from '../middlewares/authMiddleware';
+import { getTenantId } from '../utils/requestContext';
 
 export const limitacaoController = {
   async listar(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const limitacoes = await limitacaoService.listar();
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createLimitacaoService(tenantId);
+      const limitacoes = await service.listar();
       res.json(limitacoes);
     } catch (error) {
       next(error);
@@ -13,7 +17,9 @@ export const limitacaoController = {
 
   async listarAtivas(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const limitacoes = await limitacaoService.listarAtivas();
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createLimitacaoService(tenantId);
+      const limitacoes = await service.listarAtivas();
       res.json(limitacoes);
     } catch (error) {
       next(error);
@@ -22,8 +28,10 @@ export const limitacaoController = {
 
   async buscarPorId(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createLimitacaoService(tenantId);
       const { id } = req.params;
-      const limitacao = await limitacaoService.buscarPorId(id);
+      const limitacao = await service.buscarPorId(id);
       res.json(limitacao);
     } catch (error) {
       next(error);
@@ -32,8 +40,10 @@ export const limitacaoController = {
 
   async criar(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createLimitacaoService(tenantId);
       const { texto, ativo } = req.body;
-      const limitacao = await limitacaoService.criar({ texto, ativo });
+      const limitacao = await service.criar({ texto, ativo });
       res.status(201).json(limitacao);
     } catch (error) {
       next(error);
@@ -42,9 +52,11 @@ export const limitacaoController = {
 
   async atualizar(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createLimitacaoService(tenantId);
       const { id } = req.params;
       const { texto, ativo, ordem } = req.body;
-      const limitacao = await limitacaoService.atualizar(id, { texto, ativo, ordem });
+      const limitacao = await service.atualizar(id, { texto, ativo, ordem });
       res.json(limitacao);
     } catch (error) {
       next(error);
@@ -53,8 +65,10 @@ export const limitacaoController = {
 
   async excluir(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createLimitacaoService(tenantId);
       const { id } = req.params;
-      await limitacaoService.excluir(id);
+      await service.excluir(id);
       res.status(204).send();
     } catch (error) {
       next(error);
@@ -63,8 +77,10 @@ export const limitacaoController = {
 
   async toggleAtivo(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createLimitacaoService(tenantId);
       const { id } = req.params;
-      const limitacao = await limitacaoService.toggleAtivo(id);
+      const limitacao = await service.toggleAtivo(id);
       res.json(limitacao);
     } catch (error) {
       next(error);

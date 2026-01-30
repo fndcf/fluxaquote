@@ -2,7 +2,6 @@ import { useRef, useEffect, useState, useCallback } from "react";
 import {
   OrcamentoItemCompleto,
   CategoriaItem,
-  EtapaTipo,
   ItemServico,
 } from "../../../types";
 import { useInfiniteItensServicoAtivos } from "../../../hooks/useItensServico";
@@ -193,21 +192,8 @@ export function ItensCompleto({
             ×
           </RemoveItemButton>
 
-          {/* Linha 1: Etapa, Categoria, Descrição */}
+          {/* Linha 1: Categoria, Descrição */}
           <ItemCompletoRow1>
-            <InputGroup>
-              <Label>Etapa</Label>
-              <Select
-                value={item.etapa}
-                onChange={(e) =>
-                  onItemChange(index, "etapa", e.target.value as EtapaTipo)
-                }
-              >
-                <option value="comercial">Comercial</option>
-                <option value="residencial">Residencial</option>
-              </Select>
-            </InputGroup>
-
             <InputGroup>
               <Label>Categoria</Label>
               <Select

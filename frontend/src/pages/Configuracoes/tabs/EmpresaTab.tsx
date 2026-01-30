@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   useConfiguracoesGerais,
   useAtualizarConfiguracoesGerais,
 } from '../../../hooks/useConfiguracoesGerais';
-import { useBuscarCnpjBrasilAPI } from '../../../hooks/useClientes';
 import { Button, Input } from '../../../components/ui';
-import { ConfiguracoesGerais, BrasilAPICNPJ } from '../../../types';
+import { ConfiguracoesGerais } from '../../../types';
 import { logger } from '../../../utils/logger';
 import {
   Section,
@@ -13,14 +12,17 @@ import {
   FormRow,
   Label,
   HelpText,
-  CnpjRow,
   Message,
+  LogoUploadArea,
+  LogoPreview,
+  LogoActions,
 } from '../styles';
 
 export function EmpresaTab() {
   const { data: configuracoesGerais } = useConfiguracoesGerais();
   const atualizarConfiguracoes = useAtualizarConfiguracoesGerais();
-  const buscarCnpj = useBuscarCnpjBrasilAPI();
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [empresaForm, setEmpresaForm] = useState<Partial<ConfiguracoesGerais>>({
     nomeEmpresa: '',
@@ -28,6 +30,7 @@ export function EmpresaTab() {
     enderecoEmpresa: '',
     telefoneEmpresa: '',
     emailEmpresa: '',
+    logoUrl: '',
     diasValidadeOrcamento: 30,
     parcelamentoMaxParcelas: 6,
     parcelamentoValorMinimo: 1000,
@@ -49,6 +52,7 @@ export function EmpresaTab() {
         enderecoEmpresa: configuracoesGerais.enderecoEmpresa || '',
         telefoneEmpresa: configuracoesGerais.telefoneEmpresa || '',
         emailEmpresa: configuracoesGerais.emailEmpresa || '',
+        logoUrl: configuracoesGerais.logoUrl || '',
         diasValidadeOrcamento: configuracoesGerais.diasValidadeOrcamento || 30,
         parcelamentoMaxParcelas: configuracoesGerais.parcelamentoMaxParcelas ?? 6,
         parcelamentoValorMinimo: configuracoesGerais.parcelamentoValorMinimo ?? 1000,
@@ -103,41 +107,36 @@ export function EmpresaTab() {
       .replace(/(\d{5})(\d)/, '$1-$2');
   };
 
-  const preencherComDadosBrasilAPI = (dados: BrasilAPICNPJ) => {
-    setEmpresaForm((prev) => ({
-      ...prev,
-      nomeEmpresa: dados.razao_social || prev.nomeEmpresa,
-      enderecoEmpresa: dados.logradouro
-        ? `${dados.logradouro}, ${dados.numero}${dados.complemento ? `, ${dados.complemento}` : ''}, ${dados.bairro} - ${dados.municipio}/${dados.uf} - CEP ${dados.cep}`
-        : prev.enderecoEmpresa,
-      telefoneEmpresa: dados.telefone ? formatarTelefone(dados.telefone.replace(/\D/g, '').slice(0, 11)) : prev.telefoneEmpresa,
-      emailEmpresa: dados.email || prev.emailEmpresa,
-    }));
-    setEmpresaFormDirty(true);
-  };
+  const handleLogoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-  const handleBuscarCNPJ = async () => {
-    const cnpjLimpo = (empresaForm.cnpjEmpresa || '').replace(/\D/g, '');
-
-    if (cnpjLimpo.length !== 14) {
-      setEmpresaMessage({ type: 'error', text: 'Digite um CNPJ válido com 14 dígitos' });
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      setEmpresaMessage({ type: 'error', text: 'Formato inválido. Use PNG, JPG ou WEBP.' });
       return;
     }
 
-    setEmpresaMessage({ type: 'info', text: 'Buscando dados do CNPJ...' });
-
-    try {
-      const dados = await buscarCnpj.mutateAsync(cnpjLimpo);
-
-      if (dados) {
-        preencherComDadosBrasilAPI(dados);
-        setEmpresaMessage({ type: 'success', text: 'Dados preenchidos automaticamente!' });
-      } else {
-        setEmpresaMessage({ type: 'error', text: 'CNPJ não encontrado na base da Receita Federal' });
-      }
-    } catch {
-      setEmpresaMessage({ type: 'error', text: 'Erro ao buscar CNPJ' });
+    if (file.size > 500 * 1024) {
+      setEmpresaMessage({ type: 'error', text: 'Arquivo muito grande. Máximo 500KB.' });
+      return;
     }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = reader.result as string;
+      setEmpresaForm(prev => ({ ...prev, logoUrl: base64 }));
+      setEmpresaFormDirty(true);
+    };
+    reader.readAsDataURL(file);
+
+    // Limpa o input para permitir selecionar o mesmo arquivo novamente
+    e.target.value = '';
+  };
+
+  const handleLogoRemove = () => {
+    setEmpresaForm(prev => ({ ...prev, logoUrl: '' }));
+    setEmpresaFormDirty(true);
   };
 
   const handleCancelar = () => {
@@ -148,6 +147,7 @@ export function EmpresaTab() {
         enderecoEmpresa: configuracoesGerais.enderecoEmpresa || '',
         telefoneEmpresa: configuracoesGerais.telefoneEmpresa || '',
         emailEmpresa: configuracoesGerais.emailEmpresa || '',
+        logoUrl: configuracoesGerais.logoUrl || '',
         diasValidadeOrcamento: configuracoesGerais.diasValidadeOrcamento || 30,
         parcelamentoMaxParcelas: configuracoesGerais.parcelamentoMaxParcelas ?? 6,
         parcelamentoValorMinimo: configuracoesGerais.parcelamentoValorMinimo ?? 1000,
@@ -174,24 +174,55 @@ export function EmpresaTab() {
         <Message $type={empresaMessage.type}>{empresaMessage.text}</Message>
       )}
 
-      <CnpjRow style={{ marginBottom: 16 }}>
-        <FormGroup>
-          <Label>CNPJ</Label>
-          <Input
-            value={empresaForm.cnpjEmpresa || ''}
-            onChange={(e) => handleEmpresaFormChange('cnpjEmpresa', formatarCNPJ(e.target.value))}
-            placeholder="00.000.000/0000-00"
-          />
-        </FormGroup>
-        <Button
-          type="button"
-          onClick={handleBuscarCNPJ}
-          disabled={buscarCnpj.isLoading || (empresaForm.cnpjEmpresa || '').replace(/\D/g, '').length !== 14}
-          $variant="secondary"
-        >
-          {buscarCnpj.isLoading ? 'Buscando...' : 'Buscar CNPJ'}
-        </Button>
-      </CnpjRow>
+      <FormGroup style={{ marginBottom: 24 }}>
+        <Label>Logo da Empresa</Label>
+        <LogoUploadArea>
+          {empresaForm.logoUrl ? (
+            <LogoPreview>
+              <img src={empresaForm.logoUrl} alt="Logo da empresa" />
+            </LogoPreview>
+          ) : (
+            <p>Nenhum logo configurado. O logo padrão do FluxaQuote será usado no PDF.</p>
+          )}
+          <LogoActions>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              onChange={handleLogoSelect}
+              style={{ display: 'none' }}
+            />
+            <Button
+              type="button"
+              $variant="secondary"
+              $size="small"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {empresaForm.logoUrl ? 'Trocar Logo' : 'Escolher Arquivo'}
+            </Button>
+            {empresaForm.logoUrl && (
+              <Button
+                type="button"
+                $variant="ghost"
+                $size="small"
+                onClick={handleLogoRemove}
+              >
+                Remover Logo
+              </Button>
+            )}
+          </LogoActions>
+        </LogoUploadArea>
+        <HelpText>PNG, JPG ou WEBP. Máximo 500KB. Será usado no cabeçalho do PDF.</HelpText>
+      </FormGroup>
+
+      <FormGroup style={{ marginBottom: 16 }}>
+        <Label>CNPJ</Label>
+        <Input
+          value={empresaForm.cnpjEmpresa || ''}
+          onChange={(e) => handleEmpresaFormChange('cnpjEmpresa', formatarCNPJ(e.target.value))}
+          placeholder="00.000.000/0000-00"
+        />
+      </FormGroup>
 
       <FormGroup style={{ marginBottom: 16 }}>
         <Label>Nome da Empresa *</Label>

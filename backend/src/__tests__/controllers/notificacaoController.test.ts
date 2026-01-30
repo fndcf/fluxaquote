@@ -1,9 +1,29 @@
 import { Request, Response, NextFunction } from 'express';
 import { notificacaoController } from '../../controllers/notificacaoController';
-import { notificacaoService } from '../../services/notificacaoService';
+import { createNotificacaoService } from '../../services/notificacaoService';
 
 // Mock do notificacaoService
 jest.mock('../../services/notificacaoService');
+jest.mock('../../utils/requestContext', () => ({
+  getTenantId: jest.fn().mockReturnValue('test-tenant-id'),
+}));
+
+const mockService = {
+  buscarPorId: jest.fn(),
+  marcarComoLida: jest.fn(),
+  marcarTodasComoLidas: jest.fn(),
+  excluir: jest.fn(),
+  gerarNotificacoesParaOrcamento: jest.fn(),
+  processarTodosOrcamentosAceitos: jest.fn(),
+  obterResumo: jest.fn(),
+  contarNaoLidas: jest.fn(),
+  listarTodasPaginado: jest.fn(),
+  listarNaoLidasPaginado: jest.fn(),
+  listarVencidasPaginado: jest.fn(),
+  listarAtivasPaginado: jest.fn(),
+  listarProximasPaginado: jest.fn(),
+};
+(createNotificacaoService as jest.Mock).mockReturnValue(mockService);
 
 describe('notificacaoController', () => {
   let mockReq: Partial<Request>;
@@ -32,13 +52,14 @@ describe('notificacaoController', () => {
 
     mockNext = jest.fn();
     jest.clearAllMocks();
+    (createNotificacaoService as jest.Mock).mockReturnValue(mockService);
   });
 
   describe('buscarPorId', () => {
     it('deve retornar notificação por ID com sucesso', async () => {
       const notificacao = { id: '1', orcamentoId: 'orc1', tipo: 'vencimento', lida: false };
       mockReq.params = { id: '1' };
-      (notificacaoService.buscarPorId as jest.Mock).mockResolvedValue(notificacao);
+      mockService.buscarPorId.mockResolvedValue(notificacao);
 
       await notificacaoController.buscarPorId(mockReq as Request, mockRes as Response, mockNext);
 
@@ -48,7 +69,7 @@ describe('notificacaoController', () => {
     it('deve chamar next com erro quando não encontrar', async () => {
       mockReq.params = { id: 'inexistente' };
       const error = new Error('Notificação não encontrada');
-      (notificacaoService.buscarPorId as jest.Mock).mockRejectedValue(error);
+      mockService.buscarPorId.mockRejectedValue(error);
 
       await notificacaoController.buscarPorId(mockReq as Request, mockRes as Response, mockNext);
 
@@ -60,7 +81,7 @@ describe('notificacaoController', () => {
     it('deve marcar notificação como lida com sucesso', async () => {
       const notificacao = { id: '1', orcamentoId: 'orc1', tipo: 'vencimento', lida: true };
       mockReq.params = { id: '1' };
-      (notificacaoService.marcarComoLida as jest.Mock).mockResolvedValue(notificacao);
+      mockService.marcarComoLida.mockResolvedValue(notificacao);
 
       await notificacaoController.marcarComoLida(mockReq as Request, mockRes as Response, mockNext);
 
@@ -70,7 +91,7 @@ describe('notificacaoController', () => {
     it('deve chamar next com erro quando falhar', async () => {
       mockReq.params = { id: 'inexistente' };
       const error = new Error('Notificação não encontrada');
-      (notificacaoService.marcarComoLida as jest.Mock).mockRejectedValue(error);
+      mockService.marcarComoLida.mockRejectedValue(error);
 
       await notificacaoController.marcarComoLida(mockReq as Request, mockRes as Response, mockNext);
 
@@ -80,7 +101,7 @@ describe('notificacaoController', () => {
 
   describe('marcarTodasComoLidas', () => {
     it('deve marcar todas notificações como lidas com sucesso', async () => {
-      (notificacaoService.marcarTodasComoLidas as jest.Mock).mockResolvedValue(5);
+      mockService.marcarTodasComoLidas.mockResolvedValue(5);
 
       await notificacaoController.marcarTodasComoLidas(mockReq as Request, mockRes as Response, mockNext);
 
@@ -89,7 +110,7 @@ describe('notificacaoController', () => {
 
     it('deve chamar next com erro quando falhar', async () => {
       const error = new Error('Erro no banco');
-      (notificacaoService.marcarTodasComoLidas as jest.Mock).mockRejectedValue(error);
+      mockService.marcarTodasComoLidas.mockRejectedValue(error);
 
       await notificacaoController.marcarTodasComoLidas(mockReq as Request, mockRes as Response, mockNext);
 
@@ -100,7 +121,7 @@ describe('notificacaoController', () => {
   describe('excluir', () => {
     it('deve excluir notificação com sucesso', async () => {
       mockReq.params = { id: '1' };
-      (notificacaoService.excluir as jest.Mock).mockResolvedValue(undefined);
+      mockService.excluir.mockResolvedValue(undefined);
 
       await notificacaoController.excluir(mockReq as Request, mockRes as Response, mockNext);
 
@@ -111,7 +132,7 @@ describe('notificacaoController', () => {
     it('deve chamar next com erro quando falhar', async () => {
       mockReq.params = { id: 'inexistente' };
       const error = new Error('Notificação não encontrada');
-      (notificacaoService.excluir as jest.Mock).mockRejectedValue(error);
+      mockService.excluir.mockRejectedValue(error);
 
       await notificacaoController.excluir(mockReq as Request, mockRes as Response, mockNext);
 
@@ -123,18 +144,18 @@ describe('notificacaoController', () => {
     it('deve gerar notificações para orçamento com sucesso', async () => {
       const notificacoes = [{ id: '1', orcamentoId: 'orc1', tipo: 'vencimento', lida: false }];
       mockReq.params = { orcamentoId: 'orc1' };
-      (notificacaoService.gerarNotificacoesParaOrcamento as jest.Mock).mockResolvedValue(notificacoes);
+      mockService.gerarNotificacoesParaOrcamento.mockResolvedValue(notificacoes);
 
       await notificacaoController.gerarParaOrcamento(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(notificacaoService.gerarNotificacoesParaOrcamento).toHaveBeenCalledWith('orc1');
+      expect(mockService.gerarNotificacoesParaOrcamento).toHaveBeenCalledWith('orc1');
       expect(jsonMock).toHaveBeenCalledWith(notificacoes);
     });
 
     it('deve chamar next com erro quando falhar', async () => {
       mockReq.params = { orcamentoId: 'inexistente' };
       const error = new Error('Orçamento não encontrado');
-      (notificacaoService.gerarNotificacoesParaOrcamento as jest.Mock).mockRejectedValue(error);
+      mockService.gerarNotificacoesParaOrcamento.mockRejectedValue(error);
 
       await notificacaoController.gerarParaOrcamento(mockReq as Request, mockRes as Response, mockNext);
 
@@ -145,7 +166,7 @@ describe('notificacaoController', () => {
   describe('processarTodos', () => {
     it('deve processar todos orçamentos aceitos com sucesso', async () => {
       const resultado = { processados: 10, notificacoesCriadas: 20 };
-      (notificacaoService.processarTodosOrcamentosAceitos as jest.Mock).mockResolvedValue(resultado);
+      mockService.processarTodosOrcamentosAceitos.mockResolvedValue(resultado);
 
       await notificacaoController.processarTodos(mockReq as Request, mockRes as Response, mockNext);
 
@@ -154,7 +175,7 @@ describe('notificacaoController', () => {
 
     it('deve chamar next com erro quando falhar', async () => {
       const error = new Error('Erro no processamento');
-      (notificacaoService.processarTodosOrcamentosAceitos as jest.Mock).mockRejectedValue(error);
+      mockService.processarTodosOrcamentosAceitos.mockRejectedValue(error);
 
       await notificacaoController.processarTodos(mockReq as Request, mockRes as Response, mockNext);
 
@@ -165,7 +186,7 @@ describe('notificacaoController', () => {
   describe('obterResumo', () => {
     it('deve obter resumo com sucesso', async () => {
       const resumo = { total: 10, naoLidas: 5, vencidas: 2 };
-      (notificacaoService.obterResumo as jest.Mock).mockResolvedValue(resumo);
+      mockService.obterResumo.mockResolvedValue(resumo);
 
       await notificacaoController.obterResumo(mockReq as Request, mockRes as Response, mockNext);
 
@@ -174,7 +195,7 @@ describe('notificacaoController', () => {
 
     it('deve chamar next com erro quando falhar', async () => {
       const error = new Error('Erro no banco');
-      (notificacaoService.obterResumo as jest.Mock).mockRejectedValue(error);
+      mockService.obterResumo.mockRejectedValue(error);
 
       await notificacaoController.obterResumo(mockReq as Request, mockRes as Response, mockNext);
 
@@ -184,7 +205,7 @@ describe('notificacaoController', () => {
 
   describe('contarNaoLidas', () => {
     it('deve contar notificações não lidas com sucesso', async () => {
-      (notificacaoService.contarNaoLidas as jest.Mock).mockResolvedValue(5);
+      mockService.contarNaoLidas.mockResolvedValue(5);
 
       await notificacaoController.contarNaoLidas(mockReq as Request, mockRes as Response, mockNext);
 
@@ -193,7 +214,7 @@ describe('notificacaoController', () => {
 
     it('deve chamar next com erro quando falhar', async () => {
       const error = new Error('Erro no banco');
-      (notificacaoService.contarNaoLidas as jest.Mock).mockRejectedValue(error);
+      mockService.contarNaoLidas.mockRejectedValue(error);
 
       await notificacaoController.contarNaoLidas(mockReq as Request, mockRes as Response, mockNext);
 
@@ -210,27 +231,27 @@ describe('notificacaoController', () => {
     };
 
     it('deve retornar notificações paginadas com valores padrão', async () => {
-      (notificacaoService.listarTodasPaginado as jest.Mock).mockResolvedValue(mockPaginatedResponse);
+      mockService.listarTodasPaginado.mockResolvedValue(mockPaginatedResponse);
 
       await notificacaoController.listarPaginado(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(notificacaoService.listarTodasPaginado).toHaveBeenCalledWith(10, undefined);
+      expect(mockService.listarTodasPaginado).toHaveBeenCalledWith(10, undefined);
       expect(jsonMock).toHaveBeenCalledWith(mockPaginatedResponse);
     });
 
     it('deve retornar notificações paginadas com parâmetros', async () => {
       mockReq.query = { pageSize: '20', cursor: 'myCursor' };
-      (notificacaoService.listarTodasPaginado as jest.Mock).mockResolvedValue(mockPaginatedResponse);
+      mockService.listarTodasPaginado.mockResolvedValue(mockPaginatedResponse);
 
       await notificacaoController.listarPaginado(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(notificacaoService.listarTodasPaginado).toHaveBeenCalledWith(20, 'myCursor');
+      expect(mockService.listarTodasPaginado).toHaveBeenCalledWith(20, 'myCursor');
       expect(jsonMock).toHaveBeenCalledWith(mockPaginatedResponse);
     });
 
     it('deve chamar next com erro quando falhar', async () => {
       const error = new Error('Erro no banco');
-      (notificacaoService.listarTodasPaginado as jest.Mock).mockRejectedValue(error);
+      mockService.listarTodasPaginado.mockRejectedValue(error);
 
       await notificacaoController.listarPaginado(mockReq as Request, mockRes as Response, mockNext);
 
@@ -247,27 +268,27 @@ describe('notificacaoController', () => {
     };
 
     it('deve retornar notificações não lidas paginadas com valores padrão', async () => {
-      (notificacaoService.listarNaoLidasPaginado as jest.Mock).mockResolvedValue(mockPaginatedResponse);
+      mockService.listarNaoLidasPaginado.mockResolvedValue(mockPaginatedResponse);
 
       await notificacaoController.listarNaoLidasPaginado(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(notificacaoService.listarNaoLidasPaginado).toHaveBeenCalledWith(10, undefined);
+      expect(mockService.listarNaoLidasPaginado).toHaveBeenCalledWith(10, undefined);
       expect(jsonMock).toHaveBeenCalledWith(mockPaginatedResponse);
     });
 
     it('deve retornar notificações não lidas paginadas com parâmetros', async () => {
       mockReq.query = { pageSize: '15', cursor: 'myCursor' };
-      (notificacaoService.listarNaoLidasPaginado as jest.Mock).mockResolvedValue(mockPaginatedResponse);
+      mockService.listarNaoLidasPaginado.mockResolvedValue(mockPaginatedResponse);
 
       await notificacaoController.listarNaoLidasPaginado(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(notificacaoService.listarNaoLidasPaginado).toHaveBeenCalledWith(15, 'myCursor');
+      expect(mockService.listarNaoLidasPaginado).toHaveBeenCalledWith(15, 'myCursor');
       expect(jsonMock).toHaveBeenCalledWith(mockPaginatedResponse);
     });
 
     it('deve chamar next com erro quando falhar', async () => {
       const error = new Error('Erro no banco');
-      (notificacaoService.listarNaoLidasPaginado as jest.Mock).mockRejectedValue(error);
+      mockService.listarNaoLidasPaginado.mockRejectedValue(error);
 
       await notificacaoController.listarNaoLidasPaginado(mockReq as Request, mockRes as Response, mockNext);
 
@@ -284,27 +305,27 @@ describe('notificacaoController', () => {
     };
 
     it('deve retornar notificações vencidas paginadas com valores padrão', async () => {
-      (notificacaoService.listarVencidasPaginado as jest.Mock).mockResolvedValue(mockPaginatedResponse);
+      mockService.listarVencidasPaginado.mockResolvedValue(mockPaginatedResponse);
 
       await notificacaoController.listarVencidasPaginado(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(notificacaoService.listarVencidasPaginado).toHaveBeenCalledWith(10, undefined);
+      expect(mockService.listarVencidasPaginado).toHaveBeenCalledWith(10, undefined);
       expect(jsonMock).toHaveBeenCalledWith(mockPaginatedResponse);
     });
 
     it('deve retornar notificações vencidas paginadas com parâmetros', async () => {
       mockReq.query = { pageSize: '25', cursor: 'myCursor' };
-      (notificacaoService.listarVencidasPaginado as jest.Mock).mockResolvedValue(mockPaginatedResponse);
+      mockService.listarVencidasPaginado.mockResolvedValue(mockPaginatedResponse);
 
       await notificacaoController.listarVencidasPaginado(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(notificacaoService.listarVencidasPaginado).toHaveBeenCalledWith(25, 'myCursor');
+      expect(mockService.listarVencidasPaginado).toHaveBeenCalledWith(25, 'myCursor');
       expect(jsonMock).toHaveBeenCalledWith(mockPaginatedResponse);
     });
 
     it('deve chamar next com erro quando falhar', async () => {
       const error = new Error('Erro no banco');
-      (notificacaoService.listarVencidasPaginado as jest.Mock).mockRejectedValue(error);
+      mockService.listarVencidasPaginado.mockRejectedValue(error);
 
       await notificacaoController.listarVencidasPaginado(mockReq as Request, mockRes as Response, mockNext);
 
@@ -321,27 +342,27 @@ describe('notificacaoController', () => {
     };
 
     it('deve retornar notificações ativas paginadas com valores padrão', async () => {
-      (notificacaoService.listarAtivasPaginado as jest.Mock).mockResolvedValue(mockPaginatedResponse);
+      mockService.listarAtivasPaginado.mockResolvedValue(mockPaginatedResponse);
 
       await notificacaoController.listarAtivasPaginado(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(notificacaoService.listarAtivasPaginado).toHaveBeenCalledWith(60, 10, undefined);
+      expect(mockService.listarAtivasPaginado).toHaveBeenCalledWith(60, 10, undefined);
       expect(jsonMock).toHaveBeenCalledWith(mockPaginatedResponse);
     });
 
     it('deve retornar notificações ativas paginadas com parâmetros', async () => {
       mockReq.query = { dias: '45', pageSize: '30', cursor: 'myCursor' };
-      (notificacaoService.listarAtivasPaginado as jest.Mock).mockResolvedValue(mockPaginatedResponse);
+      mockService.listarAtivasPaginado.mockResolvedValue(mockPaginatedResponse);
 
       await notificacaoController.listarAtivasPaginado(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(notificacaoService.listarAtivasPaginado).toHaveBeenCalledWith(45, 30, 'myCursor');
+      expect(mockService.listarAtivasPaginado).toHaveBeenCalledWith(45, 30, 'myCursor');
       expect(jsonMock).toHaveBeenCalledWith(mockPaginatedResponse);
     });
 
     it('deve chamar next com erro quando falhar', async () => {
       const error = new Error('Erro no banco');
-      (notificacaoService.listarAtivasPaginado as jest.Mock).mockRejectedValue(error);
+      mockService.listarAtivasPaginado.mockRejectedValue(error);
 
       await notificacaoController.listarAtivasPaginado(mockReq as Request, mockRes as Response, mockNext);
 
@@ -358,27 +379,27 @@ describe('notificacaoController', () => {
     };
 
     it('deve retornar notificações próximas paginadas com valores padrão', async () => {
-      (notificacaoService.listarProximasPaginado as jest.Mock).mockResolvedValue(mockPaginatedResponse);
+      mockService.listarProximasPaginado.mockResolvedValue(mockPaginatedResponse);
 
       await notificacaoController.listarProximasPaginado(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(notificacaoService.listarProximasPaginado).toHaveBeenCalledWith(30, 10, undefined);
+      expect(mockService.listarProximasPaginado).toHaveBeenCalledWith(30, 10, undefined);
       expect(jsonMock).toHaveBeenCalledWith(mockPaginatedResponse);
     });
 
     it('deve retornar notificações próximas paginadas com parâmetros', async () => {
       mockReq.query = { dias: '15', pageSize: '20', cursor: 'myCursor' };
-      (notificacaoService.listarProximasPaginado as jest.Mock).mockResolvedValue(mockPaginatedResponse);
+      mockService.listarProximasPaginado.mockResolvedValue(mockPaginatedResponse);
 
       await notificacaoController.listarProximasPaginado(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(notificacaoService.listarProximasPaginado).toHaveBeenCalledWith(15, 20, 'myCursor');
+      expect(mockService.listarProximasPaginado).toHaveBeenCalledWith(15, 20, 'myCursor');
       expect(jsonMock).toHaveBeenCalledWith(mockPaginatedResponse);
     });
 
     it('deve chamar next com erro quando falhar', async () => {
       const error = new Error('Erro no banco');
-      (notificacaoService.listarProximasPaginado as jest.Mock).mockRejectedValue(error);
+      mockService.listarProximasPaginado.mockRejectedValue(error);
 
       await notificacaoController.listarProximasPaginado(mockReq as Request, mockRes as Response, mockNext);
 

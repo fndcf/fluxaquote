@@ -10,7 +10,7 @@ interface CriarOrcamentoDTO {
   servicoDescricao?: string;
   itensCompleto?: OrcamentoItemCompleto[];
   limitacoesSelecionadas?: string[];
-  prazoExecucaoServicos?: number;
+  prazoExecucaoServicos?: number | null;
   prazoVistoriaBombeiros?: number | null;
   condicaoPagamento?: 'a_vista' | 'a_combinar' | 'parcelado';
   parcelamentoTexto?: string;
@@ -33,13 +33,14 @@ interface AtualizarOrcamentoDTO {
   servicoDescricao?: string;
   itensCompleto?: OrcamentoItemCompleto[];
   limitacoesSelecionadas?: string[];
-  prazoExecucaoServicos?: number;
+  prazoExecucaoServicos?: number | null;
   prazoVistoriaBombeiros?: number | null;
   condicaoPagamento?: 'a_vista' | 'a_combinar' | 'parcelado';
   parcelamentoTexto?: string;
   parcelamentoDados?: ParcelamentoDados;
   descontoAVista?: DescontoAVistaDados | null;
   mostrarValoresDetalhados?: boolean;
+  introducao?: string;
   // Campos comuns
   observacoes?: string;
   dataValidade?: Date;

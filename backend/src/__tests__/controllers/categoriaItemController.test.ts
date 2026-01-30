@@ -1,9 +1,23 @@
 import { Request, Response, NextFunction } from 'express';
 import { categoriaItemController } from '../../controllers/categoriaItemController';
-import { categoriaItemService } from '../../services/categoriaItemService';
+import { createCategoriaItemService } from '../../services/categoriaItemService';
 
 // Mock do categoriaItemService
 jest.mock('../../services/categoriaItemService');
+jest.mock('../../utils/requestContext', () => ({
+  getTenantId: jest.fn().mockReturnValue('test-tenant-id'),
+}));
+
+const mockService = {
+  listar: jest.fn(),
+  listarAtivas: jest.fn(),
+  buscarPorId: jest.fn(),
+  criar: jest.fn(),
+  atualizar: jest.fn(),
+  excluir: jest.fn(),
+  toggleAtivo: jest.fn(),
+};
+(createCategoriaItemService as jest.Mock).mockReturnValue(mockService);
 
 describe('categoriaItemController', () => {
   let mockReq: Partial<Request>;
@@ -32,6 +46,7 @@ describe('categoriaItemController', () => {
 
     mockNext = jest.fn();
     jest.clearAllMocks();
+    (createCategoriaItemService as jest.Mock).mockReturnValue(mockService);
   });
 
   describe('listar', () => {
@@ -40,7 +55,7 @@ describe('categoriaItemController', () => {
         { id: '1', nome: 'Categoria 1', ativo: true, ordem: 1 },
         { id: '2', nome: 'Categoria 2', ativo: true, ordem: 2 },
       ];
-      (categoriaItemService.listar as jest.Mock).mockResolvedValue(categorias);
+      mockService.listar.mockResolvedValue(categorias);
 
       await categoriaItemController.listar(mockReq as Request, mockRes as Response, mockNext);
 
@@ -49,7 +64,7 @@ describe('categoriaItemController', () => {
 
     it('deve chamar next com erro quando falhar', async () => {
       const error = new Error('Erro no banco');
-      (categoriaItemService.listar as jest.Mock).mockRejectedValue(error);
+      mockService.listar.mockRejectedValue(error);
 
       await categoriaItemController.listar(mockReq as Request, mockRes as Response, mockNext);
 
@@ -60,7 +75,7 @@ describe('categoriaItemController', () => {
   describe('listarAtivas', () => {
     it('deve retornar lista de categorias ativas com sucesso', async () => {
       const categorias = [{ id: '1', nome: 'Categoria 1', ativo: true, ordem: 1 }];
-      (categoriaItemService.listarAtivas as jest.Mock).mockResolvedValue(categorias);
+      mockService.listarAtivas.mockResolvedValue(categorias);
 
       await categoriaItemController.listarAtivas(mockReq as Request, mockRes as Response, mockNext);
 
@@ -69,7 +84,7 @@ describe('categoriaItemController', () => {
 
     it('deve chamar next com erro quando falhar', async () => {
       const error = new Error('Erro no banco');
-      (categoriaItemService.listarAtivas as jest.Mock).mockRejectedValue(error);
+      mockService.listarAtivas.mockRejectedValue(error);
 
       await categoriaItemController.listarAtivas(mockReq as Request, mockRes as Response, mockNext);
 
@@ -81,7 +96,7 @@ describe('categoriaItemController', () => {
     it('deve retornar categoria por ID com sucesso', async () => {
       const categoria = { id: '1', nome: 'Categoria 1', ativo: true, ordem: 1 };
       mockReq.params = { id: '1' };
-      (categoriaItemService.buscarPorId as jest.Mock).mockResolvedValue(categoria);
+      mockService.buscarPorId.mockResolvedValue(categoria);
 
       await categoriaItemController.buscarPorId(mockReq as Request, mockRes as Response, mockNext);
 
@@ -91,7 +106,7 @@ describe('categoriaItemController', () => {
     it('deve chamar next com erro quando não encontrar', async () => {
       mockReq.params = { id: 'inexistente' };
       const error = new Error('Categoria não encontrada');
-      (categoriaItemService.buscarPorId as jest.Mock).mockRejectedValue(error);
+      mockService.buscarPorId.mockRejectedValue(error);
 
       await categoriaItemController.buscarPorId(mockReq as Request, mockRes as Response, mockNext);
 
@@ -104,7 +119,7 @@ describe('categoriaItemController', () => {
       const novaCategoria = { nome: 'Nova Categoria', ativo: true };
       const categoriaCriada = { id: '1', ...novaCategoria, ordem: 1 };
       mockReq.body = novaCategoria;
-      (categoriaItemService.criar as jest.Mock).mockResolvedValue(categoriaCriada);
+      mockService.criar.mockResolvedValue(categoriaCriada);
 
       await categoriaItemController.criar(mockReq as Request, mockRes as Response, mockNext);
 
@@ -115,7 +130,7 @@ describe('categoriaItemController', () => {
     it('deve chamar next com erro quando falhar', async () => {
       mockReq.body = { nome: 'AB' };
       const error = new Error('Nome muito curto');
-      (categoriaItemService.criar as jest.Mock).mockRejectedValue(error);
+      mockService.criar.mockRejectedValue(error);
 
       await categoriaItemController.criar(mockReq as Request, mockRes as Response, mockNext);
 
@@ -129,7 +144,7 @@ describe('categoriaItemController', () => {
       const categoriaAtualizada = { id: '1', nome: 'Categoria Atualizada', ativo: true, ordem: 1 };
       mockReq.params = { id: '1' };
       mockReq.body = dadosAtualizacao;
-      (categoriaItemService.atualizar as jest.Mock).mockResolvedValue(categoriaAtualizada);
+      mockService.atualizar.mockResolvedValue(categoriaAtualizada);
 
       await categoriaItemController.atualizar(mockReq as Request, mockRes as Response, mockNext);
 
@@ -140,7 +155,7 @@ describe('categoriaItemController', () => {
       mockReq.params = { id: 'inexistente' };
       mockReq.body = { nome: 'Categoria Atualizada' };
       const error = new Error('Categoria não encontrada');
-      (categoriaItemService.atualizar as jest.Mock).mockRejectedValue(error);
+      mockService.atualizar.mockRejectedValue(error);
 
       await categoriaItemController.atualizar(mockReq as Request, mockRes as Response, mockNext);
 
@@ -151,7 +166,7 @@ describe('categoriaItemController', () => {
   describe('excluir', () => {
     it('deve excluir categoria com sucesso', async () => {
       mockReq.params = { id: '1' };
-      (categoriaItemService.excluir as jest.Mock).mockResolvedValue(undefined);
+      mockService.excluir.mockResolvedValue(undefined);
 
       await categoriaItemController.excluir(mockReq as Request, mockRes as Response, mockNext);
 
@@ -162,7 +177,7 @@ describe('categoriaItemController', () => {
     it('deve chamar next com erro quando falhar', async () => {
       mockReq.params = { id: 'inexistente' };
       const error = new Error('Categoria não encontrada');
-      (categoriaItemService.excluir as jest.Mock).mockRejectedValue(error);
+      mockService.excluir.mockRejectedValue(error);
 
       await categoriaItemController.excluir(mockReq as Request, mockRes as Response, mockNext);
 
@@ -174,7 +189,7 @@ describe('categoriaItemController', () => {
     it('deve alternar status ativo com sucesso', async () => {
       const categoriaAlternada = { id: '1', nome: 'Categoria 1', ativo: false, ordem: 1 };
       mockReq.params = { id: '1' };
-      (categoriaItemService.toggleAtivo as jest.Mock).mockResolvedValue(categoriaAlternada);
+      mockService.toggleAtivo.mockResolvedValue(categoriaAlternada);
 
       await categoriaItemController.toggleAtivo(mockReq as Request, mockRes as Response, mockNext);
 
@@ -184,7 +199,7 @@ describe('categoriaItemController', () => {
     it('deve chamar next com erro quando falhar', async () => {
       mockReq.params = { id: 'inexistente' };
       const error = new Error('Categoria não encontrada');
-      (categoriaItemService.toggleAtivo as jest.Mock).mockRejectedValue(error);
+      mockService.toggleAtivo.mockRejectedValue(error);
 
       await categoriaItemController.toggleAtivo(mockReq as Request, mockRes as Response, mockNext);
 

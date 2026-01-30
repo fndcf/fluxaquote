@@ -1,4 +1,5 @@
 import { styled } from "styled-components";
+import { useTenant } from "../../hooks/useTenant";
 
 const FooterContainer = styled.footer`
   background: rgba(255, 255, 255, 0.1);
@@ -20,10 +21,12 @@ const FooterContainer = styled.footer`
 `;
 
 export default function Footer() {
+  const { nomeEmpresa } = useTenant();
+
   return (
     <FooterContainer>
       <p>
-        © {new Date().getFullYear()} FLAMA Sistemas de Proteção - Powered by FCF
+        © {new Date().getFullYear()} {nomeEmpresa || "FluxaQuote"} - Powered by FCF
         Solutions
       </p>
     </FooterContainer>

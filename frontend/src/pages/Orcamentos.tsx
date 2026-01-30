@@ -321,6 +321,7 @@ export function Orcamentos() {
           parcelamentoDados: data.parcelamentoDados,
           descontoAVista: data.descontoAVista,
           mostrarValoresDetalhados: data.mostrarValoresDetalhados,
+          introducao: data.introducao,
           // Campos comuns
           observacoes: data.observacoes,
           consultor: data.consultor,

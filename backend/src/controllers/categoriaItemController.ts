@@ -1,10 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
-import { categoriaItemService } from '../services/categoriaItemService';
+import { createCategoriaItemService } from '../services/categoriaItemService';
+import { AuthRequest } from '../middlewares/authMiddleware';
+import { getTenantId } from '../utils/requestContext';
 
 export const categoriaItemController = {
   async listar(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const categorias = await categoriaItemService.listar();
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createCategoriaItemService(tenantId);
+      const categorias = await service.listar();
       res.json(categorias);
     } catch (error) {
       next(error);
@@ -13,7 +17,9 @@ export const categoriaItemController = {
 
   async listarAtivas(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const categorias = await categoriaItemService.listarAtivas();
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createCategoriaItemService(tenantId);
+      const categorias = await service.listarAtivas();
       res.json(categorias);
     } catch (error) {
       next(error);
@@ -22,8 +28,10 @@ export const categoriaItemController = {
 
   async buscarPorId(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createCategoriaItemService(tenantId);
       const { id } = req.params;
-      const categoria = await categoriaItemService.buscarPorId(id);
+      const categoria = await service.buscarPorId(id);
       res.json(categoria);
     } catch (error) {
       next(error);
@@ -32,8 +40,10 @@ export const categoriaItemController = {
 
   async criar(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createCategoriaItemService(tenantId);
       const { nome, ativo } = req.body;
-      const categoria = await categoriaItemService.criar({ nome, ativo });
+      const categoria = await service.criar({ nome, ativo });
       res.status(201).json(categoria);
     } catch (error) {
       next(error);
@@ -42,9 +52,11 @@ export const categoriaItemController = {
 
   async atualizar(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createCategoriaItemService(tenantId);
       const { id } = req.params;
       const { nome, ativo, ordem } = req.body;
-      const categoria = await categoriaItemService.atualizar(id, { nome, ativo, ordem });
+      const categoria = await service.atualizar(id, { nome, ativo, ordem });
       res.json(categoria);
     } catch (error) {
       next(error);
@@ -53,8 +65,10 @@ export const categoriaItemController = {
 
   async excluir(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createCategoriaItemService(tenantId);
       const { id } = req.params;
-      await categoriaItemService.excluir(id);
+      await service.excluir(id);
       res.status(204).send();
     } catch (error) {
       next(error);
@@ -63,8 +77,10 @@ export const categoriaItemController = {
 
   async toggleAtivo(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createCategoriaItemService(tenantId);
       const { id } = req.params;
-      const categoria = await categoriaItemService.toggleAtivo(id);
+      const categoria = await service.toggleAtivo(id);
       res.json(categoria);
     } catch (error) {
       next(error);

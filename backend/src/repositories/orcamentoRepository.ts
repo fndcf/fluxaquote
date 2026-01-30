@@ -1,9 +1,7 @@
 import { db } from '../config/firebase';
+import { getTenantDb } from '../utils/tenantDb';
 import { Orcamento, OrcamentoStatus, PaginatedResponse } from '../models';
-import { COLLECTIONS, CONTADORES } from '../utils/constants';
 import { NotFoundError } from '../utils/errors';
-
-const collection = db.collection(COLLECTIONS.ORCAMENTOS);
 
 // Helper para mapear documento do Firestore para Orcamento
 function mapDocToOrcamento(doc: FirebaseFirestore.QueryDocumentSnapshot | FirebaseFirestore.DocumentSnapshot): Orcamento {
@@ -19,8 +17,11 @@ function mapDocToOrcamento(doc: FirebaseFirestore.QueryDocumentSnapshot | Fireba
   } as Orcamento;
 }
 
-export const orcamentoRepository = {
-  async findAll(): Promise<Orcamento[]> {
+export function createOrcamentoRepository(tenantId: string) {
+  const tenantDb = getTenantDb(tenantId);
+  const collection = tenantDb.collection('orcamentos');
+
+  async function findAll(): Promise<Orcamento[]> {
     try {
       const snapshot = await collection.orderBy('numero', 'desc').get();
       return snapshot.docs.map(doc => ({
@@ -46,9 +47,9 @@ export const orcamentoRepository = {
       })) as Orcamento[];
       return orcamentos.sort((a, b) => (b.numero || 0) - (a.numero || 0));
     }
-  },
+  }
 
-  async findById(id: string): Promise<Orcamento> {
+  async function findById(id: string): Promise<Orcamento> {
     const doc = await collection.doc(id).get();
 
     if (!doc.exists) {
@@ -64,9 +65,9 @@ export const orcamentoRepository = {
       createdAt: doc.data()?.createdAt?.toDate(),
       updatedAt: doc.data()?.updatedAt?.toDate(),
     } as Orcamento;
-  },
+  }
 
-  async findByClienteId(clienteId: string): Promise<Orcamento[]> {
+  async function findByClienteId(clienteId: string): Promise<Orcamento[]> {
     try {
       const snapshot = await collection
         .where('clienteId', '==', clienteId)
@@ -96,9 +97,9 @@ export const orcamentoRepository = {
       })) as Orcamento[];
       return orcamentos.sort((a, b) => (b.numero || 0) - (a.numero || 0));
     }
-  },
+  }
 
-  async findByPeriodo(dataInicio: Date, dataFim: Date): Promise<Orcamento[]> {
+  async function findByPeriodo(dataInicio: Date, dataFim: Date): Promise<Orcamento[]> {
     try {
       // Buscar orçamentos com dataEmissao >= dataInicio E dataEmissao <= dataFim
       const snapshot = await collection
@@ -140,9 +141,9 @@ export const orcamentoRepository = {
           return dateB.getTime() - dateA.getTime();
         });
     }
-  },
+  }
 
-  async findByStatus(status: OrcamentoStatus): Promise<Orcamento[]> {
+  async function findByStatus(status: OrcamentoStatus): Promise<Orcamento[]> {
     try {
       const snapshot = await collection
         .where('status', '==', status)
@@ -172,10 +173,10 @@ export const orcamentoRepository = {
       })) as Orcamento[];
       return orcamentos.sort((a, b) => (b.numero || 0) - (a.numero || 0));
     }
-  },
+  }
 
-  async getNextNumero(): Promise<number> {
-    const contadorRef = db.collection(COLLECTIONS.CONTADORES).doc(CONTADORES.ORCAMENTOS);
+  async function getNextNumero(): Promise<number> {
+    const contadorRef = getTenantDb(tenantId).collection('contadores').doc('orcamentos');
 
     return db.runTransaction(async (transaction) => {
       const contadorDoc = await transaction.get(contadorRef);
@@ -201,9 +202,9 @@ export const orcamentoRepository = {
 
       return proximoNumero;
     });
-  },
+  }
 
-  async create(data: Omit<Orcamento, 'id' | 'createdAt'>): Promise<Orcamento> {
+  async function create(data: Omit<Orcamento, 'id' | 'createdAt'>): Promise<Orcamento> {
     const orcamentoData = {
       ...data,
       createdAt: new Date(),
@@ -215,9 +216,9 @@ export const orcamentoRepository = {
       id: docRef.id,
       ...orcamentoData,
     } as Orcamento;
-  },
+  }
 
-  async update(id: string, data: Partial<Orcamento>): Promise<Orcamento> {
+  async function update(id: string, data: Partial<Orcamento>): Promise<Orcamento> {
     const doc = await collection.doc(id).get();
 
     if (!doc.exists) {
@@ -231,10 +232,10 @@ export const orcamentoRepository = {
 
     await collection.doc(id).update(updateData);
 
-    return this.findById(id);
-  },
+    return findById(id);
+  }
 
-  async updateStatus(id: string, status: OrcamentoStatus, dataAceite?: Date): Promise<Orcamento> {
+  async function updateStatus(id: string, status: OrcamentoStatus, dataAceite?: Date): Promise<Orcamento> {
     const doc = await collection.doc(id).get();
 
     if (!doc.exists) {
@@ -252,10 +253,10 @@ export const orcamentoRepository = {
 
     await collection.doc(id).update(updateData);
 
-    return this.findById(id);
-  },
+    return findById(id);
+  }
 
-  async delete(id: string): Promise<void> {
+  async function deleteOrcamento(id: string): Promise<void> {
     const doc = await collection.doc(id).get();
 
     if (!doc.exists) {
@@ -263,9 +264,9 @@ export const orcamentoRepository = {
     }
 
     await collection.doc(id).delete();
-  },
+  }
 
-  async getEstatisticas(): Promise<{
+  async function getEstatisticas(): Promise<{
     total: number;
     abertos: number;
     aceitos: number;
@@ -302,9 +303,9 @@ export const orcamentoRepository = {
       expirados: expiradosCount.data().count,
       valorTotalAceitos,
     };
-  },
+  }
 
-  async findPaginated(
+  async function findPaginated(
     page: number = 1,
     limit: number = 10,
     filters?: {
@@ -359,7 +360,7 @@ export const orcamentoRepository = {
 
     // Buscar total e dados em paralelo
     const [totalCount, dataSnapshot] = await Promise.all([
-      this.count(filters),
+      count(filters),
       offset > 0
         ? baseQuery.limit(offset + limit).get()
         : baseQuery.limit(limit).get()
@@ -378,9 +379,9 @@ export const orcamentoRepository = {
       total: totalCount,
       hasMore,
     };
-  },
+  }
 
-  async count(filters?: { status?: OrcamentoStatus; clienteId?: string }): Promise<number> {
+  async function count(filters?: { status?: OrcamentoStatus; clienteId?: string }): Promise<number> {
     let query: FirebaseFirestore.Query = collection;
 
     if (filters?.status) {
@@ -393,9 +394,9 @@ export const orcamentoRepository = {
     // Usar count aggregation do Firestore (mais eficiente que buscar todos os docs)
     const countSnapshot = await query.count().get();
     return countSnapshot.data().count;
-  },
+  }
 
-  async getHistoricoCliente(clienteId: string, limitItems: number = 5): Promise<{
+  async function getHistoricoCliente(clienteId: string, limitItems: number = 5): Promise<{
     orcamentos: Orcamento[];
     resumo: {
       total: number;
@@ -436,5 +437,22 @@ export const orcamentoRepository = {
         valorTotalAceitos,
       },
     };
-  },
-};
+  }
+
+  return {
+    findAll,
+    findById,
+    findByClienteId,
+    findByPeriodo,
+    findByStatus,
+    getNextNumero,
+    create,
+    update,
+    updateStatus,
+    delete: deleteOrcamento,
+    getEstatisticas,
+    findPaginated,
+    count,
+    getHistoricoCliente,
+  };
+}

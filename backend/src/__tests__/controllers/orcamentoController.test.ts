@@ -1,27 +1,31 @@
 import { Request, Response, NextFunction } from 'express';
 import { orcamentoController } from '../../controllers/orcamentoController';
-import { orcamentoService } from '../../services/orcamentoService';
+import { createOrcamentoService } from '../../services/orcamentoService';
 
 // Mock do service
-jest.mock('../../services/orcamentoService', () => ({
-  orcamentoService: {
-    listar: jest.fn(),
-    listarPaginado: jest.fn(),
-    buscarPorId: jest.fn(),
-    buscarPorCliente: jest.fn(),
-    buscarPorStatus: jest.fn(),
-    buscarPorPeriodo: jest.fn(),
-    getHistoricoCliente: jest.fn(),
-    getDashboardStats: jest.fn(),
-    criar: jest.fn(),
-    atualizar: jest.fn(),
-    atualizarStatus: jest.fn(),
-    excluir: jest.fn(),
-    duplicar: jest.fn(),
-    getEstatisticas: jest.fn(),
-    verificarExpirados: jest.fn(),
-  },
+jest.mock('../../services/orcamentoService');
+jest.mock('../../utils/requestContext', () => ({
+  getTenantId: jest.fn().mockReturnValue('test-tenant-id'),
 }));
+
+const mockService = {
+  listar: jest.fn(),
+  listarPaginado: jest.fn(),
+  buscarPorId: jest.fn(),
+  buscarPorCliente: jest.fn(),
+  buscarPorStatus: jest.fn(),
+  buscarPorPeriodo: jest.fn(),
+  getHistoricoCliente: jest.fn(),
+  getDashboardStats: jest.fn(),
+  criar: jest.fn(),
+  atualizar: jest.fn(),
+  atualizarStatus: jest.fn(),
+  excluir: jest.fn(),
+  duplicar: jest.fn(),
+  getEstatisticas: jest.fn(),
+  verificarExpirados: jest.fn(),
+};
+(createOrcamentoService as jest.Mock).mockReturnValue(mockService);
 
 describe('orcamentoController', () => {
   let mockReq: Partial<Request>;
@@ -49,22 +53,23 @@ describe('orcamentoController', () => {
     };
     mockNext = jest.fn();
     jest.clearAllMocks();
+    (createOrcamentoService as jest.Mock).mockReturnValue(mockService);
   });
 
   describe('listar', () => {
     it('deve listar todos os orçamentos', async () => {
       const orcamentos = [mockOrcamento];
-      (orcamentoService.listar as jest.Mock).mockResolvedValue(orcamentos);
+      mockService.listar.mockResolvedValue(orcamentos);
 
       await orcamentoController.listar(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(orcamentoService.listar).toHaveBeenCalled();
+      expect(mockService.listar).toHaveBeenCalled();
       expect(mockRes.json).toHaveBeenCalledWith({ success: true, data: orcamentos });
     });
 
     it('deve chamar next em caso de erro', async () => {
       const error = new Error('Erro ao listar');
-      (orcamentoService.listar as jest.Mock).mockRejectedValue(error);
+      mockService.listar.mockRejectedValue(error);
 
       await orcamentoController.listar(mockReq as Request, mockRes as Response, mockNext);
 
@@ -75,18 +80,18 @@ describe('orcamentoController', () => {
   describe('buscarPorId', () => {
     it('deve buscar orçamento por ID', async () => {
       mockReq.params = { id: 'o1' };
-      (orcamentoService.buscarPorId as jest.Mock).mockResolvedValue(mockOrcamento);
+      mockService.buscarPorId.mockResolvedValue(mockOrcamento);
 
       await orcamentoController.buscarPorId(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(orcamentoService.buscarPorId).toHaveBeenCalledWith('o1');
+      expect(mockService.buscarPorId).toHaveBeenCalledWith('o1');
       expect(mockRes.json).toHaveBeenCalledWith({ success: true, data: mockOrcamento });
     });
 
     it('deve chamar next em caso de erro', async () => {
       mockReq.params = { id: 'o1' };
       const error = new Error('Orçamento não encontrado');
-      (orcamentoService.buscarPorId as jest.Mock).mockRejectedValue(error);
+      mockService.buscarPorId.mockRejectedValue(error);
 
       await orcamentoController.buscarPorId(mockReq as Request, mockRes as Response, mockNext);
 
@@ -98,18 +103,18 @@ describe('orcamentoController', () => {
     it('deve buscar orçamentos por cliente', async () => {
       mockReq.params = { clienteId: 'c1' };
       const orcamentos = [mockOrcamento];
-      (orcamentoService.buscarPorCliente as jest.Mock).mockResolvedValue(orcamentos);
+      mockService.buscarPorCliente.mockResolvedValue(orcamentos);
 
       await orcamentoController.buscarPorCliente(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(orcamentoService.buscarPorCliente).toHaveBeenCalledWith('c1');
+      expect(mockService.buscarPorCliente).toHaveBeenCalledWith('c1');
       expect(mockRes.json).toHaveBeenCalledWith({ success: true, data: orcamentos });
     });
 
     it('deve chamar next em caso de erro', async () => {
       mockReq.params = { clienteId: 'c1' };
       const error = new Error('Erro ao buscar');
-      (orcamentoService.buscarPorCliente as jest.Mock).mockRejectedValue(error);
+      mockService.buscarPorCliente.mockRejectedValue(error);
 
       await orcamentoController.buscarPorCliente(mockReq as Request, mockRes as Response, mockNext);
 
@@ -121,18 +126,18 @@ describe('orcamentoController', () => {
     it('deve buscar orçamentos por status', async () => {
       mockReq.params = { status: 'aberto' };
       const orcamentos = [mockOrcamento];
-      (orcamentoService.buscarPorStatus as jest.Mock).mockResolvedValue(orcamentos);
+      mockService.buscarPorStatus.mockResolvedValue(orcamentos);
 
       await orcamentoController.buscarPorStatus(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(orcamentoService.buscarPorStatus).toHaveBeenCalledWith('aberto');
+      expect(mockService.buscarPorStatus).toHaveBeenCalledWith('aberto');
       expect(mockRes.json).toHaveBeenCalledWith({ success: true, data: orcamentos });
     });
 
     it('deve chamar next em caso de erro', async () => {
       mockReq.params = { status: 'aberto' };
       const error = new Error('Erro ao buscar');
-      (orcamentoService.buscarPorStatus as jest.Mock).mockRejectedValue(error);
+      mockService.buscarPorStatus.mockRejectedValue(error);
 
       await orcamentoController.buscarPorStatus(mockReq as Request, mockRes as Response, mockNext);
 
@@ -146,11 +151,11 @@ describe('orcamentoController', () => {
         clienteId: 'c1',
         itens: [{ descricao: 'Item 1', quantidade: 1, valorUnitario: 1000 }],
       };
-      (orcamentoService.criar as jest.Mock).mockResolvedValue(mockOrcamento);
+      mockService.criar.mockResolvedValue(mockOrcamento);
 
       await orcamentoController.criar(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(orcamentoService.criar).toHaveBeenCalledWith(mockReq.body);
+      expect(mockService.criar).toHaveBeenCalledWith(mockReq.body);
       expect(mockRes.status).toHaveBeenCalledWith(201);
       expect(mockRes.json).toHaveBeenCalledWith({ success: true, data: mockOrcamento });
     });
@@ -158,7 +163,7 @@ describe('orcamentoController', () => {
     it('deve chamar next em caso de erro', async () => {
       mockReq.body = { clienteId: 'c1' };
       const error = new Error('Erro ao criar');
-      (orcamentoService.criar as jest.Mock).mockRejectedValue(error);
+      mockService.criar.mockRejectedValue(error);
 
       await orcamentoController.criar(mockReq as Request, mockRes as Response, mockNext);
 
@@ -171,11 +176,11 @@ describe('orcamentoController', () => {
       mockReq.params = { id: 'o1' };
       mockReq.body = { observacoes: 'Nova observação' };
       const orcamentoAtualizado = { ...mockOrcamento, observacoes: 'Nova observação' };
-      (orcamentoService.atualizar as jest.Mock).mockResolvedValue(orcamentoAtualizado);
+      mockService.atualizar.mockResolvedValue(orcamentoAtualizado);
 
       await orcamentoController.atualizar(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(orcamentoService.atualizar).toHaveBeenCalledWith('o1', mockReq.body);
+      expect(mockService.atualizar).toHaveBeenCalledWith('o1', mockReq.body);
       expect(mockRes.json).toHaveBeenCalledWith({ success: true, data: orcamentoAtualizado });
     });
 
@@ -183,7 +188,7 @@ describe('orcamentoController', () => {
       mockReq.params = { id: 'o1' };
       mockReq.body = { observacoes: 'Nova observação' };
       const error = new Error('Erro ao atualizar');
-      (orcamentoService.atualizar as jest.Mock).mockRejectedValue(error);
+      mockService.atualizar.mockRejectedValue(error);
 
       await orcamentoController.atualizar(mockReq as Request, mockRes as Response, mockNext);
 
@@ -196,11 +201,11 @@ describe('orcamentoController', () => {
       mockReq.params = { id: 'o1' };
       mockReq.body = { status: 'aceito' };
       const orcamentoAtualizado = { ...mockOrcamento, status: 'aceito' };
-      (orcamentoService.atualizarStatus as jest.Mock).mockResolvedValue(orcamentoAtualizado);
+      mockService.atualizarStatus.mockResolvedValue(orcamentoAtualizado);
 
       await orcamentoController.atualizarStatus(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(orcamentoService.atualizarStatus).toHaveBeenCalledWith('o1', 'aceito');
+      expect(mockService.atualizarStatus).toHaveBeenCalledWith('o1', 'aceito');
       expect(mockRes.json).toHaveBeenCalledWith({ success: true, data: orcamentoAtualizado });
     });
 
@@ -208,7 +213,7 @@ describe('orcamentoController', () => {
       mockReq.params = { id: 'o1' };
       mockReq.body = { status: 'aceito' };
       const error = new Error('Transição inválida');
-      (orcamentoService.atualizarStatus as jest.Mock).mockRejectedValue(error);
+      mockService.atualizarStatus.mockRejectedValue(error);
 
       await orcamentoController.atualizarStatus(mockReq as Request, mockRes as Response, mockNext);
 
@@ -219,18 +224,18 @@ describe('orcamentoController', () => {
   describe('excluir', () => {
     it('deve excluir um orçamento', async () => {
       mockReq.params = { id: 'o1' };
-      (orcamentoService.excluir as jest.Mock).mockResolvedValue(undefined);
+      mockService.excluir.mockResolvedValue(undefined);
 
       await orcamentoController.excluir(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(orcamentoService.excluir).toHaveBeenCalledWith('o1');
+      expect(mockService.excluir).toHaveBeenCalledWith('o1');
       expect(mockRes.json).toHaveBeenCalledWith({ success: true, message: 'Orçamento excluído com sucesso' });
     });
 
     it('deve chamar next em caso de erro', async () => {
       mockReq.params = { id: 'o1' };
       const error = new Error('Não é possível excluir');
-      (orcamentoService.excluir as jest.Mock).mockRejectedValue(error);
+      mockService.excluir.mockRejectedValue(error);
 
       await orcamentoController.excluir(mockReq as Request, mockRes as Response, mockNext);
 
@@ -242,11 +247,11 @@ describe('orcamentoController', () => {
     it('deve duplicar um orçamento', async () => {
       mockReq.params = { id: 'o1' };
       const novoOrcamento = { ...mockOrcamento, id: 'o2', numero: 2 };
-      (orcamentoService.duplicar as jest.Mock).mockResolvedValue(novoOrcamento);
+      mockService.duplicar.mockResolvedValue(novoOrcamento);
 
       await orcamentoController.duplicar(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(orcamentoService.duplicar).toHaveBeenCalledWith('o1');
+      expect(mockService.duplicar).toHaveBeenCalledWith('o1');
       expect(mockRes.status).toHaveBeenCalledWith(201);
       expect(mockRes.json).toHaveBeenCalledWith({ success: true, data: novoOrcamento });
     });
@@ -254,7 +259,7 @@ describe('orcamentoController', () => {
     it('deve chamar next em caso de erro', async () => {
       mockReq.params = { id: 'o1' };
       const error = new Error('Erro ao duplicar');
-      (orcamentoService.duplicar as jest.Mock).mockRejectedValue(error);
+      mockService.duplicar.mockRejectedValue(error);
 
       await orcamentoController.duplicar(mockReq as Request, mockRes as Response, mockNext);
 
@@ -265,17 +270,17 @@ describe('orcamentoController', () => {
   describe('estatisticas', () => {
     it('deve retornar estatísticas', async () => {
       const stats = { total: 10, aceitos: 5, valorTotal: 50000 };
-      (orcamentoService.getEstatisticas as jest.Mock).mockResolvedValue(stats);
+      mockService.getEstatisticas.mockResolvedValue(stats);
 
       await orcamentoController.estatisticas(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(orcamentoService.getEstatisticas).toHaveBeenCalled();
+      expect(mockService.getEstatisticas).toHaveBeenCalled();
       expect(mockRes.json).toHaveBeenCalledWith({ success: true, data: stats });
     });
 
     it('deve chamar next em caso de erro', async () => {
       const error = new Error('Erro ao obter estatísticas');
-      (orcamentoService.getEstatisticas as jest.Mock).mockRejectedValue(error);
+      mockService.getEstatisticas.mockRejectedValue(error);
 
       await orcamentoController.estatisticas(mockReq as Request, mockRes as Response, mockNext);
 
@@ -285,17 +290,17 @@ describe('orcamentoController', () => {
 
   describe('verificarExpirados', () => {
     it('deve verificar e marcar orçamentos expirados', async () => {
-      (orcamentoService.verificarExpirados as jest.Mock).mockResolvedValue(3);
+      mockService.verificarExpirados.mockResolvedValue(3);
 
       await orcamentoController.verificarExpirados(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(orcamentoService.verificarExpirados).toHaveBeenCalled();
+      expect(mockService.verificarExpirados).toHaveBeenCalled();
       expect(mockRes.json).toHaveBeenCalledWith({ success: true, data: { expirados: 3 } });
     });
 
     it('deve chamar next em caso de erro', async () => {
       const error = new Error('Erro ao verificar');
-      (orcamentoService.verificarExpirados as jest.Mock).mockRejectedValue(error);
+      mockService.verificarExpirados.mockRejectedValue(error);
 
       await orcamentoController.verificarExpirados(mockReq as Request, mockRes as Response, mockNext);
 
@@ -307,11 +312,11 @@ describe('orcamentoController', () => {
     it('deve listar orçamentos paginados com parâmetros padrão', async () => {
       mockReq.query = {};
       const result = { items: [mockOrcamento], total: 1 };
-      (orcamentoService.listarPaginado as jest.Mock).mockResolvedValue(result);
+      mockService.listarPaginado.mockResolvedValue(result);
 
       await orcamentoController.listarPaginado(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(orcamentoService.listarPaginado).toHaveBeenCalledWith(1, 10, {
+      expect(mockService.listarPaginado).toHaveBeenCalledWith(1, 10, {
         status: undefined,
         clienteId: undefined,
         busca: undefined,
@@ -322,11 +327,11 @@ describe('orcamentoController', () => {
     it('deve listar com parâmetros personalizados', async () => {
       mockReq.query = { page: '2', limit: '20', status: 'aceito', clienteId: 'c1', busca: 'teste' };
       const result = { items: [mockOrcamento], total: 1 };
-      (orcamentoService.listarPaginado as jest.Mock).mockResolvedValue(result);
+      mockService.listarPaginado.mockResolvedValue(result);
 
       await orcamentoController.listarPaginado(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(orcamentoService.listarPaginado).toHaveBeenCalledWith(2, 20, {
+      expect(mockService.listarPaginado).toHaveBeenCalledWith(2, 20, {
         status: 'aceito',
         clienteId: 'c1',
         busca: 'teste',
@@ -336,7 +341,7 @@ describe('orcamentoController', () => {
     it('deve chamar next em caso de erro', async () => {
       mockReq.query = {};
       const error = new Error('Erro ao listar');
-      (orcamentoService.listarPaginado as jest.Mock).mockRejectedValue(error);
+      mockService.listarPaginado.mockRejectedValue(error);
 
       await orcamentoController.listarPaginado(mockReq as Request, mockRes as Response, mockNext);
 
@@ -349,29 +354,29 @@ describe('orcamentoController', () => {
       mockReq.params = { clienteId: 'c1' };
       mockReq.query = {};
       const historico = [mockOrcamento];
-      (orcamentoService.getHistoricoCliente as jest.Mock).mockResolvedValue(historico);
+      mockService.getHistoricoCliente.mockResolvedValue(historico);
 
       await orcamentoController.historicoCliente(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(orcamentoService.getHistoricoCliente).toHaveBeenCalledWith('c1', 5);
+      expect(mockService.getHistoricoCliente).toHaveBeenCalledWith('c1', 5);
       expect(mockRes.json).toHaveBeenCalledWith({ success: true, data: historico });
     });
 
     it('deve retornar histórico com limite personalizado', async () => {
       mockReq.params = { clienteId: 'c1' };
       mockReq.query = { limit: '10' };
-      (orcamentoService.getHistoricoCliente as jest.Mock).mockResolvedValue([]);
+      mockService.getHistoricoCliente.mockResolvedValue([]);
 
       await orcamentoController.historicoCliente(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(orcamentoService.getHistoricoCliente).toHaveBeenCalledWith('c1', 10);
+      expect(mockService.getHistoricoCliente).toHaveBeenCalledWith('c1', 10);
     });
 
     it('deve chamar next em caso de erro', async () => {
       mockReq.params = { clienteId: 'c1' };
       mockReq.query = {};
       const error = new Error('Erro ao buscar histórico');
-      (orcamentoService.getHistoricoCliente as jest.Mock).mockRejectedValue(error);
+      mockService.getHistoricoCliente.mockRejectedValue(error);
 
       await orcamentoController.historicoCliente(mockReq as Request, mockRes as Response, mockNext);
 
@@ -383,18 +388,18 @@ describe('orcamentoController', () => {
     it('deve buscar orçamentos por período', async () => {
       mockReq.query = { dataInicio: '2024-01-01', dataFim: '2024-12-31' };
       const orcamentos = [mockOrcamento];
-      (orcamentoService.buscarPorPeriodo as jest.Mock).mockResolvedValue(orcamentos);
+      mockService.buscarPorPeriodo.mockResolvedValue(orcamentos);
 
       await orcamentoController.buscarPorPeriodo(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(orcamentoService.buscarPorPeriodo).toHaveBeenCalledWith('2024-01-01', '2024-12-31');
+      expect(mockService.buscarPorPeriodo).toHaveBeenCalledWith('2024-01-01', '2024-12-31');
       expect(mockRes.json).toHaveBeenCalledWith({ success: true, data: orcamentos });
     });
 
     it('deve chamar next em caso de erro', async () => {
       mockReq.query = { dataInicio: '2024-01-01', dataFim: '2024-12-31' };
       const error = new Error('Erro ao buscar por período');
-      (orcamentoService.buscarPorPeriodo as jest.Mock).mockRejectedValue(error);
+      mockService.buscarPorPeriodo.mockRejectedValue(error);
 
       await orcamentoController.buscarPorPeriodo(mockReq as Request, mockRes as Response, mockNext);
 
@@ -415,17 +420,17 @@ describe('orcamentoController', () => {
         totalClientes: 5,
         porMes: [],
       };
-      (orcamentoService.getDashboardStats as jest.Mock).mockResolvedValue(stats);
+      mockService.getDashboardStats.mockResolvedValue(stats);
 
       await orcamentoController.dashboardStats(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(orcamentoService.getDashboardStats).toHaveBeenCalled();
+      expect(mockService.getDashboardStats).toHaveBeenCalled();
       expect(mockRes.json).toHaveBeenCalledWith({ success: true, data: stats });
     });
 
     it('deve chamar next em caso de erro', async () => {
       const error = new Error('Erro ao obter estatísticas');
-      (orcamentoService.getDashboardStats as jest.Mock).mockRejectedValue(error);
+      mockService.getDashboardStats.mockRejectedValue(error);
 
       await orcamentoController.dashboardStats(mockReq as Request, mockRes as Response, mockNext);
 

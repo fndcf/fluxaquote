@@ -3,6 +3,7 @@ import {
   Page,
   Text,
   View,
+  Image,
   StyleSheet,
   pdf,
 } from "@react-pdf/renderer";
@@ -21,9 +22,12 @@ const COLORS = {
   border: "#e0e0e0",
 };
 
+// Logo padrão da plataforma (servido de /public)
+const DEFAULT_LOGO_URL = "/fluxaquote-logo.png";
+
 const styles = StyleSheet.create({
   page: {
-    paddingTop: 40,
+    paddingTop: 10,
     paddingLeft: 40,
     paddingRight: 40,
     paddingBottom: 90, // Espaço para o rodapé fixo
@@ -35,26 +39,17 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 25,
-    paddingBottom: 15,
+    alignItems: "center",
+    marginBottom: 10,
+    paddingBottom: 8,
     borderBottomWidth: 3,
     borderBottomColor: COLORS.primary,
   },
   logoSection: {
     flex: 1,
   },
-  logoText: {
-    fontSize: 42,
-    fontWeight: "bold",
-    color: COLORS.primary,
-    letterSpacing: 4,
-  },
-  logoSubtitle: {
-    fontSize: 11,
-    color: COLORS.gray,
-    marginTop: 2,
-    letterSpacing: 1,
+  logoImage: {
+    width: 100,
   },
   orcamentoInfo: {
     alignItems: "flex-end",
@@ -848,7 +843,7 @@ export function OrcamentoCompletoPDFDocument({
   const numeroOrcamentoFormatado = formatOrcamentoNumero(
     orcamento.numero,
     orcamento.dataEmissao,
-    orcamento.versao
+    orcamento.versao,
   );
 
   const enderecoCompleto = [
@@ -863,21 +858,24 @@ export function OrcamentoCompletoPDFDocument({
   const valorTotalMaoDeObra = orcamento.valorTotalMaoDeObra || 0;
   const valorTotalMaterial = orcamento.valorTotalMaterial || 0;
 
-  // Separar itens por etapa (residencial/comercial)
-  const itensComerciais = itensCompleto.filter(
-    (item) => item.etapa === "comercial"
-  );
-  const itensResidenciais = itensCompleto.filter(
-    (item) => item.etapa === "residencial"
-  );
+  // Obter categorias únicas de todos os itens
+  const categorias = [
+    ...new Set(itensCompleto.map((item) => item.categoriaNome)),
+  ];
 
-  // Obter categorias únicas por etapa
-  const categoriasComerciais = [
-    ...new Set(itensComerciais.map((item) => item.categoriaNome)),
-  ];
-  const categoriasResidenciais = [
-    ...new Set(itensResidenciais.map((item) => item.categoriaNome)),
-  ];
+  // Detectar se há valores de Mão de Obra e/ou Material
+  const temMaoDeObra = itensCompleto.some(
+    (item) =>
+      (item.valorUnitarioMaoDeObra || 0) > 0 ||
+      (item.valorTotalMaoDeObra || 0) > 0,
+  );
+  const temMaterial = itensCompleto.some(
+    (item) =>
+      (item.valorUnitarioMaterial || 0) > 0 ||
+      (item.valorTotalMaterial || 0) > 0,
+  );
+  // Só mostra coluna MDO+MAT quando ambos existem (senão é redundante)
+  const temAmbos = temMaoDeObra && temMaterial;
 
   // Gerar texto da condição de pagamento (desconto à vista é tratado no JSX)
   const condicaoPagamentoTexto = (() => {
@@ -896,8 +894,10 @@ export function OrcamentoCompletoPDFDocument({
         {/* Cabeçalho */}
         <View style={styles.header}>
           <View style={styles.logoSection}>
-            <Text style={styles.logoText}>FLAMA</Text>
-            <Text style={styles.logoSubtitle}>SISTEMAS DE PROTEÇÃO</Text>
+            <Image
+              src={configuracoes?.logoUrl || DEFAULT_LOGO_URL}
+              style={styles.logoImage}
+            />
           </View>
           <View style={styles.orcamentoInfo}>
             <Text style={styles.orcamentoNumero}>
@@ -924,8 +924,8 @@ export function OrcamentoCompletoPDFDocument({
           </View>
         </View>
 
-        {/* Proposta Técnica e Comercial */}
-        <Text style={styles.sectionTitle}>Proposta Técnica e Comercial</Text>
+        {/* Proposta */}
+        <Text style={styles.sectionTitle}>Proposta</Text>
         <View style={styles.clienteSection}>
           <Text
             style={{
@@ -1008,469 +1008,21 @@ export function OrcamentoCompletoPDFDocument({
         </View>
 
         {/* Introdução */}
-        <Text style={styles.sectionTitle}>Introdução</Text>
-        <View style={styles.clienteSection}>
-          <Text style={styles.servicoText}>
-            Apresentamos a proposta técnica e comercial para o desenvolvimento
-            das atividades na edificação acima discriminada, em consonância com
-            as exigências técnicas do Corpo de Bombeiros do Estado de São Paulo.
-          </Text>
-        </View>
-
-        {/* Escopo Técnico dos Serviços */}
-        <Text style={styles.sectionTitle}>Escopo Técnico dos Serviços</Text>
-        <Text style={stylesCompleto.escopoIntro}>
-          Os trabalhos de execução do projeto serão desenvolvidos de forma
-          direcionada e envolverão as seguintes etapas:
-        </Text>
-
-        {/* Tabela Comercial */}
-        {itensComerciais.length > 0 && (
-          <View style={styles.itensSection}>
-            <Text style={stylesCompleto.etapaTitulo}>COMERCIAL</Text>
-            <View style={styles.table}>
-              {/* Header - versão detalhada ou simplificada */}
-              {orcamento.mostrarValoresDetalhados !== false ? (
-                <View style={stylesCompleto.tableHeaderCompleto}>
-                  <View style={stylesCompleto.tableHeaderRow1}>
-                    <View style={stylesCompleto.headerGroupLeft}>
-                      <Text
-                        style={stylesCompleto.tableHeaderTextCompleto}
-                      ></Text>
-                    </View>
-                    <View style={stylesCompleto.headerGroupMaoDeObra}>
-                      <Text
-                        style={[
-                          stylesCompleto.tableHeaderTextCompleto,
-                          { textAlign: "center" },
-                        ]}
-                      >
-                        MÃO DE OBRA
-                      </Text>
-                    </View>
-                    <View style={stylesCompleto.headerGroupMaterial}>
-                      <Text
-                        style={[
-                          stylesCompleto.tableHeaderTextCompleto,
-                          { textAlign: "center" },
-                        ]}
-                      >
-                        MATERIAIS
-                      </Text>
-                    </View>
-                    <View style={stylesCompleto.headerGroupTotal}>
-                      <Text
-                        style={[
-                          stylesCompleto.tableHeaderTextCompleto,
-                          { textAlign: "center" },
-                        ]}
-                      >
-                        MDO +
-                      </Text>
-                      <Text
-                        style={[
-                          stylesCompleto.tableHeaderTextCompleto,
-                          { textAlign: "center" },
-                        ]}
-                      >
-                        MAT
-                      </Text>
-                    </View>
-                  </View>
-                  <View style={stylesCompleto.tableHeaderRow2}>
-                    <Text
-                      style={[
-                        stylesCompleto.tableHeaderTextCompleto,
-                        stylesCompleto.headerCellItem,
-                      ]}
-                    >
-                      ITEM
-                    </Text>
-                    <Text
-                      style={[
-                        stylesCompleto.tableHeaderTextCompleto,
-                        stylesCompleto.headerCellDescricao,
-                      ]}
-                    >
-                      DESCRIÇÃO DOS SERVIÇOS
-                    </Text>
-                    <Text
-                      style={[
-                        stylesCompleto.tableHeaderTextCompleto,
-                        stylesCompleto.headerCellUnid,
-                      ]}
-                    >
-                      UNID.
-                    </Text>
-                    <Text
-                      style={[
-                        stylesCompleto.tableHeaderTextCompleto,
-                        stylesCompleto.headerCellQtd,
-                      ]}
-                    >
-                      QTE.
-                    </Text>
-                    <Text
-                      style={[
-                        stylesCompleto.tableHeaderTextCompleto,
-                        stylesCompleto.headerCellMaoDeObraUnit,
-                      ]}
-                    >
-                      UNIT.
-                    </Text>
-                    <Text
-                      style={[
-                        stylesCompleto.tableHeaderTextCompleto,
-                        stylesCompleto.headerCellMaoDeObraTotal,
-                      ]}
-                    >
-                      TOTAL
-                    </Text>
-                    <Text
-                      style={[
-                        stylesCompleto.tableHeaderTextCompleto,
-                        stylesCompleto.headerCellMaterialUnit,
-                      ]}
-                    >
-                      UNIT.
-                    </Text>
-                    <Text
-                      style={[
-                        stylesCompleto.tableHeaderTextCompleto,
-                        stylesCompleto.headerCellMaterialTotal,
-                      ]}
-                    >
-                      TOTAL
-                    </Text>
-                    <Text
-                      style={[
-                        stylesCompleto.tableHeaderTextCompleto,
-                        stylesCompleto.headerCellTotal,
-                      ]}
-                    >
-                      TOTAL
-                    </Text>
-                  </View>
-                </View>
-              ) : (
-                <View style={styles.tableHeader}>
-                  <Text style={[styles.tableHeaderText, { width: "10%" }]}>
-                    ITEM
-                  </Text>
-                  <Text style={[styles.tableHeaderText, { width: "70%" }]}>
-                    DESCRIÇÃO DOS SERVIÇOS
-                  </Text>
-                  <Text style={[styles.tableHeaderText, { width: "10%" }]}>
-                    UNID.
-                  </Text>
-                  <Text style={[styles.tableHeaderText, { width: "10%" }]}>
-                    QTE.
-                  </Text>
-                </View>
-              )}
-
-              {/* Agrupar por categoria */}
-              {categoriasComerciais.map((categoria, catIdx) => {
-                const itensCategoria = itensComerciais.filter(
-                  (item) => item.categoriaNome === categoria
-                );
-                const subtotalMaoDeObra = itensCategoria.reduce(
-                  (acc, item) => acc + item.valorTotalMaoDeObra,
-                  0
-                );
-                const subtotalMaterial = itensCategoria.reduce(
-                  (acc, item) => acc + item.valorTotalMaterial,
-                  0
-                );
-                const subtotalTotal = itensCategoria.reduce(
-                  (acc, item) => acc + item.valorTotal,
-                  0
-                );
-                const categoriaNumero = catIdx + 1;
-                return (
-                  <View key={categoria}>
-                    {/* Linha da categoria */}
-                    <View style={stylesCompleto.categoriaRow}>
-                      <Text
-                        style={[
-                          stylesCompleto.categoriaText,
-                          {
-                            width:
-                              orcamento.mostrarValoresDetalhados !== false
-                                ? "8%"
-                                : "10%",
-                          },
-                        ]}
-                      >
-                        {categoriaNumero}.0
-                      </Text>
-                      <Text style={stylesCompleto.categoriaText}>
-                        {categoria}
-                      </Text>
-                    </View>
-                    {/* Itens da categoria */}
-                    {itensCategoria.map((item, idx) => {
-                      const itemNum = `${categoriaNumero}.${idx + 1}`;
-                      const isAlt = idx % 2 === 1;
-                      return orcamento.mostrarValoresDetalhados !== false ? (
-                        <View
-                          key={idx}
-                          style={isAlt ? styles.tableRowAlt : styles.tableRow}
-                        >
-                          <Text style={stylesCompleto.colItem}>{itemNum}</Text>
-                          <Text style={stylesCompleto.colDescricaoCompleto}>
-                            {item.descricao}
-                          </Text>
-                          <Text style={stylesCompleto.colUnidCompleto}>
-                            {item.unidade || "un"}
-                          </Text>
-                          <Text style={stylesCompleto.colQtdCompleto}>
-                            {item.quantidade}
-                          </Text>
-                          <Text style={stylesCompleto.colMaoDeObraUnit}>
-                            {formatCurrencyShort(item.valorUnitarioMaoDeObra)}
-                          </Text>
-                          <Text style={stylesCompleto.colMaoDeObraTotal}>
-                            {formatCurrencyShort(item.valorTotalMaoDeObra)}
-                          </Text>
-                          <Text style={stylesCompleto.colMaterialUnit}>
-                            {formatCurrencyShort(item.valorUnitarioMaterial)}
-                          </Text>
-                          <Text style={stylesCompleto.colMaterialTotal}>
-                            {formatCurrencyShort(item.valorTotalMaterial)}
-                          </Text>
-                          <Text style={stylesCompleto.colTotalCompleto}>
-                            {formatCurrencyShort(item.valorTotal)}
-                          </Text>
-                        </View>
-                      ) : (
-                        <View
-                          key={idx}
-                          style={isAlt ? styles.tableRowAlt : styles.tableRow}
-                        >
-                          <Text
-                            style={{
-                              width: "10%",
-                              fontSize: 8,
-                              textAlign: "center",
-                            }}
-                          >
-                            {itemNum}
-                          </Text>
-                          <Text style={{ width: "70%", fontSize: 8 }}>
-                            {item.descricao}
-                          </Text>
-                          <Text
-                            style={{
-                              width: "10%",
-                              fontSize: 8,
-                              textAlign: "center",
-                            }}
-                          >
-                            {item.unidade || "un"}
-                          </Text>
-                          <Text
-                            style={{
-                              width: "10%",
-                              fontSize: 8,
-                              textAlign: "center",
-                            }}
-                          >
-                            {item.quantidade}
-                          </Text>
-                        </View>
-                      );
-                    })}
-                    {/* Linha de subtotal da categoria - só mostra na versão detalhada */}
-                    {orcamento.mostrarValoresDetalhados !== false && (
-                      <View style={stylesCompleto.subtotalRow}>
-                        <Text
-                          style={[
-                            stylesCompleto.subtotalText,
-                            stylesCompleto.colItem,
-                          ]}
-                        ></Text>
-                        <Text
-                          style={[
-                            stylesCompleto.subtotalText,
-                            stylesCompleto.colDescricaoCompleto,
-                          ]}
-                        >
-                          SUBTOTAL ITEM {categoriaNumero}.0
-                        </Text>
-                        <Text
-                          style={[
-                            stylesCompleto.subtotalText,
-                            stylesCompleto.colUnidCompleto,
-                          ]}
-                        ></Text>
-                        <Text
-                          style={[
-                            stylesCompleto.subtotalText,
-                            stylesCompleto.colQtdCompleto,
-                          ]}
-                        ></Text>
-                        <Text
-                          style={[
-                            stylesCompleto.subtotalText,
-                            stylesCompleto.colMaoDeObraUnit,
-                          ]}
-                        ></Text>
-                        <Text
-                          style={[
-                            stylesCompleto.subtotalValue,
-                            stylesCompleto.colMaoDeObraTotal,
-                          ]}
-                        >
-                          {formatCurrencyShort(subtotalMaoDeObra)}
-                        </Text>
-                        <Text
-                          style={[
-                            stylesCompleto.subtotalText,
-                            stylesCompleto.colMaterialUnit,
-                          ]}
-                        ></Text>
-                        <Text
-                          style={[
-                            stylesCompleto.subtotalValue,
-                            stylesCompleto.colMaterialTotal,
-                          ]}
-                        >
-                          {formatCurrencyShort(subtotalMaterial)}
-                        </Text>
-                        <Text
-                          style={[
-                            stylesCompleto.subtotalValue,
-                            stylesCompleto.colTotalCompleto,
-                          ]}
-                        >
-                          {formatCurrencyShort(subtotalTotal)}
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-                );
-              })}
-              {/* Total COMERCIAL */}
-              {orcamento.mostrarValoresDetalhados !== false ? (
-                <View style={stylesCompleto.totalEtapaRow}>
-                  <Text
-                    style={[
-                      stylesCompleto.totalEtapaText,
-                      stylesCompleto.colItem,
-                    ]}
-                  ></Text>
-                  <Text
-                    style={[
-                      stylesCompleto.totalEtapaText,
-                      stylesCompleto.colDescricaoCompleto,
-                    ]}
-                  >
-                    TOTAL COMERCIAL
-                  </Text>
-                  <Text
-                    style={[
-                      stylesCompleto.totalEtapaText,
-                      stylesCompleto.colUnidCompleto,
-                    ]}
-                  ></Text>
-                  <Text
-                    style={[
-                      stylesCompleto.totalEtapaText,
-                      stylesCompleto.colQtdCompleto,
-                    ]}
-                  ></Text>
-                  <Text
-                    style={[
-                      stylesCompleto.totalEtapaText,
-                      stylesCompleto.colMaoDeObraUnit,
-                    ]}
-                  ></Text>
-                  <Text
-                    style={[
-                      stylesCompleto.totalEtapaValue,
-                      stylesCompleto.colMaoDeObraTotal,
-                    ]}
-                  >
-                    {formatCurrencyShort(
-                      itensComerciais.reduce(
-                        (acc, item) => acc + item.valorTotalMaoDeObra,
-                        0
-                      )
-                    )}
-                  </Text>
-                  <Text
-                    style={[
-                      stylesCompleto.totalEtapaText,
-                      stylesCompleto.colMaterialUnit,
-                    ]}
-                  ></Text>
-                  <Text
-                    style={[
-                      stylesCompleto.totalEtapaValue,
-                      stylesCompleto.colMaterialTotal,
-                    ]}
-                  >
-                    {formatCurrencyShort(
-                      itensComerciais.reduce(
-                        (acc, item) => acc + item.valorTotalMaterial,
-                        0
-                      )
-                    )}
-                  </Text>
-                  <Text
-                    style={[
-                      stylesCompleto.totalEtapaValue,
-                      stylesCompleto.colTotalCompleto,
-                    ]}
-                  >
-                    {formatCurrencyShort(
-                      itensComerciais.reduce(
-                        (acc, item) => acc + item.valorTotal,
-                        0
-                      )
-                    )}
-                  </Text>
-                </View>
-              ) : (
-                <View style={stylesCompleto.totalEtapaRow}>
-                  <Text style={{ width: "10%", fontSize: 9 }}></Text>
-                  <Text
-                    style={{
-                      width: "70%",
-                      fontSize: 9,
-                      fontWeight: "bold",
-                      color: "white",
-                    }}
-                  >
-                    TOTAL COMERCIAL
-                  </Text>
-                  <Text
-                    style={{
-                      width: "20%",
-                      fontSize: 9,
-                      textAlign: "right",
-                      fontWeight: "bold",
-                      color: "white",
-                    }}
-                  >
-                    {formatCurrencyShort(
-                      itensComerciais.reduce(
-                        (acc, item) => acc + item.valorTotal,
-                        0
-                      )
-                    )}
-                  </Text>
-                </View>
-              )}
+        {orcamento.introducao && (
+          <>
+            <Text style={styles.sectionTitle}>Introdução</Text>
+            <View style={styles.clienteSection}>
+              <Text style={styles.servicoText}>{orcamento.introducao}</Text>
             </View>
-          </View>
+          </>
         )}
 
-        {/* Tabela Residencial */}
-        {itensResidenciais.length > 0 && (
+        {/* Orçamento */}
+        <Text style={styles.sectionTitle}>Orçamento</Text>
+
+        {/* Tabela de Itens */}
+        {itensCompleto.length > 0 && (
           <View style={styles.itensSection}>
-            <Text style={stylesCompleto.etapaTitulo}>RESIDENCIAL</Text>
             <View style={styles.table}>
               {/* Header - versão detalhada ou simplificada */}
               {orcamento.mostrarValoresDetalhados !== false ? (
@@ -1481,44 +1033,50 @@ export function OrcamentoCompletoPDFDocument({
                         style={stylesCompleto.tableHeaderTextCompleto}
                       ></Text>
                     </View>
-                    <View style={stylesCompleto.headerGroupMaoDeObra}>
-                      <Text
-                        style={[
-                          stylesCompleto.tableHeaderTextCompleto,
-                          { textAlign: "center" },
-                        ]}
-                      >
-                        MÃO DE OBRA
-                      </Text>
-                    </View>
-                    <View style={stylesCompleto.headerGroupMaterial}>
-                      <Text
-                        style={[
-                          stylesCompleto.tableHeaderTextCompleto,
-                          { textAlign: "center" },
-                        ]}
-                      >
-                        MATERIAIS
-                      </Text>
-                    </View>
-                    <View style={stylesCompleto.headerGroupTotal}>
-                      <Text
-                        style={[
-                          stylesCompleto.tableHeaderTextCompleto,
-                          { textAlign: "center" },
-                        ]}
-                      >
-                        MDO +
-                      </Text>
-                      <Text
-                        style={[
-                          stylesCompleto.tableHeaderTextCompleto,
-                          { textAlign: "center" },
-                        ]}
-                      >
-                        MAT
-                      </Text>
-                    </View>
+                    {temMaoDeObra && (
+                      <View style={stylesCompleto.headerGroupMaoDeObra}>
+                        <Text
+                          style={[
+                            stylesCompleto.tableHeaderTextCompleto,
+                            { textAlign: "center" },
+                          ]}
+                        >
+                          MÃO DE OBRA
+                        </Text>
+                      </View>
+                    )}
+                    {temMaterial && (
+                      <View style={stylesCompleto.headerGroupMaterial}>
+                        <Text
+                          style={[
+                            stylesCompleto.tableHeaderTextCompleto,
+                            { textAlign: "center" },
+                          ]}
+                        >
+                          MATERIAIS
+                        </Text>
+                      </View>
+                    )}
+                    {temAmbos && (
+                      <View style={stylesCompleto.headerGroupTotal}>
+                        <Text
+                          style={[
+                            stylesCompleto.tableHeaderTextCompleto,
+                            { textAlign: "center" },
+                          ]}
+                        >
+                          MDO +
+                        </Text>
+                        <Text
+                          style={[
+                            stylesCompleto.tableHeaderTextCompleto,
+                            { textAlign: "center" },
+                          ]}
+                        >
+                          MAT
+                        </Text>
+                      </View>
+                    )}
                   </View>
                   <View style={stylesCompleto.tableHeaderRow2}>
                     <Text
@@ -1553,46 +1111,56 @@ export function OrcamentoCompletoPDFDocument({
                     >
                       QTE.
                     </Text>
-                    <Text
-                      style={[
-                        stylesCompleto.tableHeaderTextCompleto,
-                        stylesCompleto.headerCellMaoDeObraUnit,
-                      ]}
-                    >
-                      UNIT.
-                    </Text>
-                    <Text
-                      style={[
-                        stylesCompleto.tableHeaderTextCompleto,
-                        stylesCompleto.headerCellMaoDeObraTotal,
-                      ]}
-                    >
-                      TOTAL
-                    </Text>
-                    <Text
-                      style={[
-                        stylesCompleto.tableHeaderTextCompleto,
-                        stylesCompleto.headerCellMaterialUnit,
-                      ]}
-                    >
-                      UNIT.
-                    </Text>
-                    <Text
-                      style={[
-                        stylesCompleto.tableHeaderTextCompleto,
-                        stylesCompleto.headerCellMaterialTotal,
-                      ]}
-                    >
-                      TOTAL
-                    </Text>
-                    <Text
-                      style={[
-                        stylesCompleto.tableHeaderTextCompleto,
-                        stylesCompleto.headerCellTotal,
-                      ]}
-                    >
-                      TOTAL
-                    </Text>
+                    {temMaoDeObra && (
+                      <>
+                        <Text
+                          style={[
+                            stylesCompleto.tableHeaderTextCompleto,
+                            stylesCompleto.headerCellMaoDeObraUnit,
+                          ]}
+                        >
+                          UNIT.
+                        </Text>
+                        <Text
+                          style={[
+                            stylesCompleto.tableHeaderTextCompleto,
+                            stylesCompleto.headerCellMaoDeObraTotal,
+                          ]}
+                        >
+                          TOTAL
+                        </Text>
+                      </>
+                    )}
+                    {temMaterial && (
+                      <>
+                        <Text
+                          style={[
+                            stylesCompleto.tableHeaderTextCompleto,
+                            stylesCompleto.headerCellMaterialUnit,
+                          ]}
+                        >
+                          UNIT.
+                        </Text>
+                        <Text
+                          style={[
+                            stylesCompleto.tableHeaderTextCompleto,
+                            stylesCompleto.headerCellMaterialTotal,
+                          ]}
+                        >
+                          TOTAL
+                        </Text>
+                      </>
+                    )}
+                    {temAmbos && (
+                      <Text
+                        style={[
+                          stylesCompleto.tableHeaderTextCompleto,
+                          stylesCompleto.headerCellTotal,
+                        ]}
+                      >
+                        TOTAL
+                      </Text>
+                    )}
                   </View>
                 </View>
               ) : (
@@ -1613,21 +1181,21 @@ export function OrcamentoCompletoPDFDocument({
               )}
 
               {/* Agrupar por categoria */}
-              {categoriasResidenciais.map((categoria, catIdx) => {
-                const itensCategoria = itensResidenciais.filter(
-                  (item) => item.categoriaNome === categoria
+              {categorias.map((categoria, catIdx) => {
+                const itensCategoria = itensCompleto.filter(
+                  (item) => item.categoriaNome === categoria,
                 );
                 const subtotalMaoDeObra = itensCategoria.reduce(
                   (acc, item) => acc + item.valorTotalMaoDeObra,
-                  0
+                  0,
                 );
                 const subtotalMaterial = itensCategoria.reduce(
                   (acc, item) => acc + item.valorTotalMaterial,
-                  0
+                  0,
                 );
                 const subtotalTotal = itensCategoria.reduce(
                   (acc, item) => acc + item.valorTotal,
-                  0
+                  0,
                 );
                 const categoriaNumero = catIdx + 1;
                 return (
@@ -1670,21 +1238,35 @@ export function OrcamentoCompletoPDFDocument({
                           <Text style={stylesCompleto.colQtdCompleto}>
                             {item.quantidade}
                           </Text>
-                          <Text style={stylesCompleto.colMaoDeObraUnit}>
-                            {formatCurrencyShort(item.valorUnitarioMaoDeObra)}
-                          </Text>
-                          <Text style={stylesCompleto.colMaoDeObraTotal}>
-                            {formatCurrencyShort(item.valorTotalMaoDeObra)}
-                          </Text>
-                          <Text style={stylesCompleto.colMaterialUnit}>
-                            {formatCurrencyShort(item.valorUnitarioMaterial)}
-                          </Text>
-                          <Text style={stylesCompleto.colMaterialTotal}>
-                            {formatCurrencyShort(item.valorTotalMaterial)}
-                          </Text>
-                          <Text style={stylesCompleto.colTotalCompleto}>
-                            {formatCurrencyShort(item.valorTotal)}
-                          </Text>
+                          {temMaoDeObra && (
+                            <>
+                              <Text style={stylesCompleto.colMaoDeObraUnit}>
+                                {formatCurrencyShort(
+                                  item.valorUnitarioMaoDeObra,
+                                )}
+                              </Text>
+                              <Text style={stylesCompleto.colMaoDeObraTotal}>
+                                {formatCurrencyShort(item.valorTotalMaoDeObra)}
+                              </Text>
+                            </>
+                          )}
+                          {temMaterial && (
+                            <>
+                              <Text style={stylesCompleto.colMaterialUnit}>
+                                {formatCurrencyShort(
+                                  item.valorUnitarioMaterial,
+                                )}
+                              </Text>
+                              <Text style={stylesCompleto.colMaterialTotal}>
+                                {formatCurrencyShort(item.valorTotalMaterial)}
+                              </Text>
+                            </>
+                          )}
+                          {temAmbos && (
+                            <Text style={stylesCompleto.colTotalCompleto}>
+                              {formatCurrencyShort(item.valorTotal)}
+                            </Text>
+                          )}
                         </View>
                       ) : (
                         <View
@@ -1753,159 +1335,57 @@ export function OrcamentoCompletoPDFDocument({
                             stylesCompleto.colQtdCompleto,
                           ]}
                         ></Text>
-                        <Text
-                          style={[
-                            stylesCompleto.subtotalText,
-                            stylesCompleto.colMaoDeObraUnit,
-                          ]}
-                        ></Text>
-                        <Text
-                          style={[
-                            stylesCompleto.subtotalValue,
-                            stylesCompleto.colMaoDeObraTotal,
-                          ]}
-                        >
-                          {formatCurrencyShort(subtotalMaoDeObra)}
-                        </Text>
-                        <Text
-                          style={[
-                            stylesCompleto.subtotalText,
-                            stylesCompleto.colMaterialUnit,
-                          ]}
-                        ></Text>
-                        <Text
-                          style={[
-                            stylesCompleto.subtotalValue,
-                            stylesCompleto.colMaterialTotal,
-                          ]}
-                        >
-                          {formatCurrencyShort(subtotalMaterial)}
-                        </Text>
-                        <Text
-                          style={[
-                            stylesCompleto.subtotalValue,
-                            stylesCompleto.colTotalCompleto,
-                          ]}
-                        >
-                          {formatCurrencyShort(subtotalTotal)}
-                        </Text>
+                        {temMaoDeObra && (
+                          <>
+                            <Text
+                              style={[
+                                stylesCompleto.subtotalText,
+                                stylesCompleto.colMaoDeObraUnit,
+                              ]}
+                            ></Text>
+                            <Text
+                              style={[
+                                stylesCompleto.subtotalValue,
+                                stylesCompleto.colMaoDeObraTotal,
+                              ]}
+                            >
+                              {formatCurrencyShort(subtotalMaoDeObra)}
+                            </Text>
+                          </>
+                        )}
+                        {temMaterial && (
+                          <>
+                            <Text
+                              style={[
+                                stylesCompleto.subtotalText,
+                                stylesCompleto.colMaterialUnit,
+                              ]}
+                            ></Text>
+                            <Text
+                              style={[
+                                stylesCompleto.subtotalValue,
+                                stylesCompleto.colMaterialTotal,
+                              ]}
+                            >
+                              {formatCurrencyShort(subtotalMaterial)}
+                            </Text>
+                          </>
+                        )}
+                        {temAmbos && (
+                          <Text
+                            style={[
+                              stylesCompleto.subtotalValue,
+                              stylesCompleto.colTotalCompleto,
+                            ]}
+                          >
+                            {formatCurrencyShort(subtotalTotal)}
+                          </Text>
+                        )}
                       </View>
                     )}
                   </View>
                 );
               })}
-              {/* Total RESIDENCIAL */}
-              {orcamento.mostrarValoresDetalhados !== false ? (
-                <View style={stylesCompleto.totalEtapaRow}>
-                  <Text
-                    style={[
-                      stylesCompleto.totalEtapaText,
-                      stylesCompleto.colItem,
-                    ]}
-                  ></Text>
-                  <Text
-                    style={[
-                      stylesCompleto.totalEtapaText,
-                      stylesCompleto.colDescricaoCompleto,
-                    ]}
-                  >
-                    TOTAL RESIDENCIAL
-                  </Text>
-                  <Text
-                    style={[
-                      stylesCompleto.totalEtapaText,
-                      stylesCompleto.colUnidCompleto,
-                    ]}
-                  ></Text>
-                  <Text
-                    style={[
-                      stylesCompleto.totalEtapaText,
-                      stylesCompleto.colQtdCompleto,
-                    ]}
-                  ></Text>
-                  <Text
-                    style={[
-                      stylesCompleto.totalEtapaText,
-                      stylesCompleto.colMaoDeObraUnit,
-                    ]}
-                  ></Text>
-                  <Text
-                    style={[
-                      stylesCompleto.totalEtapaValue,
-                      stylesCompleto.colMaoDeObraTotal,
-                    ]}
-                  >
-                    {formatCurrencyShort(
-                      itensResidenciais.reduce(
-                        (acc, item) => acc + item.valorTotalMaoDeObra,
-                        0
-                      )
-                    )}
-                  </Text>
-                  <Text
-                    style={[
-                      stylesCompleto.totalEtapaText,
-                      stylesCompleto.colMaterialUnit,
-                    ]}
-                  ></Text>
-                  <Text
-                    style={[
-                      stylesCompleto.totalEtapaValue,
-                      stylesCompleto.colMaterialTotal,
-                    ]}
-                  >
-                    {formatCurrencyShort(
-                      itensResidenciais.reduce(
-                        (acc, item) => acc + item.valorTotalMaterial,
-                        0
-                      )
-                    )}
-                  </Text>
-                  <Text
-                    style={[
-                      stylesCompleto.totalEtapaValue,
-                      stylesCompleto.colTotalCompleto,
-                    ]}
-                  >
-                    {formatCurrencyShort(
-                      itensResidenciais.reduce(
-                        (acc, item) => acc + item.valorTotal,
-                        0
-                      )
-                    )}
-                  </Text>
-                </View>
-              ) : (
-                <View style={stylesCompleto.totalEtapaRow}>
-                  <Text style={{ width: "10%", fontSize: 9 }}></Text>
-                  <Text
-                    style={{
-                      width: "70%",
-                      fontSize: 9,
-                      fontWeight: "bold",
-                      color: "white",
-                    }}
-                  >
-                    TOTAL RESIDENCIAL
-                  </Text>
-                  <Text
-                    style={{
-                      width: "20%",
-                      fontSize: 9,
-                      textAlign: "right",
-                      fontWeight: "bold",
-                      color: "white",
-                    }}
-                  >
-                    {formatCurrencyShort(
-                      itensResidenciais.reduce(
-                        (acc, item) => acc + item.valorTotal,
-                        0
-                      )
-                    )}
-                  </Text>
-                </View>
-              )}
             </View>
           </View>
         )}
@@ -1913,18 +1393,22 @@ export function OrcamentoCompletoPDFDocument({
         {/* Totais */}
         {orcamento.mostrarValoresDetalhados !== false ? (
           <View style={stylesCompleto.totaisGrid}>
-            <View style={stylesCompleto.totalBoxCompleto}>
-              <Text style={stylesCompleto.totalLabelSmall}>Mão de Obra</Text>
-              <Text style={stylesCompleto.totalValueSmall}>
-                {formatCurrency(valorTotalMaoDeObra)}
-              </Text>
-            </View>
-            <View style={stylesCompleto.totalBoxCompleto}>
-              <Text style={stylesCompleto.totalLabelSmall}>Material</Text>
-              <Text style={stylesCompleto.totalValueSmall}>
-                {formatCurrency(valorTotalMaterial)}
-              </Text>
-            </View>
+            {temMaoDeObra && (
+              <View style={stylesCompleto.totalBoxCompleto}>
+                <Text style={stylesCompleto.totalLabelSmall}>Mão de Obra</Text>
+                <Text style={stylesCompleto.totalValueSmall}>
+                  {formatCurrency(valorTotalMaoDeObra)}
+                </Text>
+              </View>
+            )}
+            {temMaterial && (
+              <View style={stylesCompleto.totalBoxCompleto}>
+                <Text style={stylesCompleto.totalLabelSmall}>Material</Text>
+                <Text style={stylesCompleto.totalValueSmall}>
+                  {formatCurrency(valorTotalMaterial)}
+                </Text>
+              </View>
+            )}
             <View style={stylesCompleto.totalBoxMain}>
               <Text
                 style={[stylesCompleto.totalLabelSmall, { color: "white" }]}
@@ -1951,62 +1435,38 @@ export function OrcamentoCompletoPDFDocument({
           </View>
         )}
 
-        {/* Observações e Limitações - View wrapper para evitar sobreposição com rodapé */}
-        <View style={stylesCompleto.limitacoesSection}>
-          <Text style={styles.sectionTitle}>Observações e Limitações</Text>
-          <View style={stylesCompleto.limitacoesBox}>
-            {/* Parágrafos fixos */}
-            <View style={stylesCompleto.limitacaoItem}>
-              <Text style={stylesCompleto.limitacaoBullet}>•</Text>
-              <Text style={stylesCompleto.limitacaoText}>
-                O Contratante deverá nos informar procedimentos e rotinas
-                operacionais ligadas à saúde e segurança a serem observadas e
-                seguidas por nossos profissionais durante a execução dos
-                trabalhos de campo.
-              </Text>
-            </View>
-            <View style={stylesCompleto.limitacaoItem}>
-              <Text style={stylesCompleto.limitacaoBullet}>•</Text>
-              <Text style={stylesCompleto.limitacaoText}>
-                Os serviços serão realizados em horário comercial, de segunda a
-                sexta-feira, das 8 às 17h, ou em horário a combinar.
-              </Text>
-            </View>
-            {/* Limitações selecionadas */}
-            {orcamento.limitacoesSelecionadas &&
-              orcamento.limitacoesSelecionadas.map((limitacao, index) => (
-                <View key={index} style={stylesCompleto.limitacaoItem}>
+        {/* Observações - só exibe se houver limitações ou observações */}
+        {((orcamento.limitacoesSelecionadas &&
+          orcamento.limitacoesSelecionadas.length > 0) ||
+          orcamento.observacoes) && (
+          <View style={stylesCompleto.limitacoesSection}>
+            <Text style={styles.sectionTitle}>Observações</Text>
+            <View style={stylesCompleto.limitacoesBox}>
+              {/* Limitações selecionadas */}
+              {orcamento.limitacoesSelecionadas &&
+                orcamento.limitacoesSelecionadas.map((limitacao, index) => (
+                  <View key={index} style={stylesCompleto.limitacaoItem}>
+                    <Text style={stylesCompleto.limitacaoBullet}>•</Text>
+                    <Text style={stylesCompleto.limitacaoText}>
+                      {limitacao}
+                    </Text>
+                  </View>
+                ))}
+              {/* Observações adicionais como último bullet */}
+              {orcamento.observacoes && (
+                <View style={stylesCompleto.limitacaoItem}>
                   <Text style={stylesCompleto.limitacaoBullet}>•</Text>
-                  <Text style={stylesCompleto.limitacaoText}>{limitacao}</Text>
+                  <Text style={stylesCompleto.limitacaoText}>
+                    {orcamento.observacoes}
+                  </Text>
                 </View>
-              ))}
-            {/* Observações adicionais como último bullet */}
-            {orcamento.observacoes && (
-              <View style={stylesCompleto.limitacaoItem}>
-                <Text style={stylesCompleto.limitacaoBullet}>•</Text>
-                <Text style={stylesCompleto.limitacaoText}>
-                  {orcamento.observacoes}
-                </Text>
-              </View>
-            )}
+              )}
+            </View>
           </View>
-        </View>
+        )}
 
-        {/* Preços e Condições de Pagamento */}
-        <Text style={styles.sectionTitle}>Preços e Condições de Pagamento</Text>
-
-        {/* Composição do Preço */}
-        <View style={stylesCompleto.precosBox}>
-          <Text style={stylesCompleto.precosSubtitulo}>
-            Composição do Preço
-          </Text>
-          <Text style={stylesCompleto.precosTexto}>
-            O preço para execução do escopo especificado nesta proposta é de:
-          </Text>
-          <Text style={stylesCompleto.precosValorTotal}>
-            {formatCurrency(orcamento.valorTotal)}
-          </Text>
-        </View>
+        {/* Condições de Pagamento */}
+        <Text style={styles.sectionTitle}>Condições de Pagamento</Text>
 
         {/* Condições de Pagamento */}
         <View style={stylesCompleto.precosBox}>
@@ -2030,10 +1490,10 @@ export function OrcamentoCompletoPDFDocument({
               const opcoesParaExibir =
                 parcelasSelecionadas && parcelasSelecionadas.length > 0
                   ? orcamento.parcelamentoDados.opcoes.filter((opcao) =>
-                      parcelasSelecionadas.includes(opcao.numeroParcelas)
+                      parcelasSelecionadas.includes(opcao.numeroParcelas),
                     )
                   : orcamento.parcelamentoDados.opcoes.filter(
-                      (opcao) => !opcao.abaixoDoMinimo
+                      (opcao) => !opcao.abaixoDoMinimo,
                     );
 
               return (
@@ -2047,7 +1507,7 @@ export function OrcamentoCompletoPDFDocument({
                     <Text style={stylesCompleto.parcelamentoRestanteText}>
                       Restante:{" "}
                       {formatCurrency(
-                        orcamento.parcelamentoDados.valorRestante
+                        orcamento.parcelamentoDados.valorRestante,
                       )}
                     </Text>
                   </View>
@@ -2135,26 +1595,33 @@ export function OrcamentoCompletoPDFDocument({
           )}
         </View>
 
-        {/* Prazo de Execução */}
-        <Text style={styles.sectionTitle}>Prazo de Execução</Text>
-        <View style={stylesCompleto.precosBox}>
-          <View style={stylesCompleto.prazoItem}>
-            <Text style={stylesCompleto.prazoBullet}>•</Text>
-            <Text style={stylesCompleto.prazoTexto}>
-              Até {orcamento.prazoExecucaoServicos || 20} dias úteis para
-              execução dos serviços, podendo ser intercalados;
-            </Text>
-          </View>
-          {orcamento.prazoVistoriaBombeiros && (
-            <View style={stylesCompleto.prazoItem}>
-              <Text style={stylesCompleto.prazoBullet}>•</Text>
-              <Text style={stylesCompleto.prazoTexto}>
-                Até {orcamento.prazoVistoriaBombeiros} dias para a vistoria do
-                Corpo de Bombeiros, depois de gerado o protocolo.
-              </Text>
+        {/* Prazo de Execução - só exibe se tiver prazo preenchido ou vistoria */}
+        {(orcamento.prazoExecucaoServicos ||
+          orcamento.prazoVistoriaBombeiros) && (
+          <>
+            <Text style={styles.sectionTitle}>Prazo de Execução</Text>
+            <View style={stylesCompleto.precosBox}>
+              {orcamento.prazoExecucaoServicos && (
+                <View style={stylesCompleto.prazoItem}>
+                  <Text style={stylesCompleto.prazoBullet}>•</Text>
+                  <Text style={stylesCompleto.prazoTexto}>
+                    Até {orcamento.prazoExecucaoServicos} dias úteis para
+                    execução dos serviços, podendo ser intercalados;
+                  </Text>
+                </View>
+              )}
+              {orcamento.prazoVistoriaBombeiros && (
+                <View style={stylesCompleto.prazoItem}>
+                  <Text style={stylesCompleto.prazoBullet}>•</Text>
+                  <Text style={stylesCompleto.prazoTexto}>
+                    Até {orcamento.prazoVistoriaBombeiros} dias para a vistoria
+                    do Corpo de Bombeiros, depois de gerado o protocolo.
+                  </Text>
+                </View>
+              )}
             </View>
-          )}
-        </View>
+          </>
+        )}
 
         {/* Prazo de Validade da Proposta */}
         <Text style={styles.sectionTitle}>Prazo de Validade da Proposta</Text>
@@ -2167,24 +1634,17 @@ export function OrcamentoCompletoPDFDocument({
           </Text>
         </View>
 
-        {/* Termo de Responsabilidade + Assinatura (agrupados para não quebrar) */}
-        <View wrap={false}>
-          <View style={styles.termoSection}>
-            <Text style={styles.termoTitle}>Termo de Responsabilidade</Text>
-            <Text style={styles.termoText}>
-              Comprometemo-nos em não divulgar quaisquer informações da
-              edificação ou dos seus ocupantes, à exceção de decisão judicial.
-            </Text>
-          </View>
-
-          {/* Assinatura */}
+        {/* Assinatura */}
+        {/* Assinatura */}
+        {configuracoes && (
           <View style={styles.assinaturaSection}>
             <Text style={styles.assinaturaTexto}>Atenciosamente,</Text>
             <View style={styles.assinaturaLinha} />
-            <Text style={styles.assinaturaNome}>FLAMA</Text>
-            <Text style={styles.assinaturaSubtitle}>Sistemas de Proteção</Text>
+            <Text style={styles.assinaturaNome}>
+              {configuracoes.nomeEmpresa}
+            </Text>
           </View>
-        </View>
+        )}
 
         {/* Rodapé com dados da empresa */}
         {configuracoes && (
@@ -2233,9 +1693,10 @@ export async function gerarPDFOrcamento(orcamento: Orcamento): Promise<void> {
   const numeroArquivo = formatOrcamentoNumero(
     orcamento.numero,
     orcamento.dataEmissao,
-    orcamento.versao
+    orcamento.versao,
   ).replace("#", "");
-  link.download = `Orçamento Flama-${numeroArquivo}.pdf`;
+  const empresa = configuracoes?.nomeEmpresa || "Empresa";
+  link.download = `Orçamento ${empresa}-${numeroArquivo}.pdf`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -2245,7 +1706,7 @@ export async function gerarPDFOrcamento(orcamento: Orcamento): Promise<void> {
 // Estilos específicos para o PDF de execução
 const stylesExecucao = StyleSheet.create({
   page: {
-    paddingTop: 40,
+    paddingTop: 10,
     paddingLeft: 40,
     paddingRight: 40,
     paddingBottom: 90,
@@ -2256,26 +1717,17 @@ const stylesExecucao = StyleSheet.create({
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 25,
-    paddingBottom: 15,
+    alignItems: "center",
+    marginBottom: 10,
+    paddingBottom: 8,
     borderBottomWidth: 3,
     borderBottomColor: COLORS.primary,
   },
   logoSection: {
     flex: 1,
   },
-  logoText: {
-    fontSize: 36,
-    fontWeight: "bold",
-    color: COLORS.primary,
-    letterSpacing: 4,
-  },
-  logoSubtitle: {
-    fontSize: 10,
-    color: COLORS.gray,
-    marginTop: 2,
-    letterSpacing: 1,
+  logoImage: {
+    width: 100,
   },
   infoSection: {
     alignItems: "flex-end",
@@ -2429,19 +1881,12 @@ function OrdemExecucaoPDFDocument({
     return d.toLocaleDateString("pt-BR");
   };
 
-  // Separar itens por etapa (residencial/comercial)
-  const itensResidenciais =
-    orcamento.itensCompleto?.filter((item) => item.etapa === "residencial") ||
-    [];
-  const itensComerciais =
-    orcamento.itensCompleto?.filter((item) => item.etapa === "comercial") || [];
+  // Todos os itens do orçamento
+  const todosItens = orcamento.itensCompleto || [];
 
   // Obter categorias únicas
-  const categoriasResidenciais = [
-    ...new Set(itensResidenciais.map((item) => item.categoriaNome)),
-  ];
-  const categoriasComerciais = [
-    ...new Set(itensComerciais.map((item) => item.categoriaNome)),
+  const todasCategorias = [
+    ...new Set(todosItens.map((item) => item.categoriaNome)),
   ];
 
   return (
@@ -2450,10 +1895,10 @@ function OrdemExecucaoPDFDocument({
         {/* Cabeçalho */}
         <View style={stylesExecucao.header}>
           <View style={stylesExecucao.logoSection}>
-            <Text style={stylesExecucao.logoText}>FLAMA</Text>
-            <Text style={stylesExecucao.logoSubtitle}>
-              Sistemas de Proteção
-            </Text>
+            <Image
+              src={configuracoes?.logoUrl || DEFAULT_LOGO_URL}
+              style={stylesExecucao.logoImage}
+            />
           </View>
           <View style={stylesExecucao.infoSection}>
             <Text style={stylesExecucao.titulo}>ORDEM DE EXECUÇÃO</Text>
@@ -2463,7 +1908,7 @@ function OrdemExecucaoPDFDocument({
                 {formatOrcamentoNumero(
                   orcamento.numero,
                   orcamento.dataEmissao,
-                  orcamento.versao
+                  orcamento.versao,
                 )}
               </Text>
             </View>
@@ -2531,182 +1976,84 @@ function OrdemExecucaoPDFDocument({
         {/* Título Serviço */}
         <Text style={stylesExecucao.sectionTitle}>Serviço</Text>
 
-        {/* Tabela de Itens - Residencial */}
-        {itensResidenciais.length > 0 && (
-          <>
-            <Text style={stylesExecucao.etapaTitulo}>Itens - Residencial</Text>
-            <View style={stylesExecucao.tableContainer}>
-              <View style={stylesExecucao.tableHeader}>
-                <Text
-                  style={[
-                    stylesExecucao.tableHeaderText,
-                    stylesExecucao.colItem,
-                  ]}
-                >
-                  ITEM
-                </Text>
-                <Text
-                  style={[
-                    stylesExecucao.tableHeaderText,
-                    stylesExecucao.colDescricao,
-                  ]}
-                >
-                  DESCRIÇÃO
-                </Text>
-                <Text
-                  style={[
-                    stylesExecucao.tableHeaderText,
-                    stylesExecucao.colUnidade,
-                  ]}
-                >
-                  UNID.
-                </Text>
-                <Text
-                  style={[
-                    stylesExecucao.tableHeaderText,
-                    stylesExecucao.colQtd,
-                  ]}
-                >
-                  QTE.
-                </Text>
-              </View>
-
-              {categoriasResidenciais.map((categoria, catIdx) => {
-                const itensCategoria = itensResidenciais.filter(
-                  (item) => item.categoriaNome === categoria
-                );
-                const categoriaNumero = catIdx + 1;
-                return (
-                  <View key={categoria}>
-                    <View style={stylesExecucao.categoriaRow}>
-                      <Text
-                        style={[stylesExecucao.categoriaText, { width: "10%" }]}
-                      >
-                        {categoriaNumero}.0
-                      </Text>
-                      <Text style={stylesExecucao.categoriaText}>
-                        {categoria}
-                      </Text>
-                    </View>
-                    {itensCategoria.map((item, idx) => {
-                      const itemNum = `${categoriaNumero}.${idx + 1}`;
-                      const isAlt = idx % 2 === 1;
-                      return (
-                        <View
-                          key={idx}
-                          style={
-                            isAlt
-                              ? stylesExecucao.tableRowAlt
-                              : stylesExecucao.tableRow
-                          }
-                        >
-                          <Text style={stylesExecucao.colItem}>{itemNum}</Text>
-                          <Text style={stylesExecucao.colDescricao}>
-                            {item.descricao}
-                          </Text>
-                          <Text style={stylesExecucao.colUnidade}>
-                            {item.unidade || "un"}
-                          </Text>
-                          <Text style={stylesExecucao.colQtd}>
-                            {item.quantidade}
-                          </Text>
-                        </View>
-                      );
-                    })}
-                  </View>
-                );
-              })}
+        {/* Tabela de Itens */}
+        {todosItens.length > 0 && (
+          <View style={stylesExecucao.tableContainer}>
+            <View style={stylesExecucao.tableHeader}>
+              <Text
+                style={[stylesExecucao.tableHeaderText, stylesExecucao.colItem]}
+              >
+                ITEM
+              </Text>
+              <Text
+                style={[
+                  stylesExecucao.tableHeaderText,
+                  stylesExecucao.colDescricao,
+                ]}
+              >
+                DESCRIÇÃO
+              </Text>
+              <Text
+                style={[
+                  stylesExecucao.tableHeaderText,
+                  stylesExecucao.colUnidade,
+                ]}
+              >
+                UNID.
+              </Text>
+              <Text
+                style={[stylesExecucao.tableHeaderText, stylesExecucao.colQtd]}
+              >
+                QTE.
+              </Text>
             </View>
-          </>
-        )}
 
-        {/* Tabela de Itens - Comercial */}
-        {itensComerciais.length > 0 && (
-          <>
-            <Text style={stylesExecucao.etapaTitulo}>Itens - Comercial</Text>
-            <View style={stylesExecucao.tableContainer}>
-              <View style={stylesExecucao.tableHeader}>
-                <Text
-                  style={[
-                    stylesExecucao.tableHeaderText,
-                    stylesExecucao.colItem,
-                  ]}
-                >
-                  ITEM
-                </Text>
-                <Text
-                  style={[
-                    stylesExecucao.tableHeaderText,
-                    stylesExecucao.colDescricao,
-                  ]}
-                >
-                  DESCRIÇÃO
-                </Text>
-                <Text
-                  style={[
-                    stylesExecucao.tableHeaderText,
-                    stylesExecucao.colUnidade,
-                  ]}
-                >
-                  UNID.
-                </Text>
-                <Text
-                  style={[
-                    stylesExecucao.tableHeaderText,
-                    stylesExecucao.colQtd,
-                  ]}
-                >
-                  QTE.
-                </Text>
-              </View>
-
-              {categoriasComerciais.map((categoria, catIdx) => {
-                const itensCategoria = itensComerciais.filter(
-                  (item) => item.categoriaNome === categoria
-                );
-                const categoriaNumero = catIdx + 1;
-                return (
-                  <View key={categoria}>
-                    <View style={stylesExecucao.categoriaRow}>
-                      <Text
-                        style={[stylesExecucao.categoriaText, { width: "10%" }]}
-                      >
-                        {categoriaNumero}.0
-                      </Text>
-                      <Text style={stylesExecucao.categoriaText}>
-                        {categoria}
-                      </Text>
-                    </View>
-                    {itensCategoria.map((item, idx) => {
-                      const itemNum = `${categoriaNumero}.${idx + 1}`;
-                      const isAlt = idx % 2 === 1;
-                      return (
-                        <View
-                          key={idx}
-                          style={
-                            isAlt
-                              ? stylesExecucao.tableRowAlt
-                              : stylesExecucao.tableRow
-                          }
-                        >
-                          <Text style={stylesExecucao.colItem}>{itemNum}</Text>
-                          <Text style={stylesExecucao.colDescricao}>
-                            {item.descricao}
-                          </Text>
-                          <Text style={stylesExecucao.colUnidade}>
-                            {item.unidade || "un"}
-                          </Text>
-                          <Text style={stylesExecucao.colQtd}>
-                            {item.quantidade}
-                          </Text>
-                        </View>
-                      );
-                    })}
+            {todasCategorias.map((categoria, catIdx) => {
+              const itensCategoria = todosItens.filter(
+                (item) => item.categoriaNome === categoria,
+              );
+              const categoriaNumero = catIdx + 1;
+              return (
+                <View key={categoria}>
+                  <View style={stylesExecucao.categoriaRow}>
+                    <Text
+                      style={[stylesExecucao.categoriaText, { width: "10%" }]}
+                    >
+                      {categoriaNumero}.0
+                    </Text>
+                    <Text style={stylesExecucao.categoriaText}>
+                      {categoria}
+                    </Text>
                   </View>
-                );
-              })}
-            </View>
-          </>
+                  {itensCategoria.map((item, idx) => {
+                    const itemNum = `${categoriaNumero}.${idx + 1}`;
+                    const isAlt = idx % 2 === 1;
+                    return (
+                      <View
+                        key={idx}
+                        style={
+                          isAlt
+                            ? stylesExecucao.tableRowAlt
+                            : stylesExecucao.tableRow
+                        }
+                      >
+                        <Text style={stylesExecucao.colItem}>{itemNum}</Text>
+                        <Text style={stylesExecucao.colDescricao}>
+                          {item.descricao}
+                        </Text>
+                        <Text style={stylesExecucao.colUnidade}>
+                          {item.unidade || "un"}
+                        </Text>
+                        <Text style={stylesExecucao.colQtd}>
+                          {item.quantidade}
+                        </Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              );
+            })}
+          </View>
         )}
 
         {/* Rodapé */}
@@ -2755,7 +2102,7 @@ export async function gerarPDFExecucao(orcamento: Orcamento): Promise<void> {
   const numeroArquivo = formatOrcamentoNumero(
     orcamento.numero,
     orcamento.dataEmissao,
-    orcamento.versao
+    orcamento.versao,
   ).replace("#", "");
   link.download = `ordem-execucao-${numeroArquivo}.pdf`;
   document.body.appendChild(link);

@@ -1,15 +1,15 @@
-import { useState } from 'react';
+import { useState } from "react";
 import {
   usePalavrasChave,
   useCriarPalavraChave,
   useAtualizarPalavraChave,
   useTogglePalavraChave,
   useExcluirPalavraChave,
-} from '../../../hooks/usePalavrasChave';
-import { Modal, Button, Input } from '../../../components/ui';
-import { PalavraChave } from '../../../types';
-import { logger } from '../../../utils/logger';
-import { ConfirmDeleteModal } from '../components/ConfirmDeleteModal';
+} from "../../../hooks/usePalavrasChave";
+import { Modal, Button, Input } from "../../../components/ui";
+import { PalavraChave } from "../../../types";
+import { logger } from "../../../utils/logger";
+import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
 import {
   Section,
   ItemsList,
@@ -25,7 +25,7 @@ import {
   HelpText,
   ErrorAlert,
   ModalButtons,
-} from '../styles';
+} from "../styles";
 
 function formatarPrazo(dias: number): string {
   const anos = Math.floor(dias / 365);
@@ -35,16 +35,16 @@ function formatarPrazo(dias: number): string {
   const partes: string[] = [];
 
   if (anos > 0) {
-    partes.push(`${anos} ${anos === 1 ? 'ano' : 'anos'}`);
+    partes.push(`${anos} ${anos === 1 ? "ano" : "anos"}`);
   }
   if (meses > 0) {
-    partes.push(`${meses} ${meses === 1 ? 'mês' : 'meses'}`);
+    partes.push(`${meses} ${meses === 1 ? "mês" : "meses"}`);
   }
   if (diasRestantes > 0 || partes.length === 0) {
-    partes.push(`${diasRestantes} ${diasRestantes === 1 ? 'dia' : 'dias'}`);
+    partes.push(`${diasRestantes} ${diasRestantes === 1 ? "dia" : "dias"}`);
   }
 
-  return partes.join(' e ');
+  return partes.join(" e ");
 }
 
 export function PalavrasChaveTab() {
@@ -58,13 +58,13 @@ export function PalavrasChaveTab() {
   const [editando, setEditando] = useState<PalavraChave | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<PalavraChave | null>(null);
 
-  const [palavra, setPalavra] = useState('');
-  const [prazoDias, setPrazoDias] = useState('');
+  const [palavra, setPalavra] = useState("");
+  const [prazoDias, setPrazoDias] = useState("");
   const [modalError, setModalError] = useState<string | null>(null);
 
   const resetForm = () => {
-    setPalavra('');
-    setPrazoDias('');
+    setPalavra("");
+    setPrazoDias("");
     setEditando(null);
     setModalError(null);
   };
@@ -106,8 +106,12 @@ export function PalavrasChaveTab() {
       }
       handleCloseModal();
     } catch (error: any) {
-      logger.error('Erro ao salvar palavra-chave', { error });
-      const errorMessage = error?.response?.data?.error || error?.response?.data?.message || error?.message || 'Erro ao salvar. Tente novamente.';
+      logger.error("Erro ao salvar palavra-chave", { error });
+      const errorMessage =
+        error?.response?.data?.error ||
+        error?.response?.data?.message ||
+        error?.message ||
+        "Erro ao salvar. Tente novamente.";
       setModalError(errorMessage);
     }
   };
@@ -116,7 +120,7 @@ export function PalavrasChaveTab() {
     try {
       await togglePalavraChave.mutateAsync(id);
     } catch (error) {
-      logger.error('Erro ao alterar status da palavra-chave', { error });
+      logger.error("Erro ao alterar status da palavra-chave", { error });
     }
   };
 
@@ -127,22 +131,34 @@ export function PalavrasChaveTab() {
       await excluirPalavraChave.mutateAsync(confirmDelete.id!);
       setConfirmDelete(null);
     } catch (error) {
-      logger.error('Erro ao excluir palavra-chave', { error });
+      logger.error("Erro ao excluir palavra-chave", { error });
     }
   };
 
-  const isSaving = criarPalavraChave.isLoading || atualizarPalavraChave.isLoading;
-  const isSaveDisabled = !palavra.trim() || !prazoDias || parseInt(prazoDias, 10) < 1 || isSaving;
+  const isSaving =
+    criarPalavraChave.isLoading || atualizarPalavraChave.isLoading;
+  const isSaveDisabled =
+    !palavra.trim() || !prazoDias || parseInt(prazoDias, 10) < 1 || isSaving;
 
   return (
     <>
       <Section>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            marginBottom: 16,
+            flexWrap: "wrap",
+            gap: 12,
+          }}
+        >
           <div>
             <h2>Palavras-chave para Notificações</h2>
             <p className="description">
-              Configure palavras-chave que serão monitoradas nos itens dos orçamentos aceitos.
-              Quando o prazo estiver próximo do vencimento, você receberá uma notificação.
+              Configure palavras-chave que serão monitoradas nos itens dos
+              orçamentos aceitos. Quando o prazo estiver próximo do vencimento,
+              você receberá uma notificação.
             </p>
           </div>
           <Button onClick={handleNovoClick}>+ Nova Palavra-chave</Button>
@@ -155,20 +171,33 @@ export function PalavrasChaveTab() {
                 <ItemInfo>
                   <div className="titulo">
                     {pc.palavra}
-                    <StatusBadge $ativo={pc.ativo}>{pc.ativo ? 'Ativa' : 'Inativa'}</StatusBadge>
+                    <StatusBadge $ativo={pc.ativo}>
+                      {pc.ativo ? "Ativa" : "Inativa"}
+                    </StatusBadge>
                   </div>
                   <div className="descricao">
-                    Prazo de validade: <strong>{formatarPrazo(pc.prazoDias)}</strong> ({pc.prazoDias} dias)
+                    Prazo de validade:{" "}
+                    <strong>{formatarPrazo(pc.prazoDias)}</strong> (
+                    {pc.prazoDias} dias)
                   </div>
                 </ItemInfo>
                 <ItemActions>
-                  <ActionButton $variant="edit" onClick={() => handleEditarClick(pc)}>
+                  <ActionButton
+                    $variant="edit"
+                    onClick={() => handleEditarClick(pc)}
+                  >
                     Editar
                   </ActionButton>
-                  <ActionButton $variant="toggle" onClick={() => handleToggle(pc.id!)}>
-                    {pc.ativo ? 'Desativar' : 'Ativar'}
+                  <ActionButton
+                    $variant="toggle"
+                    onClick={() => handleToggle(pc.id!)}
+                  >
+                    {pc.ativo ? "Desativar" : "Ativar"}
                   </ActionButton>
-                  <ActionButton $variant="delete" onClick={() => setConfirmDelete(pc)}>
+                  <ActionButton
+                    $variant="delete"
+                    onClick={() => setConfirmDelete(pc)}
+                  >
                     Excluir
                   </ActionButton>
                 </ItemActions>
@@ -178,7 +207,9 @@ export function PalavrasChaveTab() {
         ) : (
           <EmptyState>
             <p>Nenhuma palavra-chave cadastrada</p>
-            <Button onClick={handleNovoClick}>Cadastrar Primeira Palavra-chave</Button>
+            <Button onClick={handleNovoClick}>
+              Cadastrar Primeira Palavra-chave
+            </Button>
           </EmptyState>
         )}
       </Section>
@@ -187,7 +218,7 @@ export function PalavrasChaveTab() {
       <Modal
         isOpen={modalOpen}
         onClose={handleCloseModal}
-        title={editando ? 'Editar Palavra-chave' : 'Nova Palavra-chave'}
+        title={editando ? "Editar Palavra-chave" : "Nova Palavra-chave"}
         width="500px"
       >
         {modalError && <ErrorAlert>{modalError}</ErrorAlert>}
@@ -198,7 +229,6 @@ export function PalavrasChaveTab() {
             <Input
               value={palavra}
               onChange={(e) => setPalavra(e.target.value)}
-              placeholder="Ex: extintor, mangueira, alarme"
             />
             <HelpText>Termo que será buscado nos itens dos orçamentos</HelpText>
           </FormGroup>
@@ -215,17 +245,25 @@ export function PalavrasChaveTab() {
             <HelpText>
               {prazoDias && parseInt(prazoDias, 10) > 0
                 ? formatarPrazo(parseInt(prazoDias, 10))
-                : 'Dias até a notificação'}
+                : "Dias até a notificação"}
             </HelpText>
           </FormGroup>
         </FormRow>
 
         <ModalButtons>
-          <Button $variant="ghost" onClick={handleCloseModal} disabled={isSaving}>
+          <Button
+            $variant="ghost"
+            onClick={handleCloseModal}
+            disabled={isSaving}
+          >
             Cancelar
           </Button>
           <Button onClick={handleSalvar} disabled={isSaveDisabled}>
-            {isSaving ? 'Salvando...' : editando ? 'Salvar Alterações' : 'Cadastrar'}
+            {isSaving
+              ? "Salvando..."
+              : editando
+                ? "Salvar Alterações"
+                : "Cadastrar"}
           </Button>
         </ModalButtons>
       </Modal>

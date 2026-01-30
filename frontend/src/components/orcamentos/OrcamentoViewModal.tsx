@@ -1,5 +1,6 @@
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
+import { useTenant } from "../../hooks/useTenant";
 import { Orcamento, OrcamentoStatus } from "../../types";
 import { Modal } from "../ui/Modal";
 import { Button } from "../ui/Button";
@@ -149,7 +150,7 @@ const ItensTable = styled.div`
 
 const ItemHeaderCompleto = styled.div`
   display: grid;
-  grid-template-columns: 100px 120px 2fr 60px 60px 90px 90px 90px 90px;
+  grid-template-columns: 120px 2fr 60px 60px 90px 90px 90px 90px;
   gap: 8px;
   padding: 12px 16px;
   background: var(--background);
@@ -166,7 +167,7 @@ const ItemHeaderCompleto = styled.div`
 
 const ItemRowCompleto = styled.div`
   display: grid;
-  grid-template-columns: 100px 120px 2fr 60px 60px 90px 90px 90px 90px;
+  grid-template-columns: 120px 2fr 60px 60px 90px 90px 90px 90px;
   gap: 8px;
   padding: 12px 16px;
   border-top: 1px solid var(--border);
@@ -174,11 +175,6 @@ const ItemRowCompleto = styled.div`
 
   &:first-child {
     border-top: none;
-  }
-
-  .etapa {
-    color: var(--text-secondary);
-    font-size: 0.8rem;
   }
 
   .categoria {
@@ -395,12 +391,13 @@ export function OrcamentoViewModal({
   onDuplicate,
 }: OrcamentoViewModalProps) {
   const navigate = useNavigate();
+  const { buildPath } = useTenant();
 
   if (!orcamento) return null;
 
   const handleGoToOrcamentos = () => {
     onClose();
-    navigate("/orcamentos");
+    navigate(buildPath("/orcamentos"));
   };
 
   const handleEdit = () => {
@@ -412,7 +409,7 @@ export function OrcamentoViewModal({
       onEdit(orcamento);
     } else {
       onClose();
-      navigate(`/orcamentos?action=edit&id=${orcamento.id}`);
+      navigate(`${buildPath("/orcamentos")}?action=edit&id=${orcamento.id}`);
     }
   };
 
@@ -421,7 +418,7 @@ export function OrcamentoViewModal({
       onDuplicate(orcamento);
     } else {
       onClose();
-      navigate(`/orcamentos?action=duplicate&id=${orcamento.id}`);
+      navigate(`${buildPath("/orcamentos")}?action=duplicate&id=${orcamento.id}`);
     }
   };
 
@@ -528,7 +525,6 @@ export function OrcamentoViewModal({
           <h4>Itens do Orçamento (Mão de Obra e Material)</h4>
           <ItensTable>
             <ItemHeaderCompleto>
-              <span>Etapa</span>
               <span>Categoria</span>
               <span>Descrição</span>
               <span style={{ textAlign: "right" }}>Qtd</span>
@@ -540,9 +536,6 @@ export function OrcamentoViewModal({
             </ItemHeaderCompleto>
             {orcamento.itensCompleto.map((item, index) => (
               <ItemRowCompleto key={index}>
-                <DesktopOnly className="etapa">
-                  {item.etapa === "comercial" ? "Comercial" : "Residencial"}
-                </DesktopOnly>
                 <DesktopOnly className="categoria">
                   {item.categoriaNome}
                 </DesktopOnly>
@@ -561,12 +554,6 @@ export function OrcamentoViewModal({
                 <DesktopOnly className="valor">
                   {formatCurrency(item.valorTotalMaterial)}
                 </DesktopOnly>
-                <MobileItemField>
-                  <span className="label">Etapa:</span>
-                  <span>
-                    {item.etapa === "comercial" ? "Comercial" : "Residencial"}
-                  </span>
-                </MobileItemField>
                 <MobileItemField>
                   <span className="label">Categoria:</span>
                   <span>{item.categoriaNome}</span>

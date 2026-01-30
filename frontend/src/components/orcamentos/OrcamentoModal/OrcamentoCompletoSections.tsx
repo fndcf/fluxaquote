@@ -113,7 +113,7 @@ export function LimitacoesSection({
           alignItems: "center",
         }}
       >
-        <span>Limitações do Escopo e Observações</span>
+        <span>Observações</span>
         {limitacoes && limitacoes.length > 0 && onToggleAll && (
           <button
             type="button"
@@ -132,8 +132,8 @@ export function LimitacoesSection({
             {todosSelecionados
               ? "Desmarcar Todos"
               : algunsSelecionados
-              ? "Selecionar Todos"
-              : "Selecionar Todos"}
+                ? "Selecionar Todos"
+                : "Selecionar Todos"}
           </button>
         )}
       </h4>
@@ -152,8 +152,8 @@ export function LimitacoesSection({
         </LimitacoesGrid>
       ) : (
         <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>
-          Nenhuma limitação cadastrada. Configure em Configurações &gt;
-          Limitações.
+          Nenhuma observação cadastrada. Configure em Configurações &gt;
+          Observações.
         </p>
       )}
     </CompletoSection>
@@ -161,17 +161,15 @@ export function LimitacoesSection({
 }
 
 interface PrazosSectionProps {
-  prazoExecucao: number;
+  prazoExecucao: number | null;
   prazoVistoria: number | null;
-  onPrazoExecucaoChange: (valor: number) => void;
+  onPrazoExecucaoChange: (valor: number | null) => void;
   onPrazoVistoriaChange: (valor: number | null) => void;
 }
 
 export function PrazosSection({
   prazoExecucao,
-  prazoVistoria,
   onPrazoExecucaoChange,
-  onPrazoVistoriaChange,
 }: PrazosSectionProps) {
   return (
     <CompletoSection>
@@ -181,35 +179,14 @@ export function PrazosSection({
           <Label>Prazo de Execução dos Serviços (dias úteis)</Label>
           <Input
             type="number"
-            min="1"
-            value={prazoExecucao}
-            onChange={(e) =>
-              onPrazoExecucaoChange(parseInt(e.target.value) || 1)
-            }
-            style={{ maxWidth: "150px" }}
-          />
-          <p
-            style={{
-              color: "var(--text-secondary)",
-              fontSize: "0.8rem",
-              marginTop: "4px",
-            }}
-          >
-            Podendo ser intercalados
-          </p>
-        </InputGroup>
-        <InputGroup>
-          <Label>Prazo para Vistoria do Corpo de Bombeiros (dias)</Label>
-          <Input
-            type="number"
-            min="1"
-            value={prazoVistoria ?? ""}
+            min="0"
+            value={prazoExecucao ?? ""}
             onChange={(e) => {
-              const value = e.target.value;
-              onPrazoVistoriaChange(value === "" ? null : parseInt(value) || null);
+              const val = e.target.value;
+              onPrazoExecucaoChange(val === "" ? null : parseInt(val) || 0);
             }}
+            placeholder="Deixe vazio para não exibir no PDF"
             style={{ maxWidth: "150px" }}
-            placeholder="Opcional"
           />
           <p
             style={{
@@ -218,7 +195,7 @@ export function PrazosSection({
               marginTop: "4px",
             }}
           >
-            Após gerado o protocolo (deixe vazio para não exibir)
+            Podendo ser intercalados. Deixe vazio para ocultar no PDF.
           </p>
         </InputGroup>
       </InputRow>
@@ -278,20 +255,22 @@ export function CondicaoPagamentoFormSection({
 
   // Inicializa com o valor salvo ou 20% como padrão
   const [entradaPercent, setEntradaPercent] = useState<number>(
-    parcelamentoDados?.entradaPercent ?? 20
+    parcelamentoDados?.entradaPercent ?? 20,
   );
 
   // Estado para as parcelas selecionadas (quais aparecem no PDF)
   // Por padrão, nenhuma selecionada significa mostrar 1x e 2x apenas
   const [parcelasSelecionadas, setParcelasSelecionadas] = useState<number[]>(
-    parcelamentoDados?.parcelasSelecionadas ?? []
+    parcelamentoDados?.parcelasSelecionadas ?? [],
   );
 
   // Estado para o percentual de desconto à vista - controlado localmente
   // Usamos uma ref para armazenar o último valor recebido do pai para detectar mudanças externas
-  const lastExternalPercentual = useRef<number | undefined>(descontoAVista?.percentual);
+  const lastExternalPercentual = useRef<number | undefined>(
+    descontoAVista?.percentual,
+  );
   const [descontoPercent, setDescontoPercent] = useState<number>(
-    descontoAVista?.percentual ?? 0
+    descontoAVista?.percentual ?? 0,
   );
 
   // Atualiza o estado quando parcelamentoDados mudar (ex: ao abrir modal de edição)
@@ -306,7 +285,10 @@ export function CondicaoPagamentoFormSection({
         setParcelasSelecionadas(externalParcelas);
       }
     }
-  }, [parcelamentoDados?.entradaPercent, parcelamentoDados?.parcelasSelecionadas]);
+  }, [
+    parcelamentoDados?.entradaPercent,
+    parcelamentoDados?.parcelasSelecionadas,
+  ]);
 
   // Sincroniza o descontoPercent quando descontoAVista muda externamente (edição/duplicação)
   // Só atualiza se o valor vier do pai (detectado pela mudança no percentual externo)
@@ -394,9 +376,10 @@ export function CondicaoPagamentoFormSection({
 
   useEffect(() => {
     // Criar uma chave única para o estado atual
-    const currentKey = condicao === "a_vista" && descontoPercent > 0
-      ? `${descontoPercent}-${valorDesconto}-${valorFinalComDesconto}`
-      : "none";
+    const currentKey =
+      condicao === "a_vista" && descontoPercent > 0
+        ? `${descontoPercent}-${valorDesconto}-${valorFinalComDesconto}`
+        : "none";
 
     // Só atualiza se o valor mudou
     if (lastDescontoSent.current !== currentKey) {
@@ -417,7 +400,13 @@ export function CondicaoPagamentoFormSection({
         onDescontoAVistaChange(undefined);
       }
     }
-  }, [condicao, descontoPercent, valorDesconto, valorFinalComDesconto, onDescontoAVistaChange]);
+  }, [
+    condicao,
+    descontoPercent,
+    valorDesconto,
+    valorFinalComDesconto,
+    onDescontoAVistaChange,
+  ]);
 
   // Função para alternar seleção de parcela
   const toggleParcelaSelecionada = (numero: number) => {
@@ -437,7 +426,7 @@ export function CondicaoPagamentoFormSection({
       const parcelasDisponiveis = parcelasInfo.filter((p) => !p.disabled);
 
       let texto = `Entrada de ${entradaPercent}% (${formatCurrency(
-        valorEntrada
+        valorEntrada,
       )})`;
 
       if (parcelasDisponiveis.length > 0) {
@@ -471,7 +460,8 @@ export function CondicaoPagamentoFormSection({
           taxaJuros: p.taxaJuros,
           abaixoDoMinimo: p.disabled, // Marca quais estão abaixo do mínimo
         })),
-        parcelasSelecionadas: parcelasSelecionadas.length > 0 ? parcelasSelecionadas : undefined,
+        parcelasSelecionadas:
+          parcelasSelecionadas.length > 0 ? parcelasSelecionadas : undefined,
       };
       onParcelamentoDadosChange(parcelamentoDados);
     } else {
@@ -507,7 +497,9 @@ export function CondicaoPagamentoFormSection({
 
         {condicao === "a_vista" && (
           <DescontoContainer>
-            <div className="label">Desconto para pagamento à vista (opcional)</div>
+            <div className="label">
+              Desconto para pagamento à vista (opcional)
+            </div>
             <div className="input-row">
               <input
                 type="number"
@@ -550,11 +542,15 @@ export function CondicaoPagamentoFormSection({
                 </div>
                 <div className="desconto-detalhe">
                   <span className="label">Desconto ({descontoPercent}%):</span>
-                  <span className="valor">- {formatCurrency(valorDesconto)}</span>
+                  <span className="valor">
+                    - {formatCurrency(valorDesconto)}
+                  </span>
                 </div>
                 <div className="desconto-detalhe">
                   <span className="label">Valor final à vista:</span>
-                  <span className="valor">{formatCurrency(valorFinalComDesconto)}</span>
+                  <span className="valor">
+                    {formatCurrency(valorFinalComDesconto)}
+                  </span>
                 </div>
               </div>
             )}
@@ -626,11 +622,16 @@ export function CondicaoPagamentoFormSection({
                     title={parcela.motivoDisabled}
                     onClick={() => toggleParcelaSelecionada(parcela.numero)}
                   >
-                    <span className="label" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span
+                      className="label"
+                      style={{ display: "flex", alignItems: "center", gap: 8 }}
+                    >
                       <input
                         type="checkbox"
                         checked={parcelasSelecionadas.includes(parcela.numero)}
-                        onChange={() => toggleParcelaSelecionada(parcela.numero)}
+                        onChange={() =>
+                          toggleParcelaSelecionada(parcela.numero)
+                        }
                         style={{
                           width: 16,
                           height: 16,

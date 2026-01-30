@@ -45,7 +45,7 @@ export interface OrcamentoCompletoInput extends OrcamentoBase {
   servicoDescricao?: string;
   itensCompleto: OrcamentoItemCompleto[];
   limitacoesSelecionadas?: string[];
-  prazoExecucaoServicos?: number;
+  prazoExecucaoServicos?: number | null;
   prazoVistoriaBombeiros?: number | null;
   condicaoPagamento?: 'a_vista' | 'a_combinar' | 'parcelado';
   parcelamentoTexto?: string;
@@ -74,7 +74,7 @@ export interface OrcamentoCompleto extends OrcamentoBase, OrcamentoClienteInfo {
   servicoDescricao?: string;
   itensCompleto: OrcamentoItemCompleto[];
   limitacoesSelecionadas?: string[];
-  prazoExecucaoServicos?: number;
+  prazoExecucaoServicos?: number | null;
   prazoVistoriaBombeiros?: number | null;
   condicaoPagamento?: 'a_vista' | 'a_combinar' | 'parcelado';
   parcelamentoTexto?: string;

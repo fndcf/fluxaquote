@@ -1,15 +1,23 @@
 import { Response, NextFunction } from 'express';
 import { authMiddleware, AuthRequest } from '../../middlewares/authMiddleware';
-import { UnauthorizedError } from '../../utils/errors';
+import { UnauthorizedError, ForbiddenError } from '../../utils/errors';
 
-// Mock do Firebase Auth
+// Mock do Firebase Auth e Firestore
 jest.mock('../../config/firebase', () => ({
   auth: {
     verifyIdToken: jest.fn(),
+    setCustomUserClaims: jest.fn(),
+  },
+  db: {
+    collection: jest.fn().mockReturnValue({
+      doc: jest.fn().mockReturnValue({
+        get: jest.fn(),
+      }),
+    }),
   },
 }));
 
-import { auth } from '../../config/firebase';
+import { auth, db } from '../../config/firebase';
 
 describe('authMiddleware', () => {
   let mockReq: Partial<AuthRequest>;
@@ -32,7 +40,7 @@ describe('authMiddleware', () => {
 
     expect(mockNext).toHaveBeenCalledWith(expect.any(UnauthorizedError));
     const error = (mockNext as jest.Mock).mock.calls[0][0];
-    expect(error.message).toBe('Token inválido ou expirado');
+    expect(error.message).toBe('Token não fornecido');
   });
 
   it('deve chamar next com erro quando header não começa com Bearer', async () => {
@@ -54,11 +62,14 @@ describe('authMiddleware', () => {
     expect(error.message).toBe('Token inválido ou expirado');
   });
 
-  it('deve definir user no request quando token é válido', async () => {
+  it('deve definir user no request quando token tem custom claims', async () => {
     mockReq.headers = { authorization: 'Bearer valid-token' };
     (auth.verifyIdToken as jest.Mock).mockResolvedValue({
       uid: 'user-123',
       email: 'test@example.com',
+      tenantId: 'tenant-abc',
+      slug: 'minha-empresa',
+      role: 'admin',
     });
 
     await authMiddleware(mockReq as AuthRequest, mockRes as Response, mockNext);
@@ -66,8 +77,64 @@ describe('authMiddleware', () => {
     expect(mockReq.user).toEqual({
       uid: 'user-123',
       email: 'test@example.com',
+      tenantId: 'tenant-abc',
+      slug: 'minha-empresa',
+      role: 'admin',
     });
     expect(mockNext).toHaveBeenCalledWith();
+  });
+
+  it('deve buscar tenantId do Firestore quando custom claims não existem', async () => {
+    mockReq.headers = { authorization: 'Bearer valid-token' };
+    (auth.verifyIdToken as jest.Mock).mockResolvedValue({
+      uid: 'user-123',
+      email: 'test@example.com',
+    });
+
+    const mockDocGet = jest.fn().mockResolvedValue({
+      exists: true,
+      data: () => ({
+        tenantId: 'tenant-from-db',
+        slug: 'empresa-db',
+        role: 'admin',
+      }),
+    });
+    const mockDoc = jest.fn().mockReturnValue({ get: mockDocGet });
+    (db.collection as jest.Mock).mockReturnValue({ doc: mockDoc });
+
+    await authMiddleware(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+    expect(mockReq.user).toEqual({
+      uid: 'user-123',
+      email: 'test@example.com',
+      tenantId: 'tenant-from-db',
+      slug: 'empresa-db',
+      role: 'admin',
+    });
+    expect(auth.setCustomUserClaims).toHaveBeenCalledWith('user-123', {
+      tenantId: 'tenant-from-db',
+      slug: 'empresa-db',
+      role: 'admin',
+    });
+    expect(mockNext).toHaveBeenCalledWith();
+  });
+
+  it('deve chamar next com ForbiddenError quando usuário não tem tenant', async () => {
+    mockReq.headers = { authorization: 'Bearer valid-token' };
+    (auth.verifyIdToken as jest.Mock).mockResolvedValue({
+      uid: 'user-123',
+      email: 'test@example.com',
+    });
+
+    const mockDocGet = jest.fn().mockResolvedValue({
+      exists: false,
+    });
+    const mockDoc = jest.fn().mockReturnValue({ get: mockDocGet });
+    (db.collection as jest.Mock).mockReturnValue({ doc: mockDoc });
+
+    await authMiddleware(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+    expect(mockNext).toHaveBeenCalledWith(expect.any(ForbiddenError));
   });
 
   it('deve definir email vazio quando token não tem email', async () => {
@@ -75,6 +142,9 @@ describe('authMiddleware', () => {
     (auth.verifyIdToken as jest.Mock).mockResolvedValue({
       uid: 'user-123',
       email: undefined,
+      tenantId: 'tenant-abc',
+      slug: 'minha-empresa',
+      role: 'admin',
     });
 
     await authMiddleware(mockReq as AuthRequest, mockRes as Response, mockNext);
@@ -82,6 +152,30 @@ describe('authMiddleware', () => {
     expect(mockReq.user).toEqual({
       uid: 'user-123',
       email: '',
+      tenantId: 'tenant-abc',
+      slug: 'minha-empresa',
+      role: 'admin',
+    });
+    expect(mockNext).toHaveBeenCalledWith();
+  });
+
+  it('deve usar role admin como default quando role não existe', async () => {
+    mockReq.headers = { authorization: 'Bearer valid-token' };
+    (auth.verifyIdToken as jest.Mock).mockResolvedValue({
+      uid: 'user-123',
+      email: 'test@example.com',
+      tenantId: 'tenant-abc',
+      slug: 'minha-empresa',
+    });
+
+    await authMiddleware(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+    expect(mockReq.user).toEqual({
+      uid: 'user-123',
+      email: 'test@example.com',
+      tenantId: 'tenant-abc',
+      slug: 'minha-empresa',
+      role: 'admin',
     });
     expect(mockNext).toHaveBeenCalledWith();
   });

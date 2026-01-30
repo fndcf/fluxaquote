@@ -1,12 +1,14 @@
-import { historicoValoresRepository } from '../repositories/historicoValoresRepository';
+import { createHistoricoValoresRepository } from '../repositories/historicoValoresRepository';
 import { HistoricoValorItem, HistoricoConfiguracao } from '../models';
 import { ValidationError } from '../utils/errors';
 
-export const historicoValoresService = {
-  async buscarHistoricoItensPorPeriodo(
+export function createHistoricoValoresService(tenantId: string) {
+  const historicoRepo = createHistoricoValoresRepository(tenantId);
+
+  const buscarHistoricoItensPorPeriodo = async (
     dataInicio: string,
     dataFim: string
-  ): Promise<HistoricoValorItem[]> {
+  ): Promise<HistoricoValorItem[]> => {
     if (!dataInicio || !dataFim) {
       throw new ValidationError('Data início e data fim são obrigatórias');
     }
@@ -21,13 +23,13 @@ export const historicoValoresService = {
     // Ajustar fim para o final do dia
     fim.setHours(23, 59, 59, 999);
 
-    return historicoValoresRepository.buscarHistoricoItensPorPeriodo(inicio, fim);
-  },
+    return historicoRepo.buscarHistoricoItensPorPeriodo(inicio, fim);
+  };
 
-  async buscarHistoricoConfiguracoesPorPeriodo(
+  const buscarHistoricoConfiguracoesPorPeriodo = async (
     dataInicio: string,
     dataFim: string
-  ): Promise<HistoricoConfiguracao[]> {
+  ): Promise<HistoricoConfiguracao[]> => {
     if (!dataInicio || !dataFim) {
       throw new ValidationError('Data início e data fim são obrigatórias');
     }
@@ -42,6 +44,11 @@ export const historicoValoresService = {
     // Ajustar fim para o final do dia
     fim.setHours(23, 59, 59, 999);
 
-    return historicoValoresRepository.buscarHistoricoConfiguracoesPorPeriodo(inicio, fim);
-  },
-};
+    return historicoRepo.buscarHistoricoConfiguracoesPorPeriodo(inicio, fim);
+  };
+
+  return {
+    buscarHistoricoItensPorPeriodo,
+    buscarHistoricoConfiguracoesPorPeriodo,
+  };
+}

@@ -1,22 +1,22 @@
 import { db } from '../config/firebase';
+import { getTenantDb } from '../utils/tenantDb';
 import { ItemServico } from '../models';
 
-const COLLECTION = 'itensServico';
+export function createItemServicoRepository(tenantId: string) {
+  const collection = getTenantDb(tenantId).collection('itensServico');
 
-export const itemServicoRepository = {
-  async findAll(): Promise<ItemServico[]> {
-    const snapshot = await db.collection(COLLECTION).orderBy('ordem', 'asc').get();
+  async function findAll(): Promise<ItemServico[]> {
+    const snapshot = await collection.orderBy('ordem', 'asc').get();
     return snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
       createdAt: doc.data().createdAt?.toDate(),
       updatedAt: doc.data().updatedAt?.toDate(),
     })) as ItemServico[];
-  },
+  }
 
-  async findByCategoria(categoriaId: string): Promise<ItemServico[]> {
-    const snapshot = await db
-      .collection(COLLECTION)
+  async function findByCategoria(categoriaId: string): Promise<ItemServico[]> {
+    const snapshot = await collection
       .where('categoriaId', '==', categoriaId)
       .orderBy('ordem', 'asc')
       .get();
@@ -26,11 +26,10 @@ export const itemServicoRepository = {
       createdAt: doc.data().createdAt?.toDate(),
       updatedAt: doc.data().updatedAt?.toDate(),
     })) as ItemServico[];
-  },
+  }
 
-  async findAtivosByCategoria(categoriaId: string): Promise<ItemServico[]> {
-    const snapshot = await db
-      .collection(COLLECTION)
+  async function findAtivosByCategoria(categoriaId: string): Promise<ItemServico[]> {
+    const snapshot = await collection
       .where('categoriaId', '==', categoriaId)
       .where('ativo', '==', true)
       .orderBy('ordem', 'asc')
@@ -41,17 +40,16 @@ export const itemServicoRepository = {
       createdAt: doc.data().createdAt?.toDate(),
       updatedAt: doc.data().updatedAt?.toDate(),
     })) as ItemServico[];
-  },
+  }
 
-  async findAtivosByCategoriaPaginado(
+  async function findAtivosByCategoriaPaginado(
     categoriaId: string,
     limit: number = 10,
     cursor?: string,
     search?: string
   ): Promise<{ itens: ItemServico[]; nextCursor?: string; hasMore: boolean; total: number }> {
     // Query base para itens ativos da categoria ordenados por descrição
-    let baseQuery = db
-      .collection(COLLECTION)
+    let baseQuery = collection
       .where('categoriaId', '==', categoriaId)
       .where('ativo', '==', true)
       .orderBy('descricao', 'asc');
@@ -98,7 +96,7 @@ export const itemServicoRepository = {
 
     // Se há cursor, busca a partir dele
     if (cursor) {
-      const cursorDoc = await db.collection(COLLECTION).doc(cursor).get();
+      const cursorDoc = await collection.doc(cursor).get();
       if (cursorDoc.exists) {
         baseQuery = baseQuery.startAfter(cursorDoc);
       }
@@ -121,10 +119,10 @@ export const itemServicoRepository = {
     const nextCursor = hasMore && itens.length > 0 ? itens[itens.length - 1].id : undefined;
 
     return { itens, nextCursor, hasMore, total };
-  },
+  }
 
-  async findById(id: string): Promise<ItemServico | null> {
-    const doc = await db.collection(COLLECTION).doc(id).get();
+  async function findById(id: string): Promise<ItemServico | null> {
+    const doc = await collection.doc(id).get();
     if (!doc.exists) return null;
     return {
       id: doc.id,
@@ -132,11 +130,10 @@ export const itemServicoRepository = {
       createdAt: doc.data()?.createdAt?.toDate(),
       updatedAt: doc.data()?.updatedAt?.toDate(),
     } as ItemServico;
-  },
+  }
 
-  async findByDescricaoInCategoria(descricao: string, categoriaId: string): Promise<ItemServico | null> {
-    const snapshot = await db
-      .collection(COLLECTION)
+  async function findByDescricaoInCategoria(descricao: string, categoriaId: string): Promise<ItemServico | null> {
+    const snapshot = await collection
       .where('categoriaId', '==', categoriaId)
       .where('descricao', '==', descricao)
       .limit(1)
@@ -149,10 +146,10 @@ export const itemServicoRepository = {
       createdAt: doc.data()?.createdAt?.toDate(),
       updatedAt: doc.data()?.updatedAt?.toDate(),
     } as ItemServico;
-  },
+  }
 
-  async create(data: Omit<ItemServico, 'id' | 'createdAt'>): Promise<ItemServico> {
-    const docRef = await db.collection(COLLECTION).add({
+  async function create(data: Omit<ItemServico, 'id' | 'createdAt'>): Promise<ItemServico> {
+    const docRef = await collection.add({
       ...data,
       createdAt: new Date(),
     });
@@ -162,10 +159,10 @@ export const itemServicoRepository = {
       ...doc.data(),
       createdAt: doc.data()?.createdAt?.toDate(),
     } as ItemServico;
-  },
+  }
 
-  async update(id: string, data: Partial<ItemServico>): Promise<ItemServico | null> {
-    const docRef = db.collection(COLLECTION).doc(id);
+  async function update(id: string, data: Partial<ItemServico>): Promise<ItemServico | null> {
+    const docRef = collection.doc(id);
     await docRef.update({
       ...data,
       updatedAt: new Date(),
@@ -178,22 +175,21 @@ export const itemServicoRepository = {
       createdAt: doc.data()?.createdAt?.toDate(),
       updatedAt: doc.data()?.updatedAt?.toDate(),
     } as ItemServico;
-  },
+  }
 
-  async delete(id: string): Promise<boolean> {
-    await db.collection(COLLECTION).doc(id).delete();
+  async function deleteItemServico(id: string): Promise<boolean> {
+    await collection.doc(id).delete();
     return true;
-  },
+  }
 
-  async findByCategoriaPaginado(
+  async function findByCategoriaPaginado(
     categoriaId: string,
     limit: number = 10,
     cursor?: string,
     search?: string
   ): Promise<{ itens: ItemServico[]; nextCursor?: string; hasMore: boolean; total: number }> {
     // Query base para todos os itens da categoria ordenados por descrição
-    let baseQuery = db
-      .collection(COLLECTION)
+    let baseQuery = collection
       .where('categoriaId', '==', categoriaId)
       .orderBy('descricao', 'asc');
 
@@ -239,7 +235,7 @@ export const itemServicoRepository = {
 
     // Se há cursor, busca a partir dele
     if (cursor) {
-      const cursorDoc = await db.collection(COLLECTION).doc(cursor).get();
+      const cursorDoc = await collection.doc(cursor).get();
       if (cursorDoc.exists) {
         baseQuery = baseQuery.startAfter(cursorDoc);
       }
@@ -262,22 +258,20 @@ export const itemServicoRepository = {
     const nextCursor = hasMore && itens.length > 0 ? itens[itens.length - 1].id : undefined;
 
     return { itens, nextCursor, hasMore, total };
-  },
+  }
 
-  async getNextOrdem(categoriaId: string): Promise<number> {
-    const snapshot = await db
-      .collection(COLLECTION)
+  async function getNextOrdem(categoriaId: string): Promise<number> {
+    const snapshot = await collection
       .where('categoriaId', '==', categoriaId)
       .orderBy('ordem', 'desc')
       .limit(1)
       .get();
     if (snapshot.empty) return 1;
     return (snapshot.docs[0].data().ordem || 0) + 1;
-  },
+  }
 
-  async deleteByCategoria(categoriaId: string): Promise<number> {
-    const snapshot = await db
-      .collection(COLLECTION)
+  async function deleteByCategoria(categoriaId: string): Promise<number> {
+    const snapshot = await collection
       .where('categoriaId', '==', categoriaId)
       .get();
 
@@ -287,5 +281,20 @@ export const itemServicoRepository = {
     });
     await batch.commit();
     return snapshot.size;
-  },
-};
+  }
+
+  return {
+    findAll,
+    findByCategoria,
+    findAtivosByCategoria,
+    findAtivosByCategoriaPaginado,
+    findById,
+    findByDescricaoInCategoria,
+    create,
+    update,
+    delete: deleteItemServico,
+    findByCategoriaPaginado,
+    getNextOrdem,
+    deleteByCategoria,
+  };
+}

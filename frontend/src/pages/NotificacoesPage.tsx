@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
+import { useTenant } from "../hooks/useTenant";
 import { Button, Card } from "../components/ui";
 import {
   useNotificacoesPaginadas,
@@ -304,6 +305,7 @@ function diasParaVencimento(data: Date | string): string {
 export function NotificacoesPage() {
   const [activeTab, setActiveTab] = useState<TabType>("todas");
   const navigate = useNavigate();
+  const { buildPath } = useTenant();
   const listRef = useRef<HTMLDivElement>(null);
 
   const { data: resumo } = useNotificacaoResumo();
@@ -417,7 +419,7 @@ export function NotificacoesPage() {
     if (!notificacao.lida) {
       marcarLida.mutate(notificacao.id!);
     }
-    navigate(`/orcamentos?id=${notificacao.orcamentoId}`);
+    navigate(`${buildPath("/orcamentos")}?id=${notificacao.orcamentoId}`);
   };
 
   const handleMarcarLida = (e: React.MouseEvent, notificacao: Notificacao) => {

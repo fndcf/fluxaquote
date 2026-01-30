@@ -1,8 +1,5 @@
-import { db } from '../config/firebase';
+import { getTenantDb } from '../utils/tenantDb';
 import { ConfiguracoesGerais } from '../models';
-
-const COLLECTION = 'configuracoes';
-const DOC_ID = 'gerais';
 
 // Valores padrão para as configurações
 const defaultConfiguracoes: ConfiguracoesGerais = {
@@ -15,19 +12,21 @@ const defaultConfiguracoes: ConfiguracoesGerais = {
   logoUrl: '',
 };
 
-export const configuracoesGeraisRepository = {
-  async get(): Promise<ConfiguracoesGerais> {
-    const doc = await db.collection(COLLECTION).doc(DOC_ID).get();
+export function createConfiguracoesGeraisRepository(tenantId: string) {
+  const collection = getTenantDb(tenantId).collection('configuracoes');
+
+  async function get(): Promise<ConfiguracoesGerais> {
+    const doc = await collection.doc('gerais').get();
     if (!doc.exists) {
       // Se não existir, cria com valores padrão
-      await db.collection(COLLECTION).doc(DOC_ID).set(defaultConfiguracoes);
+      await collection.doc('gerais').set(defaultConfiguracoes);
       return defaultConfiguracoes;
     }
     return doc.data() as ConfiguracoesGerais;
-  },
+  }
 
-  async update(data: Partial<ConfiguracoesGerais>): Promise<ConfiguracoesGerais> {
-    const docRef = db.collection(COLLECTION).doc(DOC_ID);
+  async function update(data: Partial<ConfiguracoesGerais>): Promise<ConfiguracoesGerais> {
+    const docRef = collection.doc('gerais');
     const doc = await docRef.get();
 
     if (!doc.exists) {
@@ -40,5 +39,10 @@ export const configuracoesGeraisRepository = {
     await docRef.update(data);
     const updatedDoc = await docRef.get();
     return updatedDoc.data() as ConfiguracoesGerais;
-  },
-};
+  }
+
+  return {
+    get,
+    update,
+  };
+}

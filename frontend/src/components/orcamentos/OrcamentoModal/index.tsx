@@ -59,7 +59,7 @@ interface OrcamentoModalProps {
 }
 
 const emptyItemCompleto: OrcamentoItemCompleto = {
-  etapa: "comercial",
+  etapa: "comercial", // mantido para compatibilidade com dados existentes
   categoriaId: "",
   categoriaNome: "",
   descricao: "",
@@ -98,7 +98,7 @@ export function OrcamentoModal({
   const [limitacoesSelecionadas, setLimitacoesSelecionadas] = useState<
     string[]
   >([]);
-  const [prazoExecucaoServicos, setPrazoExecucaoServicos] = useState(20);
+  const [prazoExecucaoServicos, setPrazoExecucaoServicos] = useState<number | null>(20);
   const [prazoVistoriaBombeiros, setPrazoVistoriaBombeiros] = useState<number | null>(null);
   const [condicaoPagamento, setCondicaoPagamento] = useState<
     "a_vista" | "a_combinar" | "parcelado"
@@ -112,6 +112,7 @@ export function OrcamentoModal({
   >(undefined);
   const [mostrarValoresDetalhados, setMostrarValoresDetalhados] =
     useState(true);
+  const [introducao, setIntroducao] = useState("");
 
   // Estados comuns
   const [observacoes, setObservacoes] = useState("");
@@ -235,7 +236,7 @@ export function OrcamentoModal({
             ? limitacoesIds
             : orcamento.limitacoesSelecionadas || []
         );
-        setPrazoExecucaoServicos(orcamento.prazoExecucaoServicos || 20);
+        setPrazoExecucaoServicos(orcamento.prazoExecucaoServicos ?? null);
         setPrazoVistoriaBombeiros(orcamento.prazoVistoriaBombeiros ?? null);
         setCondicaoPagamento(orcamento.condicaoPagamento || "a_combinar");
         setParcelamentoTexto(orcamento.parcelamentoTexto || "");
@@ -244,6 +245,7 @@ export function OrcamentoModal({
         setMostrarValoresDetalhados(
           orcamento.mostrarValoresDetalhados !== false
         );
+        setIntroducao(orcamento.introducao || "");
 
         // Cliente será carregado pelo useCliente hook
         setMostrarNovoCliente(false);
@@ -272,7 +274,7 @@ export function OrcamentoModal({
             ? limitacoesIds
             : duplicarDe.limitacoesSelecionadas || []
         );
-        setPrazoExecucaoServicos(duplicarDe.prazoExecucaoServicos || 20);
+        setPrazoExecucaoServicos(duplicarDe.prazoExecucaoServicos ?? null);
         setPrazoVistoriaBombeiros(duplicarDe.prazoVistoriaBombeiros ?? null);
         setCondicaoPagamento(duplicarDe.condicaoPagamento || "a_combinar");
         setParcelamentoTexto(duplicarDe.parcelamentoTexto || "");
@@ -281,6 +283,7 @@ export function OrcamentoModal({
         setMostrarValoresDetalhados(
           duplicarDe.mostrarValoresDetalhados !== false
         );
+        setIntroducao(duplicarDe.introducao || "");
 
         // Cliente será carregado pelo useCliente hook
         setMostrarNovoCliente(false);
@@ -300,6 +303,7 @@ export function OrcamentoModal({
         setParcelamentoDados(undefined);
         setDescontoAVista(undefined);
         setMostrarValoresDetalhados(true);
+        setIntroducao("");
         setObservacoes("");
         setConsultor("");
         setContato("");
@@ -622,7 +626,8 @@ export function OrcamentoModal({
       // Envia null explicitamente para garantir que o backend processe
       descontoAVista: descontoParaEnviar,
       mostrarValoresDetalhados,
-      observacoes: observacoes.trim() || undefined,
+      introducao: introducao.trim(),
+      observacoes: observacoes.trim(),
       // Envia string vazia para permitir limpar os campos ao editar
       consultor: consultor.trim(),
       contato: contato.trim(),
@@ -772,6 +777,19 @@ export function OrcamentoModal({
           error={errors.servico}
           onServicoChange={setServicoId}
         />
+
+        {/* Introdução do orçamento (texto livre para o PDF) */}
+        <CompletoSection>
+          <h4>Introdução</h4>
+          <InputGroup>
+            <TextArea
+              placeholder="Texto de introdução que aparecerá na proposta (ex: Apresentamos a proposta técnica e comercial...). Deixe vazio para não exibir no PDF."
+              value={introducao}
+              onChange={(e) => setIntroducao(e.target.value)}
+              rows={3}
+            />
+          </InputGroup>
+        </CompletoSection>
 
         {/* Checkbox para mostrar valores detalhados no PDF */}
         <CompletoSection>

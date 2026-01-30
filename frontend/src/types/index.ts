@@ -107,6 +107,7 @@ export interface Orcamento {
   parcelamentoDados?: ParcelamentoDados; // Dados estruturados do parcelamento para o PDF
   descontoAVista?: DescontoAVistaDados; // Dados de desconto para pagamento à vista
   mostrarValoresDetalhados?: boolean; // Se true, mostra tabela de MdO/Material no PDF; se false, só valor total
+  introducao?: string; // Texto de introdução personalizado para o PDF
   // Totais
   valorTotal: number;
   valorTotalMaoDeObra?: number;
@@ -294,13 +295,14 @@ export interface OrcamentoSaveData {
   servicoDescricao?: string;
   itensCompleto?: OrcamentoItemCompleto[];
   limitacoesSelecionadas?: string[];
-  prazoExecucaoServicos?: number;
+  prazoExecucaoServicos?: number | null;
   prazoVistoriaBombeiros?: number | null;
   condicaoPagamento?: "a_vista" | "a_combinar" | "parcelado";
   parcelamentoTexto?: string;
   parcelamentoDados?: ParcelamentoDados;
   descontoAVista?: DescontoAVistaDados | null;
   mostrarValoresDetalhados?: boolean;
+  introducao?: string;
   // Campos opcionais compartilhados
   observacoes?: string;
   consultor?: string;

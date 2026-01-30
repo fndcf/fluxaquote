@@ -1,30 +1,32 @@
-import { palavraChaveRepository } from '../repositories/palavraChaveRepository';
+import { createPalavraChaveRepository } from '../repositories/palavraChaveRepository';
 import { PalavraChave } from '../models';
 import { AppError, ValidationError, NotFoundError } from '../utils/errors';
 
-export const palavraChaveService = {
-  async listar(): Promise<PalavraChave[]> {
-    return palavraChaveRepository.findAll();
-  },
+export function createPalavraChaveService(tenantId: string) {
+  const palavraChaveRepo = createPalavraChaveRepository(tenantId);
 
-  async listarAtivas(): Promise<PalavraChave[]> {
-    return palavraChaveRepository.findAtivas();
-  },
+  const listar = async (): Promise<PalavraChave[]> => {
+    return palavraChaveRepo.findAll();
+  };
 
-  async buscarPorId(id: string): Promise<PalavraChave> {
+  const listarAtivas = async (): Promise<PalavraChave[]> => {
+    return palavraChaveRepo.findAtivas();
+  };
+
+  const buscarPorId = async (id: string): Promise<PalavraChave> => {
     if (!id) {
       throw new ValidationError('ID é obrigatório');
     }
 
-    const palavraChave = await palavraChaveRepository.findById(id);
+    const palavraChave = await palavraChaveRepo.findById(id);
     if (!palavraChave) {
       throw new NotFoundError('Palavra-chave não encontrada');
     }
 
     return palavraChave;
-  },
+  };
 
-  async criar(data: { palavra: string; prazoDias: number; ativo?: boolean }): Promise<PalavraChave> {
+  const criar = async (data: { palavra: string; prazoDias: number; ativo?: boolean }): Promise<PalavraChave> => {
     // Validações
     if (!data.palavra || data.palavra.trim().length < 2) {
       throw new ValidationError('Palavra-chave deve ter pelo menos 2 caracteres');
@@ -39,28 +41,28 @@ export const palavraChaveService = {
     }
 
     // Verificar duplicidade
-    const existente = await palavraChaveRepository.findByPalavra(data.palavra.trim());
+    const existente = await palavraChaveRepo.findByPalavra(data.palavra.trim());
     if (existente) {
       throw new AppError('Já existe uma palavra-chave com este termo', 409);
     }
 
-    return palavraChaveRepository.create({
+    return palavraChaveRepo.create({
       palavra: data.palavra.trim(),
       prazoDias: data.prazoDias,
       ativo: data.ativo !== undefined ? data.ativo : true,
     });
-  },
+  };
 
-  async atualizar(
+  const atualizar = async (
     id: string,
     data: { palavra?: string; prazoDias?: number; ativo?: boolean }
-  ): Promise<PalavraChave> {
+  ): Promise<PalavraChave> => {
     if (!id) {
       throw new ValidationError('ID é obrigatório');
     }
 
     // Verificar se existe
-    const existente = await palavraChaveRepository.findById(id);
+    const existente = await palavraChaveRepo.findById(id);
     if (!existente) {
       throw new NotFoundError('Palavra-chave não encontrada');
     }
@@ -73,7 +75,7 @@ export const palavraChaveService = {
 
       // Verificar duplicidade se estiver alterando a palavra
       if (data.palavra.toLowerCase() !== existente.palavra.toLowerCase()) {
-        const duplicada = await palavraChaveRepository.findByPalavra(data.palavra.trim());
+        const duplicada = await palavraChaveRepo.findByPalavra(data.palavra.trim());
         if (duplicada) {
           throw new AppError('Já existe uma palavra-chave com este termo', 409);
         }
@@ -89,7 +91,7 @@ export const palavraChaveService = {
       }
     }
 
-    const updated = await palavraChaveRepository.update(id, {
+    const updated = await palavraChaveRepo.update(id, {
       ...(data.palavra !== undefined && { palavra: data.palavra.trim() }),
       ...(data.prazoDias !== undefined && { prazoDias: data.prazoDias }),
       ...(data.ativo !== undefined && { ativo: data.ativo }),
@@ -100,26 +102,36 @@ export const palavraChaveService = {
     }
 
     return updated;
-  },
+  };
 
-  async excluir(id: string): Promise<void> {
+  const excluir = async (id: string): Promise<void> => {
     if (!id) {
       throw new ValidationError('ID é obrigatório');
     }
 
-    const existente = await palavraChaveRepository.findById(id);
+    const existente = await palavraChaveRepo.findById(id);
     if (!existente) {
       throw new NotFoundError('Palavra-chave não encontrada');
     }
 
-    const deleted = await palavraChaveRepository.delete(id);
+    const deleted = await palavraChaveRepo.delete(id);
     if (!deleted) {
       throw new AppError('Erro ao excluir palavra-chave', 500);
     }
-  },
+  };
 
-  async toggleAtivo(id: string): Promise<PalavraChave> {
-    const existente = await this.buscarPorId(id);
-    return this.atualizar(id, { ativo: !existente.ativo });
-  },
-};
+  const toggleAtivo = async (id: string): Promise<PalavraChave> => {
+    const existente = await buscarPorId(id);
+    return atualizar(id, { ativo: !existente.ativo });
+  };
+
+  return {
+    listar,
+    listarAtivas,
+    buscarPorId,
+    criar,
+    atualizar,
+    excluir,
+    toggleAtivo,
+  };
+}

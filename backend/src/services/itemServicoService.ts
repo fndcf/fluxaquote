@@ -1,6 +1,6 @@
-import { itemServicoRepository } from '../repositories/itemServicoRepository';
-import { categoriaItemRepository } from '../repositories/categoriaItemRepository';
-import { historicoValoresRepository } from '../repositories/historicoValoresRepository';
+import { createItemServicoRepository } from '../repositories/itemServicoRepository';
+import { createCategoriaItemRepository } from '../repositories/categoriaItemRepository';
+import { createHistoricoValoresRepository } from '../repositories/historicoValoresRepository';
 import { ItemServico } from '../models';
 import { AppError, ValidationError, NotFoundError } from '../utils/errors';
 
@@ -29,77 +29,81 @@ function valoresMudaram(
   return false;
 }
 
-export const itemServicoService = {
-  async listar(): Promise<ItemServico[]> {
-    return itemServicoRepository.findAll();
-  },
+export function createItemServicoService(tenantId: string) {
+  const itemServicoRepo = createItemServicoRepository(tenantId);
+  const categoriaItemRepo = createCategoriaItemRepository(tenantId);
+  const historicoValoresRepo = createHistoricoValoresRepository(tenantId);
 
-  async listarPorCategoria(categoriaId: string): Promise<ItemServico[]> {
+  const listar = async (): Promise<ItemServico[]> => {
+    return itemServicoRepo.findAll();
+  };
+
+  const listarPorCategoria = async (categoriaId: string): Promise<ItemServico[]> => {
     if (!categoriaId) {
       throw new ValidationError('ID da categoria é obrigatório');
     }
 
-    const categoria = await categoriaItemRepository.findById(categoriaId);
+    const categoria = await categoriaItemRepo.findById(categoriaId);
     if (!categoria) {
       throw new NotFoundError('Categoria não encontrada');
     }
 
-    return itemServicoRepository.findByCategoria(categoriaId);
-  },
+    return itemServicoRepo.findByCategoria(categoriaId);
+  };
 
-  async listarAtivosPorCategoria(categoriaId: string): Promise<ItemServico[]> {
+  const listarAtivosPorCategoria = async (categoriaId: string): Promise<ItemServico[]> => {
     if (!categoriaId) {
       throw new ValidationError('ID da categoria é obrigatório');
     }
 
-    return itemServicoRepository.findAtivosByCategoria(categoriaId);
-  },
+    return itemServicoRepo.findAtivosByCategoria(categoriaId);
+  };
 
-  async listarAtivosPorCategoriaPaginado(
+  const listarAtivosPorCategoriaPaginado = async (
     categoriaId: string,
     limit: number = 10,
     cursor?: string,
     search?: string
-  ): Promise<{ itens: ItemServico[]; nextCursor?: string; hasMore: boolean; total: number }> {
+  ): Promise<{ itens: ItemServico[]; nextCursor?: string; hasMore: boolean; total: number }> => {
     if (!categoriaId) {
       throw new ValidationError('ID da categoria é obrigatório');
     }
 
-    return itemServicoRepository.findAtivosByCategoriaPaginado(categoriaId, limit, cursor, search);
-  },
+    return itemServicoRepo.findAtivosByCategoriaPaginado(categoriaId, limit, cursor, search);
+  };
 
-  async listarPorCategoriaPaginado(
+  const listarPorCategoriaPaginado = async (
     categoriaId: string,
     limit: number = 10,
     cursor?: string,
     search?: string
-  ): Promise<{ itens: ItemServico[]; nextCursor?: string; hasMore: boolean; total: number }> {
+  ): Promise<{ itens: ItemServico[]; nextCursor?: string; hasMore: boolean; total: number }> => {
     if (!categoriaId) {
       throw new ValidationError('ID da categoria é obrigatório');
     }
 
-    const categoria = await categoriaItemRepository.findById(categoriaId);
+    const categoria = await categoriaItemRepo.findById(categoriaId);
     if (!categoria) {
       throw new NotFoundError('Categoria não encontrada');
     }
 
-    return itemServicoRepository.findByCategoriaPaginado(categoriaId, limit, cursor, search);
-  },
+    return itemServicoRepo.findByCategoriaPaginado(categoriaId, limit, cursor, search);
+  };
 
-  async buscarPorId(id: string): Promise<ItemServico> {
+  const buscarPorId = async (id: string): Promise<ItemServico> => {
     if (!id) {
       throw new ValidationError('ID é obrigatório');
     }
 
-    const item = await itemServicoRepository.findById(id);
+    const item = await itemServicoRepo.findById(id);
     if (!item) {
       throw new NotFoundError('Item de serviço não encontrado');
     }
 
     return item;
-  },
+  };
 
-  async criar(data: {
+  const criar = async (data: {
     categoriaId: string;
     descricao: string;
     unidade: string;
@@ -108,7 +112,7 @@ export const itemServicoService = {
     valorMaoDeObraUnitario?: number;
     valorCusto?: number;
     valorMaoDeObraCusto?: number;
-  }): Promise<ItemServico> {
+  }): Promise<ItemServico> => {
     if (!data.categoriaId) {
       throw new ValidationError('ID da categoria é obrigatório');
     }
@@ -121,18 +125,18 @@ export const itemServicoService = {
       throw new ValidationError('Unidade é obrigatória');
     }
 
-    const categoria = await categoriaItemRepository.findById(data.categoriaId);
+    const categoria = await categoriaItemRepo.findById(data.categoriaId);
     if (!categoria) {
       throw new NotFoundError('Categoria não encontrada');
     }
 
     // Verificar se já existe um item com a mesma descrição nesta categoria
-    const existente = await itemServicoRepository.findByDescricaoInCategoria(data.descricao.trim(), data.categoriaId);
+    const existente = await itemServicoRepo.findByDescricaoInCategoria(data.descricao.trim(), data.categoriaId);
     if (existente) {
       throw new AppError('Já existe um item com esta descrição nesta categoria', 409);
     }
 
-    const ordem = await itemServicoRepository.getNextOrdem(data.categoriaId);
+    const ordem = await itemServicoRepo.getNextOrdem(data.categoriaId);
 
     // Montar objeto apenas com campos definidos (Firestore não aceita undefined)
     const itemData: Omit<ItemServico, 'id' | 'createdAt'> = {
@@ -149,7 +153,7 @@ export const itemServicoService = {
     if (data.valorCusto !== undefined) itemData.valorCusto = data.valorCusto;
     if (data.valorMaoDeObraCusto !== undefined) itemData.valorMaoDeObraCusto = data.valorMaoDeObraCusto;
 
-    const created = await itemServicoRepository.create(itemData);
+    const created = await itemServicoRepo.create(itemData);
 
     // Salvar primeiro registro de histórico se houver valores definidos
     const temValores =
@@ -159,7 +163,7 @@ export const itemServicoService = {
       data.valorMaoDeObraCusto !== undefined;
 
     if (temValores && created.id) {
-      await historicoValoresRepository.salvarHistoricoItem({
+      await historicoValoresRepo.salvarHistoricoItem({
         itemServicoId: created.id,
         descricao: created.descricao,
         dataVigencia: new Date(),
@@ -171,9 +175,9 @@ export const itemServicoService = {
     }
 
     return created;
-  },
+  };
 
-  async atualizar(
+  const atualizar = async (
     id: string,
     data: {
       descricao?: string;
@@ -185,12 +189,12 @@ export const itemServicoService = {
       valorCusto?: number;
       valorMaoDeObraCusto?: number;
     }
-  ): Promise<ItemServico> {
+  ): Promise<ItemServico> => {
     if (!id) {
       throw new ValidationError('ID é obrigatório');
     }
 
-    const existente = await itemServicoRepository.findById(id);
+    const existente = await itemServicoRepo.findById(id);
     if (!existente) {
       throw new NotFoundError('Item de serviço não encontrado');
     }
@@ -205,7 +209,7 @@ export const itemServicoService = {
 
     // Verificar se a nova descrição já existe em outro item da mesma categoria
     if (data.descricao !== undefined) {
-      const duplicado = await itemServicoRepository.findByDescricaoInCategoria(data.descricao.trim(), existente.categoriaId);
+      const duplicado = await itemServicoRepo.findByDescricaoInCategoria(data.descricao.trim(), existente.categoriaId);
       if (duplicado && duplicado.id !== id) {
         throw new AppError('Já existe um item com esta descrição nesta categoria', 409);
       }
@@ -224,14 +228,14 @@ export const itemServicoService = {
     // Verificar se os valores mudaram para salvar histórico
     const deveSalvarHistorico = valoresMudaram(existente, data);
 
-    const updated = await itemServicoRepository.update(id, updateData);
+    const updated = await itemServicoRepo.update(id, updateData);
     if (!updated) {
       throw new Error('Erro ao atualizar item de serviço');
     }
 
     // Salvar histórico se os valores mudaram
     if (deveSalvarHistorico) {
-      await historicoValoresRepository.salvarHistoricoItem({
+      await historicoValoresRepo.salvarHistoricoItem({
         itemServicoId: id,
         descricao: updated.descricao,
         dataVigencia: new Date(),
@@ -243,23 +247,36 @@ export const itemServicoService = {
     }
 
     return updated;
-  },
+  };
 
-  async excluir(id: string): Promise<void> {
+  const excluir = async (id: string): Promise<void> => {
     if (!id) {
       throw new ValidationError('ID é obrigatório');
     }
 
-    const existente = await itemServicoRepository.findById(id);
+    const existente = await itemServicoRepo.findById(id);
     if (!existente) {
       throw new NotFoundError('Item de serviço não encontrado');
     }
 
-    await itemServicoRepository.delete(id);
-  },
+    await itemServicoRepo.delete(id);
+  };
 
-  async toggleAtivo(id: string): Promise<ItemServico> {
-    const existente = await this.buscarPorId(id);
-    return this.atualizar(id, { ativo: !existente.ativo });
-  },
-};
+  const toggleAtivo = async (id: string): Promise<ItemServico> => {
+    const existente = await buscarPorId(id);
+    return atualizar(id, { ativo: !existente.ativo });
+  };
+
+  return {
+    listar,
+    listarPorCategoria,
+    listarAtivosPorCategoria,
+    listarAtivosPorCategoriaPaginado,
+    listarPorCategoriaPaginado,
+    buscarPorId,
+    criar,
+    atualizar,
+    excluir,
+    toggleAtivo,
+  };
+}

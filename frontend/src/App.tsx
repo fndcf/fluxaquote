@@ -5,6 +5,8 @@ import { GlobalStyles } from './styles/GlobalStyles';
 import { PrivateRoute } from './components/auth/PrivateRoute';
 import { AdminLayout } from './components/layout/AdminLayout';
 import { Login } from './pages/Login';
+import { Home } from './pages/Home';
+import { Register } from './pages/Register';
 import { Dashboard } from './pages/Dashboard';
 import { Clientes } from './pages/Clientes';
 import { Orcamentos } from './pages/Orcamentos';
@@ -28,17 +30,22 @@ function App() {
         <GlobalStyles />
         <BrowserRouter>
           <Routes>
+            {/* Rotas públicas */}
+            <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/registro" element={<Register />} />
 
+            {/* Rotas tenant-scoped */}
             <Route
-              path="/"
+              path="/:slug"
               element={
                 <PrivateRoute>
                   <AdminLayout />
                 </PrivateRoute>
               }
             >
-              <Route index element={<Dashboard />} />
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<Dashboard />} />
               <Route path="clientes" element={<Clientes />} />
               <Route path="orcamentos" element={<Orcamentos />} />
               <Route path="relatorios" element={<Relatorios />} />

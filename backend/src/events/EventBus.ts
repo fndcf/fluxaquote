@@ -17,18 +17,21 @@ interface EventMap {
 }
 
 export interface OrcamentoStatusChangedEvent {
+  tenantId: string;
   orcamentoId: string;
   statusAnterior: string;
   statusNovo: string;
 }
 
 export interface OrcamentoCreatedEvent {
+  tenantId: string;
   orcamentoId: string;
   clienteId: string;
   tipo: string;
 }
 
 export interface OrcamentoDeletedEvent {
+  tenantId: string;
   orcamentoId: string;
 }
 

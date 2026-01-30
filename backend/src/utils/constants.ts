@@ -13,7 +13,7 @@ export const EMPRESA = {
 // Validade padrão do orçamento (em dias)
 export const VALIDADE_ORCAMENTO_DIAS = 30;
 
-// Coleções do Firestore
+// Coleções do Firestore (scoped por tenant)
 export const COLLECTIONS = {
   USUARIOS: 'usuarios',
   CLIENTES: 'clientes',
@@ -22,6 +22,19 @@ export const COLLECTIONS = {
   CONFIGURACOES: 'configuracoes',
   PALAVRAS_CHAVE: 'palavrasChave',
   CONTADORES: 'contadores',
+  SERVICOS: 'servicos',
+  CATEGORIAS_ITEM: 'categoriasItem',
+  ITENS_SERVICO: 'itensServico',
+  LIMITACOES: 'limitacoes',
+  HISTORICO_VALORES: 'historicoValoresItens',
+  HISTORICO_CONFIGURACOES: 'historicoConfiguracoes',
+};
+
+// Coleções globais (não scoped por tenant)
+export const GLOBAL_COLLECTIONS = {
+  TENANTS: 'tenants',
+  SLUGS: 'slugs',
+  USER_TENANTS: 'userTenants',
 };
 
 // Documentos de contadores

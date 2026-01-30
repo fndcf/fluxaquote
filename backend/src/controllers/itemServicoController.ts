@@ -1,10 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
-import { itemServicoService } from '../services/itemServicoService';
+import { createItemServicoService } from '../services/itemServicoService';
+import { AuthRequest } from '../middlewares/authMiddleware';
+import { getTenantId } from '../utils/requestContext';
 
 export const itemServicoController = {
   async listar(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const itens = await itemServicoService.listar();
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createItemServicoService(tenantId);
+      const itens = await service.listar();
       res.json(itens);
     } catch (error) {
       next(error);
@@ -13,8 +17,10 @@ export const itemServicoController = {
 
   async listarPorCategoria(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createItemServicoService(tenantId);
       const { categoriaId } = req.params;
-      const itens = await itemServicoService.listarPorCategoria(categoriaId);
+      const itens = await service.listarPorCategoria(categoriaId);
       res.json(itens);
     } catch (error) {
       next(error);
@@ -23,8 +29,10 @@ export const itemServicoController = {
 
   async listarAtivosPorCategoria(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createItemServicoService(tenantId);
       const { categoriaId } = req.params;
-      const itens = await itemServicoService.listarAtivosPorCategoria(categoriaId);
+      const itens = await service.listarAtivosPorCategoria(categoriaId);
       res.json(itens);
     } catch (error) {
       next(error);
@@ -33,9 +41,11 @@ export const itemServicoController = {
 
   async listarAtivosPorCategoriaPaginado(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createItemServicoService(tenantId);
       const { categoriaId } = req.params;
       const { limit = '10', cursor, search } = req.query;
-      const result = await itemServicoService.listarAtivosPorCategoriaPaginado(
+      const result = await service.listarAtivosPorCategoriaPaginado(
         categoriaId,
         parseInt(limit as string, 10),
         cursor as string | undefined,
@@ -49,9 +59,11 @@ export const itemServicoController = {
 
   async listarPorCategoriaPaginado(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createItemServicoService(tenantId);
       const { categoriaId } = req.params;
       const { limit = '10', cursor, search } = req.query;
-      const result = await itemServicoService.listarPorCategoriaPaginado(
+      const result = await service.listarPorCategoriaPaginado(
         categoriaId,
         parseInt(limit as string, 10),
         cursor as string | undefined,
@@ -65,8 +77,10 @@ export const itemServicoController = {
 
   async buscarPorId(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createItemServicoService(tenantId);
       const { id } = req.params;
-      const item = await itemServicoService.buscarPorId(id);
+      const item = await service.buscarPorId(id);
       res.json(item);
     } catch (error) {
       next(error);
@@ -75,8 +89,10 @@ export const itemServicoController = {
 
   async criar(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createItemServicoService(tenantId);
       const { categoriaId, descricao, unidade, ativo, valorUnitario, valorMaoDeObraUnitario, valorCusto, valorMaoDeObraCusto } = req.body;
-      const item = await itemServicoService.criar({
+      const item = await service.criar({
         categoriaId,
         descricao,
         unidade,
@@ -94,9 +110,11 @@ export const itemServicoController = {
 
   async atualizar(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createItemServicoService(tenantId);
       const { id } = req.params;
       const { descricao, unidade, ativo, ordem, valorUnitario, valorMaoDeObraUnitario, valorCusto, valorMaoDeObraCusto } = req.body;
-      const item = await itemServicoService.atualizar(id, {
+      const item = await service.atualizar(id, {
         descricao,
         unidade,
         ativo,
@@ -114,8 +132,10 @@ export const itemServicoController = {
 
   async excluir(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createItemServicoService(tenantId);
       const { id } = req.params;
-      await itemServicoService.excluir(id);
+      await service.excluir(id);
       res.status(204).send();
     } catch (error) {
       next(error);
@@ -124,8 +144,10 @@ export const itemServicoController = {
 
   async toggleAtivo(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createItemServicoService(tenantId);
       const { id } = req.params;
-      const item = await itemServicoService.toggleAtivo(id);
+      const item = await service.toggleAtivo(id);
       res.json(item);
     } catch (error) {
       next(error);

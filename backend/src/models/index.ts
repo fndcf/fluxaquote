@@ -103,6 +103,7 @@ export interface Orcamento {
   parcelamentoDados?: ParcelamentoDados | null; // Dados estruturados do parcelamento para o PDF
   descontoAVista?: DescontoAVistaDados | null; // Dados de desconto para pagamento à vista
   mostrarValoresDetalhados?: boolean; // Se true, mostra tabela de MdO/Material no PDF; se false, só valor total
+  introducao?: string; // Texto de introdução personalizado para o PDF
   // Totais
   valorTotal: number;
   valorTotalMaoDeObra?: number;
@@ -241,6 +242,28 @@ export interface HistoricoConfiguracao {
   impostoMaterial: number; // Percentual de imposto sobre material
   impostoServico: number; // Percentual de imposto sobre serviço
   createdAt: Date; // Quando o registro foi criado
+}
+
+// Interface do Tenant (Multi-tenancy)
+export interface Tenant {
+  id?: string;
+  slug: string;
+  nomeEmpresa: string;
+  email: string;
+  telefone: string;
+  ownerId: string;
+  plano: string;
+  ativo: boolean;
+  createdAt: Date;
+  updatedAt?: Date;
+}
+
+// Interface de mapeamento Usuário → Tenant
+export interface UserTenant {
+  tenantId: string;
+  slug: string;
+  role: string;
+  createdAt: Date;
 }
 
 // Interface para estatísticas do Dashboard (dados agregados)

@@ -509,3 +509,65 @@ export const ItensTotalCount = styled.div`
   border-top: 1px solid var(--border);
   margin-top: 8px;
 `;
+
+export const LogoUploadArea = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 20px;
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  background: var(--background);
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+`;
+
+export const LogoPreview = styled.div`
+  flex-shrink: 0;
+  width: 200px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+
+  img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+
+  .placeholder {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    text-align: center;
+  }
+`;
+
+export const LogoActions = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  .logo-info {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+  }
+
+  .logo-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  input[type="file"] {
+    display: none;
+  }
+`;

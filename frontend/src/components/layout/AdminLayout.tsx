@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import styled from "styled-components";
 import { useAuth } from "../../contexts/AuthContext";
+import { useTenant } from "../../hooks/useTenant";
+import { useConfiguracoesGerais } from "../../hooks/useConfiguracoesGerais";
 import { Modal, Button } from "../ui";
 import { NotificacaoDropdown } from "../notificacoes/NotificacaoDropdown";
 
@@ -32,6 +34,9 @@ const Header = styled.header`
 `;
 
 const Logo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
   color: var(--primary);
   font-size: 1.5rem;
   font-weight: bold;
@@ -39,6 +44,18 @@ const Logo = styled.div`
 
   @media (max-width: 768px) {
     font-size: 1.25rem;
+    gap: 8px;
+  }
+`;
+
+const LogoImage = styled.img`
+  height: 40px;
+  max-width: 120px;
+  object-fit: contain;
+
+  @media (max-width: 768px) {
+    height: 32px;
+    max-width: 100px;
   }
 `;
 
@@ -170,41 +187,47 @@ const LogoutModalButtons = styled.div`
 
 export function AdminLayout() {
   const { user, signOut } = useAuth();
+  const { nomeEmpresa, buildPath } = useTenant();
+  const { data: configuracoes } = useConfiguracoesGerais();
   const navigate = useNavigate();
   const location = useLocation();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  const logoSrc = configuracoes?.logoUrl || "/fluxaquote-logo.png";
 
   const handleLogout = async () => {
     await signOut();
     navigate("/login");
   };
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => location.pathname === buildPath(path);
 
   return (
     <Container>
       <Header>
-        <Logo onClick={() => navigate("/")}>FLAMA</Logo>
+        <Logo onClick={() => navigate(buildPath("/dashboard"))}>
+          <LogoImage src={logoSrc} alt={nomeEmpresa || "FluxaQuote"} />
+        </Logo>
 
         <Nav>
-          <NavButton $active={isActive("/")} onClick={() => navigate("/")}>
+          <NavButton $active={isActive("/dashboard")} onClick={() => navigate(buildPath("/dashboard"))}>
             Painel
           </NavButton>
           <NavButton
             $active={isActive("/clientes")}
-            onClick={() => navigate("/clientes")}
+            onClick={() => navigate(buildPath("/clientes"))}
           >
             Clientes
           </NavButton>
           <NavButton
             $active={isActive("/orcamentos")}
-            onClick={() => navigate("/orcamentos")}
+            onClick={() => navigate(buildPath("/orcamentos"))}
           >
             Orçamentos
           </NavButton>
           <NavButton
             $active={isActive("/relatorios")}
-            onClick={() => navigate("/relatorios")}
+            onClick={() => navigate(buildPath("/relatorios"))}
           >
             Relatórios
           </NavButton>
@@ -214,7 +237,7 @@ export function AdminLayout() {
           <NotificacaoDropdown />
 
           <IconButton
-            onClick={() => navigate("/configuracoes")}
+            onClick={() => navigate(buildPath("/configuracoes"))}
             title="Configurações"
           >
             ⚙️

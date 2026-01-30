@@ -1,9 +1,26 @@
 import { Request, Response, NextFunction } from 'express';
 import { itemServicoController } from '../../controllers/itemServicoController';
-import { itemServicoService } from '../../services/itemServicoService';
+import { createItemServicoService } from '../../services/itemServicoService';
 
 // Mock do itemServicoService
 jest.mock('../../services/itemServicoService');
+jest.mock('../../utils/requestContext', () => ({
+  getTenantId: jest.fn().mockReturnValue('test-tenant-id'),
+}));
+
+const mockService = {
+  listar: jest.fn(),
+  listarPorCategoria: jest.fn(),
+  listarAtivosPorCategoria: jest.fn(),
+  listarAtivosPorCategoriaPaginado: jest.fn(),
+  listarPorCategoriaPaginado: jest.fn(),
+  buscarPorId: jest.fn(),
+  criar: jest.fn(),
+  atualizar: jest.fn(),
+  excluir: jest.fn(),
+  toggleAtivo: jest.fn(),
+};
+(createItemServicoService as jest.Mock).mockReturnValue(mockService);
 
 describe('itemServicoController', () => {
   let mockReq: Partial<Request>;
@@ -32,6 +49,7 @@ describe('itemServicoController', () => {
 
     mockNext = jest.fn();
     jest.clearAllMocks();
+    (createItemServicoService as jest.Mock).mockReturnValue(mockService);
   });
 
   describe('listar', () => {
@@ -40,7 +58,7 @@ describe('itemServicoController', () => {
         { id: '1', categoriaId: 'cat1', descricao: 'Item 1', unidade: 'UN', ativo: true, ordem: 1 },
         { id: '2', categoriaId: 'cat1', descricao: 'Item 2', unidade: 'UN', ativo: true, ordem: 2 },
       ];
-      (itemServicoService.listar as jest.Mock).mockResolvedValue(itens);
+      mockService.listar.mockResolvedValue(itens);
 
       await itemServicoController.listar(mockReq as Request, mockRes as Response, mockNext);
 
@@ -49,7 +67,7 @@ describe('itemServicoController', () => {
 
     it('deve chamar next com erro quando falhar', async () => {
       const error = new Error('Erro no banco');
-      (itemServicoService.listar as jest.Mock).mockRejectedValue(error);
+      mockService.listar.mockRejectedValue(error);
 
       await itemServicoController.listar(mockReq as Request, mockRes as Response, mockNext);
 
@@ -61,18 +79,18 @@ describe('itemServicoController', () => {
     it('deve retornar lista de itens por categoria com sucesso', async () => {
       const itens = [{ id: '1', categoriaId: 'cat1', descricao: 'Item 1', unidade: 'UN', ativo: true, ordem: 1 }];
       mockReq.params = { categoriaId: 'cat1' };
-      (itemServicoService.listarPorCategoria as jest.Mock).mockResolvedValue(itens);
+      mockService.listarPorCategoria.mockResolvedValue(itens);
 
       await itemServicoController.listarPorCategoria(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(itemServicoService.listarPorCategoria).toHaveBeenCalledWith('cat1');
+      expect(mockService.listarPorCategoria).toHaveBeenCalledWith('cat1');
       expect(jsonMock).toHaveBeenCalledWith(itens);
     });
 
     it('deve chamar next com erro quando falhar', async () => {
       mockReq.params = { categoriaId: 'cat1' };
       const error = new Error('Categoria não encontrada');
-      (itemServicoService.listarPorCategoria as jest.Mock).mockRejectedValue(error);
+      mockService.listarPorCategoria.mockRejectedValue(error);
 
       await itemServicoController.listarPorCategoria(mockReq as Request, mockRes as Response, mockNext);
 
@@ -84,18 +102,18 @@ describe('itemServicoController', () => {
     it('deve retornar lista de itens ativos por categoria com sucesso', async () => {
       const itens = [{ id: '1', categoriaId: 'cat1', descricao: 'Item 1', unidade: 'UN', ativo: true, ordem: 1 }];
       mockReq.params = { categoriaId: 'cat1' };
-      (itemServicoService.listarAtivosPorCategoria as jest.Mock).mockResolvedValue(itens);
+      mockService.listarAtivosPorCategoria.mockResolvedValue(itens);
 
       await itemServicoController.listarAtivosPorCategoria(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(itemServicoService.listarAtivosPorCategoria).toHaveBeenCalledWith('cat1');
+      expect(mockService.listarAtivosPorCategoria).toHaveBeenCalledWith('cat1');
       expect(jsonMock).toHaveBeenCalledWith(itens);
     });
 
     it('deve chamar next com erro quando falhar', async () => {
       mockReq.params = { categoriaId: 'cat1' };
       const error = new Error('Erro no banco');
-      (itemServicoService.listarAtivosPorCategoria as jest.Mock).mockRejectedValue(error);
+      mockService.listarAtivosPorCategoria.mockRejectedValue(error);
 
       await itemServicoController.listarAtivosPorCategoria(mockReq as Request, mockRes as Response, mockNext);
 
@@ -112,11 +130,11 @@ describe('itemServicoController', () => {
       };
       mockReq.params = { categoriaId: 'cat1' };
       mockReq.query = {};
-      (itemServicoService.listarAtivosPorCategoriaPaginado as jest.Mock).mockResolvedValue(result);
+      mockService.listarAtivosPorCategoriaPaginado.mockResolvedValue(result);
 
       await itemServicoController.listarAtivosPorCategoriaPaginado(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(itemServicoService.listarAtivosPorCategoriaPaginado).toHaveBeenCalledWith('cat1', 10, undefined, undefined);
+      expect(mockService.listarAtivosPorCategoriaPaginado).toHaveBeenCalledWith('cat1', 10, undefined, undefined);
       expect(jsonMock).toHaveBeenCalledWith(result);
     });
 
@@ -128,11 +146,11 @@ describe('itemServicoController', () => {
       };
       mockReq.params = { categoriaId: 'cat1' };
       mockReq.query = { limit: '5', cursor: 'cursor-abc', search: 'teste' };
-      (itemServicoService.listarAtivosPorCategoriaPaginado as jest.Mock).mockResolvedValue(result);
+      mockService.listarAtivosPorCategoriaPaginado.mockResolvedValue(result);
 
       await itemServicoController.listarAtivosPorCategoriaPaginado(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(itemServicoService.listarAtivosPorCategoriaPaginado).toHaveBeenCalledWith('cat1', 5, 'cursor-abc', 'teste');
+      expect(mockService.listarAtivosPorCategoriaPaginado).toHaveBeenCalledWith('cat1', 5, 'cursor-abc', 'teste');
       expect(jsonMock).toHaveBeenCalledWith(result);
     });
 
@@ -140,7 +158,7 @@ describe('itemServicoController', () => {
       mockReq.params = { categoriaId: 'cat1' };
       mockReq.query = {};
       const error = new Error('Erro no banco');
-      (itemServicoService.listarAtivosPorCategoriaPaginado as jest.Mock).mockRejectedValue(error);
+      mockService.listarAtivosPorCategoriaPaginado.mockRejectedValue(error);
 
       await itemServicoController.listarAtivosPorCategoriaPaginado(mockReq as Request, mockRes as Response, mockNext);
 
@@ -160,11 +178,11 @@ describe('itemServicoController', () => {
       };
       mockReq.params = { categoriaId: 'cat1' };
       mockReq.query = {};
-      (itemServicoService.listarPorCategoriaPaginado as jest.Mock).mockResolvedValue(result);
+      mockService.listarPorCategoriaPaginado.mockResolvedValue(result);
 
       await itemServicoController.listarPorCategoriaPaginado(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(itemServicoService.listarPorCategoriaPaginado).toHaveBeenCalledWith('cat1', 10, undefined, undefined);
+      expect(mockService.listarPorCategoriaPaginado).toHaveBeenCalledWith('cat1', 10, undefined, undefined);
       expect(jsonMock).toHaveBeenCalledWith(result);
     });
 
@@ -176,11 +194,11 @@ describe('itemServicoController', () => {
       };
       mockReq.params = { categoriaId: 'cat1' };
       mockReq.query = { limit: '20', cursor: 'prev-cursor', search: 'busca' };
-      (itemServicoService.listarPorCategoriaPaginado as jest.Mock).mockResolvedValue(result);
+      mockService.listarPorCategoriaPaginado.mockResolvedValue(result);
 
       await itemServicoController.listarPorCategoriaPaginado(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(itemServicoService.listarPorCategoriaPaginado).toHaveBeenCalledWith('cat1', 20, 'prev-cursor', 'busca');
+      expect(mockService.listarPorCategoriaPaginado).toHaveBeenCalledWith('cat1', 20, 'prev-cursor', 'busca');
       expect(jsonMock).toHaveBeenCalledWith(result);
     });
 
@@ -188,7 +206,7 @@ describe('itemServicoController', () => {
       mockReq.params = { categoriaId: 'cat1' };
       mockReq.query = {};
       const error = new Error('Erro no banco');
-      (itemServicoService.listarPorCategoriaPaginado as jest.Mock).mockRejectedValue(error);
+      mockService.listarPorCategoriaPaginado.mockRejectedValue(error);
 
       await itemServicoController.listarPorCategoriaPaginado(mockReq as Request, mockRes as Response, mockNext);
 
@@ -200,7 +218,7 @@ describe('itemServicoController', () => {
     it('deve retornar item por ID com sucesso', async () => {
       const item = { id: '1', categoriaId: 'cat1', descricao: 'Item 1', unidade: 'UN', ativo: true, ordem: 1 };
       mockReq.params = { id: '1' };
-      (itemServicoService.buscarPorId as jest.Mock).mockResolvedValue(item);
+      mockService.buscarPorId.mockResolvedValue(item);
 
       await itemServicoController.buscarPorId(mockReq as Request, mockRes as Response, mockNext);
 
@@ -210,7 +228,7 @@ describe('itemServicoController', () => {
     it('deve chamar next com erro quando não encontrar', async () => {
       mockReq.params = { id: 'inexistente' };
       const error = new Error('Item não encontrado');
-      (itemServicoService.buscarPorId as jest.Mock).mockRejectedValue(error);
+      mockService.buscarPorId.mockRejectedValue(error);
 
       await itemServicoController.buscarPorId(mockReq as Request, mockRes as Response, mockNext);
 
@@ -223,7 +241,7 @@ describe('itemServicoController', () => {
       const novoItem = { categoriaId: 'cat1', descricao: 'Novo Item', unidade: 'UN', ativo: true };
       const itemCriado = { id: '1', ...novoItem, ordem: 1 };
       mockReq.body = novoItem;
-      (itemServicoService.criar as jest.Mock).mockResolvedValue(itemCriado);
+      mockService.criar.mockResolvedValue(itemCriado);
 
       await itemServicoController.criar(mockReq as Request, mockRes as Response, mockNext);
 
@@ -234,7 +252,7 @@ describe('itemServicoController', () => {
     it('deve chamar next com erro quando falhar', async () => {
       mockReq.body = { categoriaId: 'cat1', descricao: 'AB', unidade: 'UN' };
       const error = new Error('Descrição muito curta');
-      (itemServicoService.criar as jest.Mock).mockRejectedValue(error);
+      mockService.criar.mockRejectedValue(error);
 
       await itemServicoController.criar(mockReq as Request, mockRes as Response, mockNext);
 
@@ -255,7 +273,7 @@ describe('itemServicoController', () => {
       };
       mockReq.params = { id: '1' };
       mockReq.body = dadosAtualizacao;
-      (itemServicoService.atualizar as jest.Mock).mockResolvedValue(itemAtualizado);
+      mockService.atualizar.mockResolvedValue(itemAtualizado);
 
       await itemServicoController.atualizar(mockReq as Request, mockRes as Response, mockNext);
 
@@ -266,7 +284,7 @@ describe('itemServicoController', () => {
       mockReq.params = { id: 'inexistente' };
       mockReq.body = { descricao: 'Item Atualizado' };
       const error = new Error('Item não encontrado');
-      (itemServicoService.atualizar as jest.Mock).mockRejectedValue(error);
+      mockService.atualizar.mockRejectedValue(error);
 
       await itemServicoController.atualizar(mockReq as Request, mockRes as Response, mockNext);
 
@@ -277,7 +295,7 @@ describe('itemServicoController', () => {
   describe('excluir', () => {
     it('deve excluir item com sucesso', async () => {
       mockReq.params = { id: '1' };
-      (itemServicoService.excluir as jest.Mock).mockResolvedValue(undefined);
+      mockService.excluir.mockResolvedValue(undefined);
 
       await itemServicoController.excluir(mockReq as Request, mockRes as Response, mockNext);
 
@@ -288,7 +306,7 @@ describe('itemServicoController', () => {
     it('deve chamar next com erro quando falhar', async () => {
       mockReq.params = { id: 'inexistente' };
       const error = new Error('Item não encontrado');
-      (itemServicoService.excluir as jest.Mock).mockRejectedValue(error);
+      mockService.excluir.mockRejectedValue(error);
 
       await itemServicoController.excluir(mockReq as Request, mockRes as Response, mockNext);
 
@@ -307,7 +325,7 @@ describe('itemServicoController', () => {
         ordem: 1,
       };
       mockReq.params = { id: '1' };
-      (itemServicoService.toggleAtivo as jest.Mock).mockResolvedValue(itemAlternado);
+      mockService.toggleAtivo.mockResolvedValue(itemAlternado);
 
       await itemServicoController.toggleAtivo(mockReq as Request, mockRes as Response, mockNext);
 
@@ -317,7 +335,7 @@ describe('itemServicoController', () => {
     it('deve chamar next com erro quando falhar', async () => {
       mockReq.params = { id: 'inexistente' };
       const error = new Error('Item não encontrado');
-      (itemServicoService.toggleAtivo as jest.Mock).mockRejectedValue(error);
+      mockService.toggleAtivo.mockRejectedValue(error);
 
       await itemServicoController.toggleAtivo(mockReq as Request, mockRes as Response, mockNext);
 

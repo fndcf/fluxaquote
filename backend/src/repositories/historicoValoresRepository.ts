@@ -1,16 +1,16 @@
-import { db } from '../config/firebase';
+import { getTenantDb } from '../utils/tenantDb';
 import { HistoricoValorItem, HistoricoConfiguracao } from '../models';
 
-const COLLECTION_ITENS = 'historicoValoresItens';
-const COLLECTION_CONFIGURACOES = 'historicoConfiguracoes';
+export function createHistoricoValoresRepository(tenantId: string) {
+  const collectionItens = getTenantDb(tenantId).collection('historicoValoresItens');
+  const collectionConfiguracoes = getTenantDb(tenantId).collection('historicoConfiguracoes');
 
-export const historicoValoresRepository = {
   // ==================== HISTÓRICO DE ITENS ====================
 
-  async salvarHistoricoItem(
+  async function salvarHistoricoItem(
     data: Omit<HistoricoValorItem, 'id' | 'createdAt'>
   ): Promise<HistoricoValorItem> {
-    const docRef = await db.collection(COLLECTION_ITENS).add({
+    const docRef = await collectionItens.add({
       ...data,
       createdAt: new Date(),
     });
@@ -21,9 +21,9 @@ export const historicoValoresRepository = {
       dataVigencia: doc.data()?.dataVigencia?.toDate(),
       createdAt: doc.data()?.createdAt?.toDate(),
     } as HistoricoValorItem;
-  },
+  }
 
-  async buscarHistoricoItensPorPeriodo(
+  async function buscarHistoricoItensPorPeriodo(
     _dataInicio: Date,
     _dataFim: Date
   ): Promise<HistoricoValorItem[]> {
@@ -33,8 +33,7 @@ export const historicoValoresRepository = {
     // O registro vigente pode ter sido criado ANTES do período selecionado
     // ou mesmo DEPOIS (se não existia registro anterior à data do orçamento)
     // Os parâmetros são mantidos para compatibilidade da API
-    const snapshot = await db
-      .collection(COLLECTION_ITENS)
+    const snapshot = await collectionItens
       .orderBy('dataVigencia', 'desc')
       .get();
 
@@ -44,11 +43,10 @@ export const historicoValoresRepository = {
       dataVigencia: doc.data().dataVigencia?.toDate(),
       createdAt: doc.data().createdAt?.toDate(),
     })) as HistoricoValorItem[];
-  },
+  }
 
-  async buscarUltimoHistoricoItem(itemServicoId: string): Promise<HistoricoValorItem | null> {
-    const snapshot = await db
-      .collection(COLLECTION_ITENS)
+  async function buscarUltimoHistoricoItem(itemServicoId: string): Promise<HistoricoValorItem | null> {
+    const snapshot = await collectionItens
       .where('itemServicoId', '==', itemServicoId)
       .orderBy('dataVigencia', 'desc')
       .limit(1)
@@ -63,14 +61,14 @@ export const historicoValoresRepository = {
       dataVigencia: doc.data().dataVigencia?.toDate(),
       createdAt: doc.data().createdAt?.toDate(),
     } as HistoricoValorItem;
-  },
+  }
 
   // ==================== HISTÓRICO DE CONFIGURAÇÕES ====================
 
-  async salvarHistoricoConfiguracao(
+  async function salvarHistoricoConfiguracao(
     data: Omit<HistoricoConfiguracao, 'id' | 'createdAt'>
   ): Promise<HistoricoConfiguracao> {
-    const docRef = await db.collection(COLLECTION_CONFIGURACOES).add({
+    const docRef = await collectionConfiguracoes.add({
       ...data,
       createdAt: new Date(),
     });
@@ -81,9 +79,9 @@ export const historicoValoresRepository = {
       dataVigencia: doc.data()?.dataVigencia?.toDate(),
       createdAt: doc.data()?.createdAt?.toDate(),
     } as HistoricoConfiguracao;
-  },
+  }
 
-  async buscarHistoricoConfiguracoesPorPeriodo(
+  async function buscarHistoricoConfiguracoesPorPeriodo(
     _dataInicio: Date,
     _dataFim: Date
   ): Promise<HistoricoConfiguracao[]> {
@@ -91,8 +89,7 @@ export const historicoValoresRepository = {
     // Mesma lógica dos itens: precisamos de todos os registros para encontrar
     // o valor vigente na data de emissão de cada orçamento
     // Os parâmetros são mantidos para compatibilidade da API
-    const snapshot = await db
-      .collection(COLLECTION_CONFIGURACOES)
+    const snapshot = await collectionConfiguracoes
       .orderBy('dataVigencia', 'desc')
       .get();
 
@@ -102,11 +99,10 @@ export const historicoValoresRepository = {
       dataVigencia: doc.data().dataVigencia?.toDate(),
       createdAt: doc.data().createdAt?.toDate(),
     })) as HistoricoConfiguracao[];
-  },
+  }
 
-  async buscarUltimaHistoricoConfiguracao(): Promise<HistoricoConfiguracao | null> {
-    const snapshot = await db
-      .collection(COLLECTION_CONFIGURACOES)
+  async function buscarUltimaHistoricoConfiguracao(): Promise<HistoricoConfiguracao | null> {
+    const snapshot = await collectionConfiguracoes
       .orderBy('dataVigencia', 'desc')
       .limit(1)
       .get();
@@ -120,5 +116,14 @@ export const historicoValoresRepository = {
       dataVigencia: doc.data().dataVigencia?.toDate(),
       createdAt: doc.data().createdAt?.toDate(),
     } as HistoricoConfiguracao;
-  },
-};
+  }
+
+  return {
+    salvarHistoricoItem,
+    buscarHistoricoItensPorPeriodo,
+    buscarUltimoHistoricoItem,
+    salvarHistoricoConfiguracao,
+    buscarHistoricoConfiguracoesPorPeriodo,
+    buscarUltimaHistoricoConfiguracao,
+  };
+}

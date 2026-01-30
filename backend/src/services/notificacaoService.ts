@@ -1,6 +1,6 @@
-import { notificacaoRepository } from "../repositories/notificacaoRepository";
-import { orcamentoRepository } from "../repositories/orcamentoRepository";
-import { palavraChaveRepository } from "../repositories/palavraChaveRepository";
+import { createNotificacaoRepository } from "../repositories/notificacaoRepository";
+import { createOrcamentoRepository } from "../repositories/orcamentoRepository";
+import { createPalavraChaveRepository } from "../repositories/palavraChaveRepository";
 import { Notificacao, Orcamento, PaginatedResponse } from "../models";
 import { NotFoundError } from "../utils/errors";
 import {
@@ -10,78 +10,82 @@ import {
 } from "../events";
 import { logger } from "../utils/logger";
 
-export const notificacaoService = {
+export function createNotificacaoService(tenantId: string) {
+  const notificacaoRepo = createNotificacaoRepository(tenantId);
+  const orcamentoRepo = createOrcamentoRepository(tenantId);
+  const palavraChaveRepo = createPalavraChaveRepository(tenantId);
+
   // ========== MÉTODOS PAGINADOS ==========
 
-  async listarTodasPaginado(pageSize: number = 10, cursor?: string): Promise<PaginatedResponse<Notificacao>> {
-    return notificacaoRepository.findAllPaginated(pageSize, cursor);
-  },
+  const listarTodasPaginado = async (pageSize: number = 10, cursor?: string): Promise<PaginatedResponse<Notificacao>> => {
+    return notificacaoRepo.findAllPaginated(pageSize, cursor);
+  };
 
-  async listarNaoLidasPaginado(pageSize: number = 10, cursor?: string): Promise<PaginatedResponse<Notificacao>> {
-    return notificacaoRepository.findNaoLidasPaginated(pageSize, cursor);
-  },
+  const listarNaoLidasPaginado = async (pageSize: number = 10, cursor?: string): Promise<PaginatedResponse<Notificacao>> => {
+    return notificacaoRepo.findNaoLidasPaginated(pageSize, cursor);
+  };
 
-  async listarVencidasPaginado(pageSize: number = 10, cursor?: string): Promise<PaginatedResponse<Notificacao>> {
-    return notificacaoRepository.findVencidasPaginated(pageSize, cursor);
-  },
+  const listarVencidasPaginado = async (pageSize: number = 10, cursor?: string): Promise<PaginatedResponse<Notificacao>> => {
+    return notificacaoRepo.findVencidasPaginated(pageSize, cursor);
+  };
 
-  async listarAtivasPaginado(diasAntecedencia: number = 60, pageSize: number = 10, cursor?: string): Promise<PaginatedResponse<Notificacao>> {
-    return notificacaoRepository.findAtivasPaginated(diasAntecedencia, pageSize, cursor);
-  },
+  const listarAtivasPaginado = async (diasAntecedencia: number = 60, pageSize: number = 10, cursor?: string): Promise<PaginatedResponse<Notificacao>> => {
+    return notificacaoRepo.findAtivasPaginated(diasAntecedencia, pageSize, cursor);
+  };
 
-  async listarProximasPaginado(dias: number = 30, pageSize: number = 10, cursor?: string): Promise<PaginatedResponse<Notificacao>> {
-    return notificacaoRepository.findProximasPaginated(dias, pageSize, cursor);
-  },
+  const listarProximasPaginado = async (dias: number = 30, pageSize: number = 10, cursor?: string): Promise<PaginatedResponse<Notificacao>> => {
+    return notificacaoRepo.findProximasPaginated(dias, pageSize, cursor);
+  };
 
-  async buscarPorId(id: string): Promise<Notificacao> {
-    const notificacao = await notificacaoRepository.findById(id);
+  const buscarPorId = async (id: string): Promise<Notificacao> => {
+    const notificacao = await notificacaoRepo.findById(id);
     if (!notificacao) {
       throw new NotFoundError("Notificação não encontrada");
     }
     return notificacao;
-  },
+  };
 
-  async marcarComoLida(id: string): Promise<Notificacao> {
-    const notificacao = await notificacaoRepository.marcarComoLida(id);
+  const marcarComoLida = async (id: string): Promise<Notificacao> => {
+    const notificacao = await notificacaoRepo.marcarComoLida(id);
     if (!notificacao) {
       throw new NotFoundError("Notificação não encontrada");
     }
     return notificacao;
-  },
+  };
 
-  async marcarTodasComoLidas(): Promise<number> {
-    return notificacaoRepository.marcarTodasComoLidas();
-  },
+  const marcarTodasComoLidas = async (): Promise<number> => {
+    return notificacaoRepo.marcarTodasComoLidas();
+  };
 
-  async excluir(id: string): Promise<void> {
-    const deleted = await notificacaoRepository.delete(id);
+  const excluir = async (id: string): Promise<void> => {
+    const deleted = await notificacaoRepo.delete(id);
     if (!deleted) {
       throw new NotFoundError("Notificação não encontrada");
     }
-  },
+  };
 
   /**
    * Gera notificações para um orçamento específico baseado nas palavras-chave
    * Só processa orçamentos com status "aceito"
    */
-  async gerarNotificacoesParaOrcamento(
+  const gerarNotificacoesParaOrcamento = async (
     orcamentoId: string
-  ): Promise<Notificacao[]> {
-    const orcamento = await orcamentoRepository.findById(orcamentoId);
+  ): Promise<Notificacao[]> => {
+    const orcamento = await orcamentoRepo.findById(orcamentoId);
 
     // Só gera notificações para orçamentos aceitos
     if (orcamento.status !== "aceito") {
       return [];
     }
 
-    return this.processarOrcamento(orcamento);
-  },
+    return processarOrcamento(orcamento);
+  };
 
   /**
    * Processa um orçamento e cria notificações baseadas nas palavras-chave encontradas
    */
-  async processarOrcamento(orcamento: Orcamento): Promise<Notificacao[]> {
-    const palavrasChaveAtivas = await palavraChaveRepository.findAtivas();
+  const processarOrcamento = async (orcamento: Orcamento): Promise<Notificacao[]> => {
+    const palavrasChaveAtivas = await palavraChaveRepo.findAtivas();
 
     if (palavrasChaveAtivas.length === 0) {
       return [];
@@ -110,7 +114,7 @@ export const notificacaoService = {
         // Verifica se a descrição contém a palavra-chave
         if (descricaoLower.includes(palavraChave.palavra.toLowerCase())) {
           // Verifica se já existe notificação para este orçamento/item/palavra
-          const existe = await notificacaoRepository.exists(
+          const existe = await notificacaoRepo.exists(
             orcamento.id!,
             descricao,
             palavraChave.palavra
@@ -144,23 +148,23 @@ export const notificacaoService = {
     }
 
     // Criar todas as notificações em batch
-    return notificacaoRepository.createMany(notificacoesParaCriar);
-  },
+    return notificacaoRepo.createMany(notificacoesParaCriar);
+  };
 
   /**
    * Processa todos os orçamentos aceitos e gera notificações
    * Útil para rodar em batch ou na inicialização
    */
-  async processarTodosOrcamentosAceitos(): Promise<{
+  const processarTodosOrcamentosAceitos = async (): Promise<{
     processados: number;
     notificacoesCriadas: number;
-  }> {
-    const orcamentosAceitos = await orcamentoRepository.findByStatus("aceito");
+  }> => {
+    const orcamentosAceitos = await orcamentoRepo.findByStatus("aceito");
 
     let notificacoesCriadas = 0;
 
     for (const orcamento of orcamentosAceitos) {
-      const notificacoes = await this.processarOrcamento(orcamento);
+      const notificacoes = await processarOrcamento(orcamento);
       notificacoesCriadas += notificacoes.length;
     }
 
@@ -168,40 +172,40 @@ export const notificacaoService = {
       processados: orcamentosAceitos.length,
       notificacoesCriadas,
     };
-  },
+  };
 
   /**
    * Remove todas as notificações de um orçamento específico
    * Útil quando um orçamento deixa de ser "aceito"
    */
-  async removerNotificacoesDoOrcamento(orcamentoId: string): Promise<number> {
-    return notificacaoRepository.deleteByOrcamentoId(orcamentoId);
-  },
+  const removerNotificacoesDoOrcamento = async (orcamentoId: string): Promise<number> => {
+    return notificacaoRepo.deleteByOrcamentoId(orcamentoId);
+  };
 
   /**
    * Conta notificações não lidas
    */
-  async contarNaoLidas(): Promise<number> {
-    const naoLidas = await notificacaoRepository.findNaoLidas();
+  const contarNaoLidas = async (): Promise<number> => {
+    const naoLidas = await notificacaoRepo.findNaoLidas();
     return naoLidas.length;
-  },
+  };
 
   /**
    * Retorna resumo das notificações (para dashboard/header)
    */
-  async obterResumo(): Promise<{
+  const obterResumo = async (): Promise<{
     total: number;
     naoLidas: number;
     vencidas: number;
     proximasVencer: number;
     ativas: number;
-  }> {
+  }> => {
     const [todas, naoLidas, vencidas, proximas, ativas] = await Promise.all([
-      notificacaoRepository.findAll(),
-      notificacaoRepository.findNaoLidas(),
-      notificacaoRepository.findVencidas(),
-      notificacaoRepository.findProximas(30),
-      notificacaoRepository.findAtivas(10),
+      notificacaoRepo.findAll(),
+      notificacaoRepo.findNaoLidas(),
+      notificacaoRepo.findVencidas(),
+      notificacaoRepo.findProximas(30),
+      notificacaoRepo.findAtivas(10),
     ]);
 
     return {
@@ -211,9 +215,26 @@ export const notificacaoService = {
       proximasVencer: proximas.length,
       ativas: ativas.length,
     };
-  },
+  };
 
-};
+  return {
+    listarTodasPaginado,
+    listarNaoLidasPaginado,
+    listarVencidasPaginado,
+    listarAtivasPaginado,
+    listarProximasPaginado,
+    buscarPorId,
+    marcarComoLida,
+    marcarTodasComoLidas,
+    excluir,
+    gerarNotificacoesParaOrcamento,
+    processarOrcamento,
+    processarTodosOrcamentosAceitos,
+    removerNotificacoesDoOrcamento,
+    contarNaoLidas,
+    obterResumo,
+  };
+}
 
 /**
  * Registra handlers de eventos para o notificacaoService
@@ -225,21 +246,25 @@ export function inicializarEventHandlers(): void {
     OrcamentoEvents.STATUS_CHANGED,
     async (event: OrcamentoStatusChangedEvent) => {
       try {
-        const { orcamentoId, statusAnterior, statusNovo } = event;
+        const { orcamentoId, statusAnterior, statusNovo, tenantId } = event;
+
+        if (!tenantId) {
+          logger.error('[NotificacaoService] tenantId ausente no evento');
+          return;
+        }
+
+        const service = createNotificacaoService(tenantId);
 
         if (statusNovo === "aceito" && statusAnterior !== "aceito") {
-          // Gerar notificações quando orçamento é aceito
-          await notificacaoService.gerarNotificacoesParaOrcamento(orcamentoId);
+          await service.gerarNotificacoesParaOrcamento(orcamentoId);
         } else if (statusAnterior === "aceito" && statusNovo !== "aceito") {
-          // Remover notificações quando orçamento deixa de ser aceito
-          await notificacaoService.removerNotificacoesDoOrcamento(orcamentoId);
+          await service.removerNotificacoesDoOrcamento(orcamentoId);
         }
       } catch (error) {
         logger.error(
           "[NotificacaoService] Erro ao processar evento de mudança de status:",
           { error }
         );
-        // Não propaga o erro - EventBus já trata isso
       }
     }
   );

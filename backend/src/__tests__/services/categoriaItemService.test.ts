@@ -1,14 +1,30 @@
-import { categoriaItemService } from '../../services/categoriaItemService';
-import { categoriaItemRepository } from '../../repositories/categoriaItemRepository';
+import { createCategoriaItemService } from '../../services/categoriaItemService';
+import { createCategoriaItemRepository } from '../../repositories/categoriaItemRepository';
 import { AppError, ValidationError, NotFoundError } from '../../utils/errors';
 import { CategoriaItem } from '../../models';
 
 // Mock do repository
 jest.mock('../../repositories/categoriaItemRepository');
 
+const mockRepo = {
+  findAll: jest.fn(),
+  findAtivas: jest.fn(),
+  findById: jest.fn(),
+  findByNome: jest.fn(),
+  getNextOrdem: jest.fn(),
+  create: jest.fn(),
+  update: jest.fn(),
+  delete: jest.fn(),
+};
+(createCategoriaItemRepository as jest.Mock).mockReturnValue(mockRepo);
+
 describe('categoriaItemService', () => {
+  let service: ReturnType<typeof createCategoriaItemService>;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    (createCategoriaItemRepository as jest.Mock).mockReturnValue(mockRepo);
+    service = createCategoriaItemService('test-tenant-id');
   });
 
   const mockCategoria: CategoriaItem = {
@@ -22,18 +38,18 @@ describe('categoriaItemService', () => {
   describe('listar', () => {
     it('deve retornar lista de categorias', async () => {
       const categorias = [mockCategoria, { ...mockCategoria, id: '2', nome: 'Sistema de Hidrantes' }];
-      (categoriaItemRepository.findAll as jest.Mock).mockResolvedValue(categorias);
+      (mockRepo.findAll as jest.Mock).mockResolvedValue(categorias);
 
-      const resultado = await categoriaItemService.listar();
+      const resultado = await service.listar();
 
-      expect(categoriaItemRepository.findAll).toHaveBeenCalled();
+      expect(mockRepo.findAll).toHaveBeenCalled();
       expect(resultado).toEqual(categorias);
     });
 
     it('deve retornar lista vazia quando não houver categorias', async () => {
-      (categoriaItemRepository.findAll as jest.Mock).mockResolvedValue([]);
+      (mockRepo.findAll as jest.Mock).mockResolvedValue([]);
 
-      const resultado = await categoriaItemService.listar();
+      const resultado = await service.listar();
 
       expect(resultado).toEqual([]);
     });
@@ -42,50 +58,50 @@ describe('categoriaItemService', () => {
   describe('listarAtivas', () => {
     it('deve retornar apenas categorias ativas', async () => {
       const categoriasAtivas = [mockCategoria];
-      (categoriaItemRepository.findAtivas as jest.Mock).mockResolvedValue(categoriasAtivas);
+      (mockRepo.findAtivas as jest.Mock).mockResolvedValue(categoriasAtivas);
 
-      const resultado = await categoriaItemService.listarAtivas();
+      const resultado = await service.listarAtivas();
 
-      expect(categoriaItemRepository.findAtivas).toHaveBeenCalled();
+      expect(mockRepo.findAtivas).toHaveBeenCalled();
       expect(resultado).toEqual(categoriasAtivas);
     });
   });
 
   describe('buscarPorId', () => {
     it('deve retornar categoria por ID', async () => {
-      (categoriaItemRepository.findById as jest.Mock).mockResolvedValue(mockCategoria);
+      (mockRepo.findById as jest.Mock).mockResolvedValue(mockCategoria);
 
-      const resultado = await categoriaItemService.buscarPorId('1');
+      const resultado = await service.buscarPorId('1');
 
-      expect(categoriaItemRepository.findById).toHaveBeenCalledWith('1');
+      expect(mockRepo.findById).toHaveBeenCalledWith('1');
       expect(resultado).toEqual(mockCategoria);
     });
 
     it('deve lançar ValidationError quando ID não for fornecido', async () => {
-      await expect(categoriaItemService.buscarPorId('')).rejects.toThrow(ValidationError);
-      await expect(categoriaItemService.buscarPorId('')).rejects.toThrow('ID é obrigatório');
+      await expect(service.buscarPorId('')).rejects.toThrow(ValidationError);
+      await expect(service.buscarPorId('')).rejects.toThrow('ID é obrigatório');
     });
 
     it('deve lançar NotFoundError quando categoria não existir', async () => {
-      (categoriaItemRepository.findById as jest.Mock).mockResolvedValue(null);
+      (mockRepo.findById as jest.Mock).mockResolvedValue(null);
 
-      await expect(categoriaItemService.buscarPorId('inexistente')).rejects.toThrow(NotFoundError);
-      await expect(categoriaItemService.buscarPorId('inexistente')).rejects.toThrow('Categoria não encontrada');
+      await expect(service.buscarPorId('inexistente')).rejects.toThrow(NotFoundError);
+      await expect(service.buscarPorId('inexistente')).rejects.toThrow('Categoria não encontrada');
     });
   });
 
   describe('criar', () => {
     it('deve criar categoria com sucesso', async () => {
       const dados = { nome: 'Bomba de Incêndio' };
-      (categoriaItemRepository.findByNome as jest.Mock).mockResolvedValue(null);
-      (categoriaItemRepository.getNextOrdem as jest.Mock).mockResolvedValue(1);
-      (categoriaItemRepository.create as jest.Mock).mockResolvedValue(mockCategoria);
+      (mockRepo.findByNome as jest.Mock).mockResolvedValue(null);
+      (mockRepo.getNextOrdem as jest.Mock).mockResolvedValue(1);
+      (mockRepo.create as jest.Mock).mockResolvedValue(mockCategoria);
 
-      const resultado = await categoriaItemService.criar(dados);
+      const resultado = await service.criar(dados);
 
-      expect(categoriaItemRepository.findByNome).toHaveBeenCalledWith(dados.nome);
-      expect(categoriaItemRepository.getNextOrdem).toHaveBeenCalled();
-      expect(categoriaItemRepository.create).toHaveBeenCalledWith({
+      expect(mockRepo.findByNome).toHaveBeenCalledWith(dados.nome);
+      expect(mockRepo.getNextOrdem).toHaveBeenCalled();
+      expect(mockRepo.create).toHaveBeenCalledWith({
         nome: dados.nome,
         ativo: true,
         ordem: 1,
@@ -95,13 +111,13 @@ describe('categoriaItemService', () => {
 
     it('deve criar categoria inativa quando especificado', async () => {
       const dados = { nome: 'Bomba de Incêndio', ativo: false };
-      (categoriaItemRepository.findByNome as jest.Mock).mockResolvedValue(null);
-      (categoriaItemRepository.getNextOrdem as jest.Mock).mockResolvedValue(1);
-      (categoriaItemRepository.create as jest.Mock).mockResolvedValue({ ...mockCategoria, ativo: false });
+      (mockRepo.findByNome as jest.Mock).mockResolvedValue(null);
+      (mockRepo.getNextOrdem as jest.Mock).mockResolvedValue(1);
+      (mockRepo.create as jest.Mock).mockResolvedValue({ ...mockCategoria, ativo: false });
 
-      await categoriaItemService.criar(dados);
+      await service.criar(dados);
 
-      expect(categoriaItemRepository.create).toHaveBeenCalledWith({
+      expect(mockRepo.create).toHaveBeenCalledWith({
         nome: dados.nome,
         ativo: false,
         ordem: 1,
@@ -109,33 +125,33 @@ describe('categoriaItemService', () => {
     });
 
     it('deve lançar ValidationError quando nome for muito curto', async () => {
-      await expect(categoriaItemService.criar({ nome: 'AB' })).rejects.toThrow(ValidationError);
-      await expect(categoriaItemService.criar({ nome: 'AB' })).rejects.toThrow(
+      await expect(service.criar({ nome: 'AB' })).rejects.toThrow(ValidationError);
+      await expect(service.criar({ nome: 'AB' })).rejects.toThrow(
         'Nome deve ter pelo menos 3 caracteres'
       );
     });
 
     it('deve lançar ValidationError quando nome for vazio', async () => {
-      await expect(categoriaItemService.criar({ nome: '' })).rejects.toThrow(ValidationError);
+      await expect(service.criar({ nome: '' })).rejects.toThrow(ValidationError);
     });
 
     it('deve lançar AppError quando nome já existir', async () => {
-      (categoriaItemRepository.findByNome as jest.Mock).mockResolvedValue(mockCategoria);
+      (mockRepo.findByNome as jest.Mock).mockResolvedValue(mockCategoria);
 
-      await expect(categoriaItemService.criar({ nome: 'Bomba de Incêndio' })).rejects.toThrow(AppError);
-      await expect(categoriaItemService.criar({ nome: 'Bomba de Incêndio' })).rejects.toThrow(
+      await expect(service.criar({ nome: 'Bomba de Incêndio' })).rejects.toThrow(AppError);
+      await expect(service.criar({ nome: 'Bomba de Incêndio' })).rejects.toThrow(
         'Já existe uma categoria com este nome'
       );
     });
 
     it('deve fazer trim do nome antes de salvar', async () => {
-      (categoriaItemRepository.findByNome as jest.Mock).mockResolvedValue(null);
-      (categoriaItemRepository.getNextOrdem as jest.Mock).mockResolvedValue(1);
-      (categoriaItemRepository.create as jest.Mock).mockResolvedValue(mockCategoria);
+      (mockRepo.findByNome as jest.Mock).mockResolvedValue(null);
+      (mockRepo.getNextOrdem as jest.Mock).mockResolvedValue(1);
+      (mockRepo.create as jest.Mock).mockResolvedValue(mockCategoria);
 
-      await categoriaItemService.criar({ nome: '  Bomba de Incêndio  ' });
+      await service.criar({ nome: '  Bomba de Incêndio  ' });
 
-      expect(categoriaItemRepository.create).toHaveBeenCalledWith({
+      expect(mockRepo.create).toHaveBeenCalledWith({
         nome: 'Bomba de Incêndio',
         ativo: true,
         ordem: 1,
@@ -146,84 +162,84 @@ describe('categoriaItemService', () => {
   describe('atualizar', () => {
     it('deve atualizar categoria com sucesso', async () => {
       const dados = { nome: 'Bomba Atualizada' };
-      (categoriaItemRepository.findById as jest.Mock).mockResolvedValue(mockCategoria);
-      (categoriaItemRepository.findByNome as jest.Mock).mockResolvedValue(null);
-      (categoriaItemRepository.update as jest.Mock).mockResolvedValue({ ...mockCategoria, ...dados });
+      (mockRepo.findById as jest.Mock).mockResolvedValue(mockCategoria);
+      (mockRepo.findByNome as jest.Mock).mockResolvedValue(null);
+      (mockRepo.update as jest.Mock).mockResolvedValue({ ...mockCategoria, ...dados });
 
-      const resultado = await categoriaItemService.atualizar('1', dados);
+      const resultado = await service.atualizar('1', dados);
 
-      expect(categoriaItemRepository.findById).toHaveBeenCalledWith('1');
-      expect(categoriaItemRepository.update).toHaveBeenCalledWith('1', { nome: dados.nome });
+      expect(mockRepo.findById).toHaveBeenCalledWith('1');
+      expect(mockRepo.update).toHaveBeenCalledWith('1', { nome: dados.nome });
       expect(resultado.nome).toBe(dados.nome);
     });
 
     it('deve atualizar apenas o status ativo', async () => {
-      (categoriaItemRepository.findById as jest.Mock).mockResolvedValue(mockCategoria);
-      (categoriaItemRepository.update as jest.Mock).mockResolvedValue({ ...mockCategoria, ativo: false });
+      (mockRepo.findById as jest.Mock).mockResolvedValue(mockCategoria);
+      (mockRepo.update as jest.Mock).mockResolvedValue({ ...mockCategoria, ativo: false });
 
-      await categoriaItemService.atualizar('1', { ativo: false });
+      await service.atualizar('1', { ativo: false });
 
-      expect(categoriaItemRepository.update).toHaveBeenCalledWith('1', { ativo: false });
+      expect(mockRepo.update).toHaveBeenCalledWith('1', { ativo: false });
     });
 
     it('deve atualizar apenas a ordem', async () => {
-      (categoriaItemRepository.findById as jest.Mock).mockResolvedValue(mockCategoria);
-      (categoriaItemRepository.update as jest.Mock).mockResolvedValue({ ...mockCategoria, ordem: 5 });
+      (mockRepo.findById as jest.Mock).mockResolvedValue(mockCategoria);
+      (mockRepo.update as jest.Mock).mockResolvedValue({ ...mockCategoria, ordem: 5 });
 
-      await categoriaItemService.atualizar('1', { ordem: 5 });
+      await service.atualizar('1', { ordem: 5 });
 
-      expect(categoriaItemRepository.update).toHaveBeenCalledWith('1', { ordem: 5 });
+      expect(mockRepo.update).toHaveBeenCalledWith('1', { ordem: 5 });
     });
 
     it('deve lançar ValidationError quando ID não for fornecido', async () => {
-      await expect(categoriaItemService.atualizar('', { nome: 'Teste' })).rejects.toThrow(ValidationError);
-      await expect(categoriaItemService.atualizar('', { nome: 'Teste' })).rejects.toThrow('ID é obrigatório');
+      await expect(service.atualizar('', { nome: 'Teste' })).rejects.toThrow(ValidationError);
+      await expect(service.atualizar('', { nome: 'Teste' })).rejects.toThrow('ID é obrigatório');
     });
 
     it('deve lançar NotFoundError quando categoria não existir', async () => {
-      (categoriaItemRepository.findById as jest.Mock).mockResolvedValue(null);
+      (mockRepo.findById as jest.Mock).mockResolvedValue(null);
 
-      await expect(categoriaItemService.atualizar('inexistente', { nome: 'Teste' })).rejects.toThrow(NotFoundError);
+      await expect(service.atualizar('inexistente', { nome: 'Teste' })).rejects.toThrow(NotFoundError);
     });
 
     it('deve lançar ValidationError quando novo nome for muito curto', async () => {
-      (categoriaItemRepository.findById as jest.Mock).mockResolvedValue(mockCategoria);
+      (mockRepo.findById as jest.Mock).mockResolvedValue(mockCategoria);
 
-      await expect(categoriaItemService.atualizar('1', { nome: 'AB' })).rejects.toThrow(ValidationError);
-      await expect(categoriaItemService.atualizar('1', { nome: 'AB' })).rejects.toThrow(
+      await expect(service.atualizar('1', { nome: 'AB' })).rejects.toThrow(ValidationError);
+      await expect(service.atualizar('1', { nome: 'AB' })).rejects.toThrow(
         'Nome deve ter pelo menos 3 caracteres'
       );
     });
 
     it('deve lançar AppError quando novo nome já existir em outra categoria', async () => {
-      (categoriaItemRepository.findById as jest.Mock).mockResolvedValue(mockCategoria);
-      (categoriaItemRepository.findByNome as jest.Mock).mockResolvedValue({
+      (mockRepo.findById as jest.Mock).mockResolvedValue(mockCategoria);
+      (mockRepo.findByNome as jest.Mock).mockResolvedValue({
         ...mockCategoria,
         id: '2',
         nome: 'Outra Categoria',
       });
 
-      await expect(categoriaItemService.atualizar('1', { nome: 'Outra Categoria' })).rejects.toThrow(AppError);
-      await expect(categoriaItemService.atualizar('1', { nome: 'Outra Categoria' })).rejects.toThrow(
+      await expect(service.atualizar('1', { nome: 'Outra Categoria' })).rejects.toThrow(AppError);
+      await expect(service.atualizar('1', { nome: 'Outra Categoria' })).rejects.toThrow(
         'Já existe uma categoria com este nome'
       );
     });
 
     it('deve permitir atualizar mantendo o mesmo nome', async () => {
-      (categoriaItemRepository.findById as jest.Mock).mockResolvedValue(mockCategoria);
-      (categoriaItemRepository.findByNome as jest.Mock).mockResolvedValue(mockCategoria);
-      (categoriaItemRepository.update as jest.Mock).mockResolvedValue(mockCategoria);
+      (mockRepo.findById as jest.Mock).mockResolvedValue(mockCategoria);
+      (mockRepo.findByNome as jest.Mock).mockResolvedValue(mockCategoria);
+      (mockRepo.update as jest.Mock).mockResolvedValue(mockCategoria);
 
-      await categoriaItemService.atualizar('1', { nome: mockCategoria.nome });
+      await service.atualizar('1', { nome: mockCategoria.nome });
 
-      expect(categoriaItemRepository.update).toHaveBeenCalled();
+      expect(mockRepo.update).toHaveBeenCalled();
     });
 
     it('deve lançar erro quando update retornar null', async () => {
-      (categoriaItemRepository.findById as jest.Mock).mockResolvedValue(mockCategoria);
-      (categoriaItemRepository.update as jest.Mock).mockResolvedValue(null);
+      (mockRepo.findById as jest.Mock).mockResolvedValue(mockCategoria);
+      (mockRepo.update as jest.Mock).mockResolvedValue(null);
 
-      await expect(categoriaItemService.atualizar('1', { ativo: false })).rejects.toThrow(
+      await expect(service.atualizar('1', { ativo: false })).rejects.toThrow(
         'Erro ao atualizar categoria'
       );
     });
@@ -231,53 +247,53 @@ describe('categoriaItemService', () => {
 
   describe('excluir', () => {
     it('deve excluir categoria com sucesso', async () => {
-      (categoriaItemRepository.findById as jest.Mock).mockResolvedValue(mockCategoria);
-      (categoriaItemRepository.delete as jest.Mock).mockResolvedValue(true);
+      (mockRepo.findById as jest.Mock).mockResolvedValue(mockCategoria);
+      (mockRepo.delete as jest.Mock).mockResolvedValue(true);
 
-      await expect(categoriaItemService.excluir('1')).resolves.not.toThrow();
+      await expect(service.excluir('1')).resolves.not.toThrow();
 
-      expect(categoriaItemRepository.findById).toHaveBeenCalledWith('1');
-      expect(categoriaItemRepository.delete).toHaveBeenCalledWith('1');
+      expect(mockRepo.findById).toHaveBeenCalledWith('1');
+      expect(mockRepo.delete).toHaveBeenCalledWith('1');
     });
 
     it('deve lançar ValidationError quando ID não for fornecido', async () => {
-      await expect(categoriaItemService.excluir('')).rejects.toThrow(ValidationError);
-      await expect(categoriaItemService.excluir('')).rejects.toThrow('ID é obrigatório');
+      await expect(service.excluir('')).rejects.toThrow(ValidationError);
+      await expect(service.excluir('')).rejects.toThrow('ID é obrigatório');
     });
 
     it('deve lançar NotFoundError quando categoria não existir', async () => {
-      (categoriaItemRepository.findById as jest.Mock).mockResolvedValue(null);
+      (mockRepo.findById as jest.Mock).mockResolvedValue(null);
 
-      await expect(categoriaItemService.excluir('inexistente')).rejects.toThrow(NotFoundError);
-      await expect(categoriaItemService.excluir('inexistente')).rejects.toThrow('Categoria não encontrada');
+      await expect(service.excluir('inexistente')).rejects.toThrow(NotFoundError);
+      await expect(service.excluir('inexistente')).rejects.toThrow('Categoria não encontrada');
     });
   });
 
   describe('toggleAtivo', () => {
     it('deve alternar de ativo para inativo', async () => {
-      (categoriaItemRepository.findById as jest.Mock).mockResolvedValue(mockCategoria);
-      (categoriaItemRepository.update as jest.Mock).mockResolvedValue({ ...mockCategoria, ativo: false });
+      (mockRepo.findById as jest.Mock).mockResolvedValue(mockCategoria);
+      (mockRepo.update as jest.Mock).mockResolvedValue({ ...mockCategoria, ativo: false });
 
-      const resultado = await categoriaItemService.toggleAtivo('1');
+      const resultado = await service.toggleAtivo('1');
 
-      expect(categoriaItemRepository.update).toHaveBeenCalledWith('1', { ativo: false });
+      expect(mockRepo.update).toHaveBeenCalledWith('1', { ativo: false });
       expect(resultado.ativo).toBe(false);
     });
 
     it('deve alternar de inativo para ativo', async () => {
-      (categoriaItemRepository.findById as jest.Mock).mockResolvedValue({ ...mockCategoria, ativo: false });
-      (categoriaItemRepository.update as jest.Mock).mockResolvedValue({ ...mockCategoria, ativo: true });
+      (mockRepo.findById as jest.Mock).mockResolvedValue({ ...mockCategoria, ativo: false });
+      (mockRepo.update as jest.Mock).mockResolvedValue({ ...mockCategoria, ativo: true });
 
-      const resultado = await categoriaItemService.toggleAtivo('1');
+      const resultado = await service.toggleAtivo('1');
 
-      expect(categoriaItemRepository.update).toHaveBeenCalledWith('1', { ativo: true });
+      expect(mockRepo.update).toHaveBeenCalledWith('1', { ativo: true });
       expect(resultado.ativo).toBe(true);
     });
 
     it('deve lançar erro quando categoria não existir', async () => {
-      (categoriaItemRepository.findById as jest.Mock).mockResolvedValue(null);
+      (mockRepo.findById as jest.Mock).mockResolvedValue(null);
 
-      await expect(categoriaItemService.toggleAtivo('inexistente')).rejects.toThrow(NotFoundError);
+      await expect(service.toggleAtivo('inexistente')).rejects.toThrow(NotFoundError);
     });
   });
 });

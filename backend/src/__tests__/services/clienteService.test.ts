@@ -1,14 +1,25 @@
-import { clienteService } from '../../services/clienteService';
-import { clienteRepository } from '../../repositories/clienteRepository';
+import { createClienteService } from '../../services/clienteService';
+import { createClienteRepository } from '../../repositories/clienteRepository';
 import { ValidationError } from '../../utils/errors';
 import { Cliente } from '../../models';
 
 // Mock do repository
 jest.mock('../../repositories/clienteRepository');
 
-const mockClienteRepository = clienteRepository as jest.Mocked<typeof clienteRepository>;
+const mockClienteRepository = {
+  findAll: jest.fn(),
+  findById: jest.fn(),
+  findByDocumento: jest.fn(),
+  search: jest.fn(),
+  create: jest.fn(),
+  update: jest.fn(),
+  delete: jest.fn(),
+};
+(createClienteRepository as jest.Mock).mockReturnValue(mockClienteRepository);
 
 describe('ClienteService', () => {
+  let service: ReturnType<typeof createClienteService>;
+
   const mockCliente: Cliente = {
     id: '1',
     razaoSocial: 'Empresa Teste LTDA',
@@ -25,13 +36,15 @@ describe('ClienteService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    (createClienteRepository as jest.Mock).mockReturnValue(mockClienteRepository);
+    service = createClienteService('test-tenant-id');
   });
 
   describe('listar', () => {
     it('deve retornar lista de clientes', async () => {
       mockClienteRepository.findAll.mockResolvedValue([mockCliente]);
 
-      const result = await clienteService.listar();
+      const result = await service.listar();
 
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual(mockCliente);
@@ -41,7 +54,7 @@ describe('ClienteService', () => {
     it('deve retornar lista vazia quando não há clientes', async () => {
       mockClienteRepository.findAll.mockResolvedValue([]);
 
-      const result = await clienteService.listar();
+      const result = await service.listar();
 
       expect(result).toHaveLength(0);
     });
@@ -51,7 +64,7 @@ describe('ClienteService', () => {
     it('deve retornar cliente por ID', async () => {
       mockClienteRepository.findById.mockResolvedValue(mockCliente);
 
-      const result = await clienteService.buscarPorId('1');
+      const result = await service.buscarPorId('1');
 
       expect(result).toEqual(mockCliente);
       expect(mockClienteRepository.findById).toHaveBeenCalledWith('1');
@@ -62,7 +75,7 @@ describe('ClienteService', () => {
     it('deve retornar cliente por CNPJ', async () => {
       mockClienteRepository.findByDocumento.mockResolvedValue(mockCliente);
 
-      const result = await clienteService.buscarPorDocumento('12345678901234');
+      const result = await service.buscarPorDocumento('12345678901234');
 
       expect(result).toEqual(mockCliente);
       expect(mockClienteRepository.findByDocumento).toHaveBeenCalledWith('12345678901234');
@@ -71,7 +84,7 @@ describe('ClienteService', () => {
     it('deve retornar null quando cliente não encontrado', async () => {
       mockClienteRepository.findByDocumento.mockResolvedValue(null);
 
-      const result = await clienteService.buscarPorDocumento('00000000000000');
+      const result = await service.buscarPorDocumento('00000000000000');
 
       expect(result).toBeNull();
     });
@@ -79,14 +92,14 @@ describe('ClienteService', () => {
 
   describe('pesquisar', () => {
     it('deve retornar lista vazia para termo menor que 2 caracteres', async () => {
-      const result = await clienteService.pesquisar('a');
+      const result = await service.pesquisar('a');
 
       expect(result).toHaveLength(0);
       expect(mockClienteRepository.search).not.toHaveBeenCalled();
     });
 
     it('deve retornar lista vazia para termo vazio', async () => {
-      const result = await clienteService.pesquisar('');
+      const result = await service.pesquisar('');
 
       expect(result).toHaveLength(0);
     });
@@ -94,7 +107,7 @@ describe('ClienteService', () => {
     it('deve chamar repository.search para termos válidos', async () => {
       mockClienteRepository.search.mockResolvedValue([mockCliente]);
 
-      const result = await clienteService.pesquisar('Empresa');
+      const result = await service.pesquisar('Empresa');
 
       expect(result).toHaveLength(1);
       expect(mockClienteRepository.search).toHaveBeenCalledWith('Empresa');
@@ -117,7 +130,7 @@ describe('ClienteService', () => {
       mockClienteRepository.findByDocumento.mockResolvedValue(null);
       mockClienteRepository.create.mockResolvedValue({ ...novoCliente, id: '2', createdAt: new Date() });
 
-      const result = await clienteService.criar(novoCliente);
+      const result = await service.criar(novoCliente);
 
       expect(result.id).toBe('2');
       expect(mockClienteRepository.create).toHaveBeenCalled();
@@ -128,7 +141,7 @@ describe('ClienteService', () => {
       mockClienteRepository.findByDocumento.mockResolvedValue(null);
       mockClienteRepository.create.mockResolvedValue({ ...clientePF, id: '3', createdAt: new Date() });
 
-      const result = await clienteService.criar(clientePF);
+      const result = await service.criar(clientePF);
 
       expect(result.id).toBe('3');
     });
@@ -136,8 +149,8 @@ describe('ClienteService', () => {
     it('deve lançar erro para razão social muito curta', async () => {
       const clienteInvalido = { ...novoCliente, razaoSocial: 'AB' };
 
-      await expect(clienteService.criar(clienteInvalido)).rejects.toThrow(ValidationError);
-      await expect(clienteService.criar(clienteInvalido)).rejects.toThrow(
+      await expect(service.criar(clienteInvalido)).rejects.toThrow(ValidationError);
+      await expect(service.criar(clienteInvalido)).rejects.toThrow(
         'Nome/Razão social deve ter pelo menos 3 caracteres'
       );
     });
@@ -145,8 +158,8 @@ describe('ClienteService', () => {
     it('deve lançar erro para CNPJ vazio em pessoa jurídica', async () => {
       const clienteInvalido = { ...novoCliente, cnpj: '', tipoPessoa: 'juridica' as const };
 
-      await expect(clienteService.criar(clienteInvalido)).rejects.toThrow(ValidationError);
-      await expect(clienteService.criar(clienteInvalido)).rejects.toThrow('CNPJ é obrigatório para pessoa jurídica');
+      await expect(service.criar(clienteInvalido)).rejects.toThrow(ValidationError);
+      await expect(service.criar(clienteInvalido)).rejects.toThrow('CNPJ é obrigatório para pessoa jurídica');
     });
 
     it('deve permitir CPF vazio para pessoa física', async () => {
@@ -154,7 +167,7 @@ describe('ClienteService', () => {
       mockClienteRepository.findByDocumento.mockResolvedValue(null);
       mockClienteRepository.create.mockResolvedValue({ ...clientePessoaFisica, id: '4', createdAt: new Date() });
 
-      const result = await clienteService.criar(clientePessoaFisica);
+      const result = await service.criar(clientePessoaFisica);
 
       expect(result.id).toBe('4');
     });
@@ -162,8 +175,8 @@ describe('ClienteService', () => {
     it('deve lançar erro para documento com tamanho inválido', async () => {
       const clienteInvalido = { ...novoCliente, cnpj: '123456' };
 
-      await expect(clienteService.criar(clienteInvalido)).rejects.toThrow(ValidationError);
-      await expect(clienteService.criar(clienteInvalido)).rejects.toThrow(
+      await expect(service.criar(clienteInvalido)).rejects.toThrow(ValidationError);
+      await expect(service.criar(clienteInvalido)).rejects.toThrow(
         'CPF deve ter 11 dígitos ou CNPJ deve ter 14 dígitos'
       );
     });
@@ -171,8 +184,8 @@ describe('ClienteService', () => {
     it('deve lançar erro para documento já cadastrado', async () => {
       mockClienteRepository.findByDocumento.mockResolvedValue(mockCliente);
 
-      await expect(clienteService.criar(novoCliente)).rejects.toThrow(ValidationError);
-      await expect(clienteService.criar(novoCliente)).rejects.toThrow(
+      await expect(service.criar(novoCliente)).rejects.toThrow(ValidationError);
+      await expect(service.criar(novoCliente)).rejects.toThrow(
         'Já existe um cliente cadastrado com este CPF/CNPJ'
       );
     });
@@ -183,7 +196,7 @@ describe('ClienteService', () => {
       const dadosAtualizacao = { razaoSocial: 'Empresa Atualizada LTDA' };
       mockClienteRepository.update.mockResolvedValue({ ...mockCliente, ...dadosAtualizacao });
 
-      const result = await clienteService.atualizar('1', dadosAtualizacao);
+      const result = await service.atualizar('1', dadosAtualizacao);
 
       expect(result.razaoSocial).toBe('Empresa Atualizada LTDA');
       expect(mockClienteRepository.update).toHaveBeenCalledWith('1', dadosAtualizacao);
@@ -192,14 +205,14 @@ describe('ClienteService', () => {
     it('deve lançar erro ao atualizar com razão social muito curta', async () => {
       const dadosInvalidos = { razaoSocial: 'AB' };
 
-      await expect(clienteService.atualizar('1', dadosInvalidos)).rejects.toThrow(ValidationError);
+      await expect(service.atualizar('1', dadosInvalidos)).rejects.toThrow(ValidationError);
     });
 
     it('deve lançar erro ao atualizar com documento de outro cliente', async () => {
       const outroCliente = { ...mockCliente, id: '2' };
       mockClienteRepository.findByDocumento.mockResolvedValue(outroCliente);
 
-      await expect(clienteService.atualizar('1', { cnpj: '12345678901234' })).rejects.toThrow(
+      await expect(service.atualizar('1', { cnpj: '12345678901234' })).rejects.toThrow(
         'Já existe outro cliente cadastrado com este CPF/CNPJ'
       );
     });
@@ -207,8 +220,8 @@ describe('ClienteService', () => {
     it('deve lançar erro ao atualizar com documento de tamanho inválido', async () => {
       const dadosInvalidos = { cnpj: '123456' };
 
-      await expect(clienteService.atualizar('1', dadosInvalidos)).rejects.toThrow(ValidationError);
-      await expect(clienteService.atualizar('1', dadosInvalidos)).rejects.toThrow(
+      await expect(service.atualizar('1', dadosInvalidos)).rejects.toThrow(ValidationError);
+      await expect(service.atualizar('1', dadosInvalidos)).rejects.toThrow(
         'CPF deve ter 11 dígitos ou CNPJ deve ter 14 dígitos'
       );
     });
@@ -217,7 +230,7 @@ describe('ClienteService', () => {
       mockClienteRepository.findByDocumento.mockResolvedValue(mockCliente);
       mockClienteRepository.update.mockResolvedValue({ ...mockCliente, cnpj: '12345678901234' });
 
-      const result = await clienteService.atualizar('1', { cnpj: '12345678901234' });
+      const result = await service.atualizar('1', { cnpj: '12345678901234' });
 
       expect(result.cnpj).toBe('12345678901234');
       expect(mockClienteRepository.update).toHaveBeenCalled();
@@ -226,8 +239,8 @@ describe('ClienteService', () => {
     it('deve lançar erro ao mudar para pessoa jurídica sem CNPJ', async () => {
       const dadosInvalidos = { tipoPessoa: 'juridica' as const, cnpj: '' };
 
-      await expect(clienteService.atualizar('1', dadosInvalidos)).rejects.toThrow(ValidationError);
-      await expect(clienteService.atualizar('1', dadosInvalidos)).rejects.toThrow(
+      await expect(service.atualizar('1', dadosInvalidos)).rejects.toThrow(ValidationError);
+      await expect(service.atualizar('1', dadosInvalidos)).rejects.toThrow(
         'CNPJ é obrigatório para pessoa jurídica'
       );
     });
@@ -235,8 +248,8 @@ describe('ClienteService', () => {
     it('deve lançar erro ao mudar para pessoa jurídica com documento inválido', async () => {
       const dadosInvalidos = { tipoPessoa: 'juridica' as const, cnpj: '12345678901' }; // CPF ao invés de CNPJ
 
-      await expect(clienteService.atualizar('1', dadosInvalidos)).rejects.toThrow(ValidationError);
-      await expect(clienteService.atualizar('1', dadosInvalidos)).rejects.toThrow(
+      await expect(service.atualizar('1', dadosInvalidos)).rejects.toThrow(ValidationError);
+      await expect(service.atualizar('1', dadosInvalidos)).rejects.toThrow(
         'CNPJ é obrigatório para pessoa jurídica'
       );
     });
@@ -249,7 +262,7 @@ describe('ClienteService', () => {
         cnpj: '12345678901234',
       });
 
-      const result = await clienteService.atualizar('1', {
+      const result = await service.atualizar('1', {
         tipoPessoa: 'juridica' as const,
         cnpj: '12345678901234',
       });
@@ -262,7 +275,7 @@ describe('ClienteService', () => {
       mockClienteRepository.update.mockResolvedValue({ ...mockCliente, cnpj: '' });
 
       // Não deve lançar erro porque não está passando cnpj com valor inválido
-      const result = await clienteService.atualizar('1', { razaoSocial: 'Novo Nome' });
+      const result = await service.atualizar('1', { razaoSocial: 'Novo Nome' });
 
       expect(mockClienteRepository.update).toHaveBeenCalledWith('1', { razaoSocial: 'Novo Nome' });
     });
@@ -270,9 +283,9 @@ describe('ClienteService', () => {
 
   describe('excluir', () => {
     it('deve excluir cliente existente', async () => {
-      mockClienteRepository.delete.mockResolvedValue();
+      mockClienteRepository.delete.mockResolvedValue(undefined);
 
-      await clienteService.excluir('1');
+      await service.excluir('1');
 
       expect(mockClienteRepository.delete).toHaveBeenCalledWith('1');
     });

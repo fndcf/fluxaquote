@@ -1,5 +1,5 @@
-import { configuracoesGeraisRepository } from '../repositories/configuracoesGeraisRepository';
-import { historicoValoresRepository } from '../repositories/historicoValoresRepository';
+import { createConfiguracoesGeraisRepository } from '../repositories/configuracoesGeraisRepository';
+import { createHistoricoValoresRepository } from '../repositories/historicoValoresRepository';
 import { ConfiguracoesGerais } from '../models';
 import { ValidationError } from '../utils/errors';
 
@@ -29,12 +29,15 @@ function valoresFinanceirosMudaram(
   return false;
 }
 
-export const configuracoesGeraisService = {
-  async buscar(): Promise<ConfiguracoesGerais> {
-    return configuracoesGeraisRepository.get();
-  },
+export function createConfiguracoesGeraisService(tenantId: string) {
+  const configuracoesGeraisRepo = createConfiguracoesGeraisRepository(tenantId);
+  const historicoValoresRepo = createHistoricoValoresRepository(tenantId);
 
-  async atualizar(data: Partial<ConfiguracoesGerais>): Promise<ConfiguracoesGerais> {
+  const buscar = async (): Promise<ConfiguracoesGerais> => {
+    return configuracoesGeraisRepo.get();
+  };
+
+  const atualizar = async (data: Partial<ConfiguracoesGerais>): Promise<ConfiguracoesGerais> => {
     // Validações
     if (data.diasValidadeOrcamento !== undefined) {
       if (data.diasValidadeOrcamento < 1 || data.diasValidadeOrcamento > 365) {
@@ -58,14 +61,14 @@ export const configuracoesGeraisService = {
     }
 
     // Buscar configurações atuais para verificar se valores financeiros mudaram
-    const existente = await configuracoesGeraisRepository.get();
+    const existente = await configuracoesGeraisRepo.get();
     const deveSalvarHistorico = valoresFinanceirosMudaram(existente, data);
 
-    const updated = await configuracoesGeraisRepository.update(data);
+    const updated = await configuracoesGeraisRepo.update(data);
 
     // Salvar histórico se os valores financeiros mudaram
     if (deveSalvarHistorico) {
-      await historicoValoresRepository.salvarHistoricoConfiguracao({
+      await historicoValoresRepo.salvarHistoricoConfiguracao({
         dataVigencia: new Date(),
         custoFixoMensal: updated.custoFixoMensal || 0,
         impostoMaterial: updated.impostoMaterial || 0,
@@ -74,5 +77,10 @@ export const configuracoesGeraisService = {
     }
 
     return updated;
-  },
-};
+  };
+
+  return {
+    buscar,
+    atualizar,
+  };
+}

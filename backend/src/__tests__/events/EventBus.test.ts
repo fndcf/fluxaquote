@@ -12,6 +12,7 @@ describe('EventBus', () => {
       eventBus.on(OrcamentoEvents.STATUS_CHANGED, handler);
 
       const event: OrcamentoStatusChangedEvent = {
+        tenantId: 'test-tenant-id',
         orcamentoId: '123',
         statusAnterior: 'pendente',
         statusNovo: 'aceito',
@@ -31,6 +32,7 @@ describe('EventBus', () => {
       eventBus.on(OrcamentoEvents.STATUS_CHANGED, handler2);
 
       const event: OrcamentoStatusChangedEvent = {
+        tenantId: 'test-tenant-id',
         orcamentoId: '123',
         statusAnterior: 'pendente',
         statusNovo: 'aceito',
@@ -50,6 +52,7 @@ describe('EventBus', () => {
       unsubscribe();
 
       const event: OrcamentoStatusChangedEvent = {
+        tenantId: 'test-tenant-id',
         orcamentoId: '123',
         statusAnterior: 'pendente',
         statusNovo: 'aceito',
@@ -72,6 +75,7 @@ describe('EventBus', () => {
       eventBus.on(OrcamentoEvents.STATUS_CHANGED, handler3);
 
       const event: OrcamentoStatusChangedEvent = {
+        tenantId: 'test-tenant-id',
         orcamentoId: '123',
         statusAnterior: 'pendente',
         statusNovo: 'aceito',
@@ -86,6 +90,7 @@ describe('EventBus', () => {
 
     it('deve não falhar quando não há handlers registrados', async () => {
       const event: OrcamentoStatusChangedEvent = {
+        tenantId: 'test-tenant-id',
         orcamentoId: '123',
         statusAnterior: 'pendente',
         statusNovo: 'aceito',
@@ -106,6 +111,7 @@ describe('EventBus', () => {
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
 
       const event: OrcamentoStatusChangedEvent = {
+        tenantId: 'test-tenant-id',
         orcamentoId: '123',
         statusAnterior: 'pendente',
         statusNovo: 'aceito',
@@ -140,6 +146,7 @@ describe('EventBus', () => {
       eventBus.on(OrcamentoEvents.STATUS_CHANGED, handler2);
 
       const event: OrcamentoStatusChangedEvent = {
+        tenantId: 'test-tenant-id',
         orcamentoId: '123',
         statusAnterior: 'pendente',
         statusNovo: 'aceito',
@@ -163,6 +170,7 @@ describe('EventBus', () => {
       eventBus.off(OrcamentoEvents.STATUS_CHANGED);
 
       const event: OrcamentoStatusChangedEvent = {
+        tenantId: 'test-tenant-id',
         orcamentoId: '123',
         statusAnterior: 'pendente',
         statusNovo: 'aceito',
@@ -184,6 +192,7 @@ describe('EventBus', () => {
       eventBus.off(OrcamentoEvents.STATUS_CHANGED);
 
       const createdEvent: OrcamentoCreatedEvent = {
+        tenantId: 'test-tenant-id',
         orcamentoId: '123',
         clienteId: 'cli1',
         tipo: 'simples',
@@ -208,18 +217,21 @@ describe('EventBus', () => {
       eventBus.clear();
 
       const statusEvent: OrcamentoStatusChangedEvent = {
+        tenantId: 'test-tenant-id',
         orcamentoId: '123',
         statusAnterior: 'pendente',
         statusNovo: 'aceito',
       };
 
       const createdEvent: OrcamentoCreatedEvent = {
+        tenantId: 'test-tenant-id',
         orcamentoId: '123',
         clienteId: 'cli1',
         tipo: 'simples',
       };
 
       const deletedEvent: OrcamentoDeletedEvent = {
+        tenantId: 'test-tenant-id',
         orcamentoId: '123',
       };
 
@@ -247,6 +259,7 @@ describe('EventBus', () => {
       eventBus.on(OrcamentoEvents.CREATED, handler);
 
       const event: OrcamentoCreatedEvent = {
+        tenantId: 'test-tenant-id',
         orcamentoId: '123',
         clienteId: 'cli1',
         tipo: 'completo',
@@ -262,6 +275,7 @@ describe('EventBus', () => {
       eventBus.on(OrcamentoEvents.DELETED, handler);
 
       const event: OrcamentoDeletedEvent = {
+        tenantId: 'test-tenant-id',
         orcamentoId: '456',
       };
 

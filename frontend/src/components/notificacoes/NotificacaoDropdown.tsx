@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
+import { useTenant } from "../../hooks/useTenant";
 import {
   useNotificacaoResumo,
   useNotificacoesAtivasPaginadas,
@@ -260,6 +261,7 @@ export function NotificacaoDropdown() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const { buildPath } = useTenant();
 
   const { data: resumo } = useNotificacaoResumo();
   // Usar notificações ativas paginadas (10 por página)
@@ -315,7 +317,7 @@ export function NotificacaoDropdown() {
       marcarLida.mutate(notificacao.id!);
     }
     setIsOpen(false);
-    navigate(`/orcamentos?id=${notificacao.orcamentoId}`);
+    navigate(`${buildPath("/orcamentos")}?id=${notificacao.orcamentoId}`);
   };
 
   const handleMarcarTodasLidas = () => {
@@ -324,7 +326,7 @@ export function NotificacaoDropdown() {
 
   const handleVerTodas = () => {
     setIsOpen(false);
-    navigate("/notificacoes");
+    navigate(buildPath("/notificacoes"));
   };
 
   // Usar contagem de ativas (vencidas + próximas) em vez de todas não lidas

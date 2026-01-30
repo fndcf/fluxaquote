@@ -1,9 +1,18 @@
 import { Request, Response, NextFunction } from 'express';
 import { configuracoesGeraisController } from '../../controllers/configuracoesGeraisController';
-import { configuracoesGeraisService } from '../../services/configuracoesGeraisService';
+import { createConfiguracoesGeraisService } from '../../services/configuracoesGeraisService';
 
 // Mock do configuracoesGeraisService
 jest.mock('../../services/configuracoesGeraisService');
+jest.mock('../../utils/requestContext', () => ({
+  getTenantId: jest.fn().mockReturnValue('test-tenant-id'),
+}));
+
+const mockService = {
+  buscar: jest.fn(),
+  atualizar: jest.fn(),
+};
+(createConfiguracoesGeraisService as jest.Mock).mockReturnValue(mockService);
 
 describe('configuracoesGeraisController', () => {
   let mockReq: Partial<Request>;
@@ -26,6 +35,7 @@ describe('configuracoesGeraisController', () => {
 
     mockNext = jest.fn();
     jest.clearAllMocks();
+    (createConfiguracoesGeraisService as jest.Mock).mockReturnValue(mockService);
   });
 
   describe('buscar', () => {
@@ -38,7 +48,7 @@ describe('configuracoesGeraisController', () => {
         telefoneEmpresa: '11999999999',
         emailEmpresa: 'teste@empresa.com',
       };
-      (configuracoesGeraisService.buscar as jest.Mock).mockResolvedValue(configuracoes);
+      mockService.buscar.mockResolvedValue(configuracoes);
 
       await configuracoesGeraisController.buscar(mockReq as Request, mockRes as Response, mockNext);
 
@@ -47,7 +57,7 @@ describe('configuracoesGeraisController', () => {
 
     it('deve chamar next com erro quando falhar', async () => {
       const error = new Error('Erro no banco');
-      (configuracoesGeraisService.buscar as jest.Mock).mockRejectedValue(error);
+      mockService.buscar.mockRejectedValue(error);
 
       await configuracoesGeraisController.buscar(mockReq as Request, mockRes as Response, mockNext);
 
@@ -67,18 +77,18 @@ describe('configuracoesGeraisController', () => {
         emailEmpresa: 'teste@empresa.com',
       };
       mockReq.body = dadosAtualizacao;
-      (configuracoesGeraisService.atualizar as jest.Mock).mockResolvedValue(configuracoes);
+      mockService.atualizar.mockResolvedValue(configuracoes);
 
       await configuracoesGeraisController.atualizar(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(configuracoesGeraisService.atualizar).toHaveBeenCalledWith(dadosAtualizacao);
+      expect(mockService.atualizar).toHaveBeenCalledWith(dadosAtualizacao);
       expect(jsonMock).toHaveBeenCalledWith(configuracoes);
     });
 
     it('deve chamar next com erro quando falhar', async () => {
       mockReq.body = { diasValidadeOrcamento: 0 };
       const error = new Error('Dias de validade inválido');
-      (configuracoesGeraisService.atualizar as jest.Mock).mockRejectedValue(error);
+      mockService.atualizar.mockRejectedValue(error);
 
       await configuracoesGeraisController.atualizar(mockReq as Request, mockRes as Response, mockNext);
 
@@ -98,11 +108,11 @@ describe('configuracoesGeraisController', () => {
         impostoServico: 15,
       };
       mockReq.body = dadosAtualizacao;
-      (configuracoesGeraisService.atualizar as jest.Mock).mockResolvedValue(configuracoes);
+      mockService.atualizar.mockResolvedValue(configuracoes);
 
       await configuracoesGeraisController.atualizar(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(configuracoesGeraisService.atualizar).toHaveBeenCalledWith(dadosAtualizacao);
+      expect(mockService.atualizar).toHaveBeenCalledWith(dadosAtualizacao);
       expect(jsonMock).toHaveBeenCalledWith(configuracoes);
     });
   });

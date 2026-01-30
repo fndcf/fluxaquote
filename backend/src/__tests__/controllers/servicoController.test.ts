@@ -1,9 +1,23 @@
 import { Request, Response, NextFunction } from 'express';
 import { servicoController } from '../../controllers/servicoController';
-import { servicoService } from '../../services/servicoService';
+import { createServicoService } from '../../services/servicoService';
 
 // Mock do servicoService
 jest.mock('../../services/servicoService');
+jest.mock('../../utils/requestContext', () => ({
+  getTenantId: jest.fn().mockReturnValue('test-tenant-id'),
+}));
+
+const mockService = {
+  listar: jest.fn(),
+  listarAtivos: jest.fn(),
+  buscarPorId: jest.fn(),
+  criar: jest.fn(),
+  atualizar: jest.fn(),
+  excluir: jest.fn(),
+  toggleAtivo: jest.fn(),
+};
+(createServicoService as jest.Mock).mockReturnValue(mockService);
 
 describe('servicoController', () => {
   let mockReq: Partial<Request>;
@@ -32,6 +46,7 @@ describe('servicoController', () => {
 
     mockNext = jest.fn();
     jest.clearAllMocks();
+    (createServicoService as jest.Mock).mockReturnValue(mockService);
   });
 
   describe('listar', () => {
@@ -40,7 +55,7 @@ describe('servicoController', () => {
         { id: '1', descricao: 'Serviço 1', ativo: true, ordem: 1 },
         { id: '2', descricao: 'Serviço 2', ativo: true, ordem: 2 },
       ];
-      (servicoService.listar as jest.Mock).mockResolvedValue(servicos);
+      mockService.listar.mockResolvedValue(servicos);
 
       await servicoController.listar(mockReq as Request, mockRes as Response, mockNext);
 
@@ -49,7 +64,7 @@ describe('servicoController', () => {
 
     it('deve chamar next com erro quando falhar', async () => {
       const error = new Error('Erro no banco');
-      (servicoService.listar as jest.Mock).mockRejectedValue(error);
+      mockService.listar.mockRejectedValue(error);
 
       await servicoController.listar(mockReq as Request, mockRes as Response, mockNext);
 
@@ -60,7 +75,7 @@ describe('servicoController', () => {
   describe('listarAtivos', () => {
     it('deve retornar lista de serviços ativos com sucesso', async () => {
       const servicos = [{ id: '1', descricao: 'Serviço 1', ativo: true, ordem: 1 }];
-      (servicoService.listarAtivos as jest.Mock).mockResolvedValue(servicos);
+      mockService.listarAtivos.mockResolvedValue(servicos);
 
       await servicoController.listarAtivos(mockReq as Request, mockRes as Response, mockNext);
 
@@ -69,7 +84,7 @@ describe('servicoController', () => {
 
     it('deve chamar next com erro quando falhar', async () => {
       const error = new Error('Erro no banco');
-      (servicoService.listarAtivos as jest.Mock).mockRejectedValue(error);
+      mockService.listarAtivos.mockRejectedValue(error);
 
       await servicoController.listarAtivos(mockReq as Request, mockRes as Response, mockNext);
 
@@ -81,7 +96,7 @@ describe('servicoController', () => {
     it('deve retornar serviço por ID com sucesso', async () => {
       const servico = { id: '1', descricao: 'Serviço 1', ativo: true, ordem: 1 };
       mockReq.params = { id: '1' };
-      (servicoService.buscarPorId as jest.Mock).mockResolvedValue(servico);
+      mockService.buscarPorId.mockResolvedValue(servico);
 
       await servicoController.buscarPorId(mockReq as Request, mockRes as Response, mockNext);
 
@@ -91,7 +106,7 @@ describe('servicoController', () => {
     it('deve chamar next com erro quando não encontrar', async () => {
       mockReq.params = { id: 'inexistente' };
       const error = new Error('Serviço não encontrado');
-      (servicoService.buscarPorId as jest.Mock).mockRejectedValue(error);
+      mockService.buscarPorId.mockRejectedValue(error);
 
       await servicoController.buscarPorId(mockReq as Request, mockRes as Response, mockNext);
 
@@ -104,7 +119,7 @@ describe('servicoController', () => {
       const novoServico = { descricao: 'Novo Serviço de Teste', ativo: true };
       const servicoCriado = { id: '1', ...novoServico, ordem: 1 };
       mockReq.body = novoServico;
-      (servicoService.criar as jest.Mock).mockResolvedValue(servicoCriado);
+      mockService.criar.mockResolvedValue(servicoCriado);
 
       await servicoController.criar(mockReq as Request, mockRes as Response, mockNext);
 
@@ -115,7 +130,7 @@ describe('servicoController', () => {
     it('deve chamar next com erro quando falhar', async () => {
       mockReq.body = { descricao: 'curto' };
       const error = new Error('Descrição muito curta');
-      (servicoService.criar as jest.Mock).mockRejectedValue(error);
+      mockService.criar.mockRejectedValue(error);
 
       await servicoController.criar(mockReq as Request, mockRes as Response, mockNext);
 
@@ -129,7 +144,7 @@ describe('servicoController', () => {
       const servicoAtualizado = { id: '1', descricao: 'Serviço Atualizado com Descrição', ativo: true, ordem: 1 };
       mockReq.params = { id: '1' };
       mockReq.body = dadosAtualizacao;
-      (servicoService.atualizar as jest.Mock).mockResolvedValue(servicoAtualizado);
+      mockService.atualizar.mockResolvedValue(servicoAtualizado);
 
       await servicoController.atualizar(mockReq as Request, mockRes as Response, mockNext);
 
@@ -141,18 +156,18 @@ describe('servicoController', () => {
       const servicoAtualizado = { id: '1', descricao: 'Serviço 1', ativo: false, ordem: 1 };
       mockReq.params = { id: '1' };
       mockReq.body = dadosAtualizacao;
-      (servicoService.atualizar as jest.Mock).mockResolvedValue(servicoAtualizado);
+      mockService.atualizar.mockResolvedValue(servicoAtualizado);
 
       await servicoController.atualizar(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(servicoService.atualizar).toHaveBeenCalledWith('1', { descricao: undefined, ativo: false, ordem: undefined });
+      expect(mockService.atualizar).toHaveBeenCalledWith('1', { descricao: undefined, ativo: false, ordem: undefined });
     });
 
     it('deve chamar next com erro quando falhar', async () => {
       mockReq.params = { id: 'inexistente' };
       mockReq.body = { descricao: 'Serviço Atualizado' };
       const error = new Error('Serviço não encontrado');
-      (servicoService.atualizar as jest.Mock).mockRejectedValue(error);
+      mockService.atualizar.mockRejectedValue(error);
 
       await servicoController.atualizar(mockReq as Request, mockRes as Response, mockNext);
 
@@ -163,7 +178,7 @@ describe('servicoController', () => {
   describe('excluir', () => {
     it('deve excluir serviço com sucesso', async () => {
       mockReq.params = { id: '1' };
-      (servicoService.excluir as jest.Mock).mockResolvedValue(undefined);
+      mockService.excluir.mockResolvedValue(undefined);
 
       await servicoController.excluir(mockReq as Request, mockRes as Response, mockNext);
 
@@ -174,7 +189,7 @@ describe('servicoController', () => {
     it('deve chamar next com erro quando falhar', async () => {
       mockReq.params = { id: 'inexistente' };
       const error = new Error('Serviço não encontrado');
-      (servicoService.excluir as jest.Mock).mockRejectedValue(error);
+      mockService.excluir.mockRejectedValue(error);
 
       await servicoController.excluir(mockReq as Request, mockRes as Response, mockNext);
 
@@ -186,7 +201,7 @@ describe('servicoController', () => {
     it('deve alternar status ativo com sucesso', async () => {
       const servicoAlternado = { id: '1', descricao: 'Serviço 1', ativo: false, ordem: 1 };
       mockReq.params = { id: '1' };
-      (servicoService.toggleAtivo as jest.Mock).mockResolvedValue(servicoAlternado);
+      mockService.toggleAtivo.mockResolvedValue(servicoAlternado);
 
       await servicoController.toggleAtivo(mockReq as Request, mockRes as Response, mockNext);
 
@@ -196,7 +211,7 @@ describe('servicoController', () => {
     it('deve chamar next com erro quando falhar', async () => {
       mockReq.params = { id: 'inexistente' };
       const error = new Error('Serviço não encontrado');
-      (servicoService.toggleAtivo as jest.Mock).mockRejectedValue(error);
+      mockService.toggleAtivo.mockRejectedValue(error);
 
       await servicoController.toggleAtivo(mockReq as Request, mockRes as Response, mockNext);
 

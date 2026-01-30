@@ -1,9 +1,24 @@
 import { Request, Response, NextFunction } from 'express';
 import { clienteController } from '../../controllers/clienteController';
-import { clienteService } from '../../services/clienteService';
+import { createClienteService } from '../../services/clienteService';
 
 // Mock do clienteService
 jest.mock('../../services/clienteService');
+jest.mock('../../utils/requestContext', () => ({
+  getTenantId: jest.fn().mockReturnValue('test-tenant-id'),
+}));
+
+const mockService = {
+  listar: jest.fn(),
+  listarPaginado: jest.fn(),
+  buscarPorId: jest.fn(),
+  buscarPorDocumento: jest.fn(),
+  pesquisar: jest.fn(),
+  criar: jest.fn(),
+  atualizar: jest.fn(),
+  excluir: jest.fn(),
+};
+(createClienteService as jest.Mock).mockReturnValue(mockService);
 
 describe('clienteController', () => {
   let mockReq: Partial<Request>;
@@ -29,6 +44,7 @@ describe('clienteController', () => {
 
     mockNext = jest.fn();
     jest.clearAllMocks();
+    (createClienteService as jest.Mock).mockReturnValue(mockService);
   });
 
   describe('listar', () => {
@@ -37,7 +53,7 @@ describe('clienteController', () => {
         { id: '1', razaoSocial: 'Cliente 1', cnpj: '12345678901234' },
         { id: '2', razaoSocial: 'Cliente 2', cnpj: '98765432109876' },
       ];
-      (clienteService.listar as jest.Mock).mockResolvedValue(clientes);
+      mockService.listar.mockResolvedValue(clientes);
 
       await clienteController.listar(mockReq as Request, mockRes as Response, mockNext);
 
@@ -49,7 +65,7 @@ describe('clienteController', () => {
 
     it('deve chamar next com erro quando falhar', async () => {
       const error = new Error('Erro no banco');
-      (clienteService.listar as jest.Mock).mockRejectedValue(error);
+      mockService.listar.mockRejectedValue(error);
 
       await clienteController.listar(mockReq as Request, mockRes as Response, mockNext);
 
@@ -69,11 +85,11 @@ describe('clienteController', () => {
         totalPages: 1,
       };
       mockReq.query = {};
-      (clienteService.listarPaginado as jest.Mock).mockResolvedValue(result);
+      mockService.listarPaginado.mockResolvedValue(result);
 
       await clienteController.listarPaginado(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(clienteService.listarPaginado).toHaveBeenCalledWith(1, 10, { busca: undefined });
+      expect(mockService.listarPaginado).toHaveBeenCalledWith(1, 10, { busca: undefined });
       expect(jsonMock).toHaveBeenCalledWith({
         success: true,
         data: result,
@@ -88,11 +104,11 @@ describe('clienteController', () => {
         totalPages: 5,
       };
       mockReq.query = { page: '2', limit: '5', busca: 'teste' };
-      (clienteService.listarPaginado as jest.Mock).mockResolvedValue(result);
+      mockService.listarPaginado.mockResolvedValue(result);
 
       await clienteController.listarPaginado(mockReq as Request, mockRes as Response, mockNext);
 
-      expect(clienteService.listarPaginado).toHaveBeenCalledWith(2, 5, { busca: 'teste' });
+      expect(mockService.listarPaginado).toHaveBeenCalledWith(2, 5, { busca: 'teste' });
       expect(jsonMock).toHaveBeenCalledWith({
         success: true,
         data: result,
@@ -102,7 +118,7 @@ describe('clienteController', () => {
     it('deve chamar next com erro quando falhar', async () => {
       mockReq.query = {};
       const error = new Error('Erro no banco');
-      (clienteService.listarPaginado as jest.Mock).mockRejectedValue(error);
+      mockService.listarPaginado.mockRejectedValue(error);
 
       await clienteController.listarPaginado(mockReq as Request, mockRes as Response, mockNext);
 
@@ -114,7 +130,7 @@ describe('clienteController', () => {
     it('deve retornar cliente por ID com sucesso', async () => {
       const cliente = { id: '1', razaoSocial: 'Cliente 1', cnpj: '12345678901234' };
       mockReq.params = { id: '1' };
-      (clienteService.buscarPorId as jest.Mock).mockResolvedValue(cliente);
+      mockService.buscarPorId.mockResolvedValue(cliente);
 
       await clienteController.buscarPorId(mockReq as Request, mockRes as Response, mockNext);
 
@@ -127,7 +143,7 @@ describe('clienteController', () => {
     it('deve chamar next com erro quando não encontrar', async () => {
       mockReq.params = { id: 'inexistente' };
       const error = new Error('Cliente não encontrado');
-      (clienteService.buscarPorId as jest.Mock).mockRejectedValue(error);
+      mockService.buscarPorId.mockRejectedValue(error);
 
       await clienteController.buscarPorId(mockReq as Request, mockRes as Response, mockNext);
 
@@ -139,7 +155,7 @@ describe('clienteController', () => {
     it('deve retornar cliente por documento com sucesso', async () => {
       const cliente = { id: '1', razaoSocial: 'Cliente 1', cnpj: '12345678901234' };
       mockReq.params = { documento: '12345678901234' };
-      (clienteService.buscarPorDocumento as jest.Mock).mockResolvedValue(cliente);
+      mockService.buscarPorDocumento.mockResolvedValue(cliente);
 
       await clienteController.buscarPorDocumento(mockReq as Request, mockRes as Response, mockNext);
 
@@ -151,7 +167,7 @@ describe('clienteController', () => {
 
     it('deve retornar null quando não encontrar', async () => {
       mockReq.params = { documento: '00000000000000' };
-      (clienteService.buscarPorDocumento as jest.Mock).mockResolvedValue(null);
+      mockService.buscarPorDocumento.mockResolvedValue(null);
 
       await clienteController.buscarPorDocumento(mockReq as Request, mockRes as Response, mockNext);
 
@@ -164,7 +180,7 @@ describe('clienteController', () => {
     it('deve chamar next com erro quando falhar', async () => {
       mockReq.params = { documento: '12345678901234' };
       const error = new Error('Erro no banco');
-      (clienteService.buscarPorDocumento as jest.Mock).mockRejectedValue(error);
+      mockService.buscarPorDocumento.mockRejectedValue(error);
 
       await clienteController.buscarPorDocumento(mockReq as Request, mockRes as Response, mockNext);
 
@@ -176,7 +192,7 @@ describe('clienteController', () => {
     it('deve retornar clientes pesquisados com sucesso', async () => {
       const clientes = [{ id: '1', razaoSocial: 'Cliente Teste', cnpj: '12345678901234' }];
       mockReq.query = { termo: 'teste' };
-      (clienteService.pesquisar as jest.Mock).mockResolvedValue(clientes);
+      mockService.pesquisar.mockResolvedValue(clientes);
 
       await clienteController.pesquisar(mockReq as Request, mockRes as Response, mockNext);
 
@@ -189,7 +205,7 @@ describe('clienteController', () => {
     it('deve chamar next com erro quando falhar', async () => {
       mockReq.query = { termo: 'teste' };
       const error = new Error('Erro na pesquisa');
-      (clienteService.pesquisar as jest.Mock).mockRejectedValue(error);
+      mockService.pesquisar.mockRejectedValue(error);
 
       await clienteController.pesquisar(mockReq as Request, mockRes as Response, mockNext);
 
@@ -202,7 +218,7 @@ describe('clienteController', () => {
       const novoCliente = { razaoSocial: 'Novo Cliente', cnpj: '12345678901234' };
       const clienteCriado = { id: '1', ...novoCliente };
       mockReq.body = novoCliente;
-      (clienteService.criar as jest.Mock).mockResolvedValue(clienteCriado);
+      mockService.criar.mockResolvedValue(clienteCriado);
 
       await clienteController.criar(mockReq as Request, mockRes as Response, mockNext);
 
@@ -216,7 +232,7 @@ describe('clienteController', () => {
     it('deve chamar next com erro quando falhar', async () => {
       mockReq.body = { razaoSocial: 'AB', cnpj: '123' };
       const error = new Error('Dados inválidos');
-      (clienteService.criar as jest.Mock).mockRejectedValue(error);
+      mockService.criar.mockRejectedValue(error);
 
       await clienteController.criar(mockReq as Request, mockRes as Response, mockNext);
 
@@ -230,7 +246,7 @@ describe('clienteController', () => {
       const clienteAtualizado = { id: '1', razaoSocial: 'Cliente Atualizado', cnpj: '12345678901234' };
       mockReq.params = { id: '1' };
       mockReq.body = dadosAtualizacao;
-      (clienteService.atualizar as jest.Mock).mockResolvedValue(clienteAtualizado);
+      mockService.atualizar.mockResolvedValue(clienteAtualizado);
 
       await clienteController.atualizar(mockReq as Request, mockRes as Response, mockNext);
 
@@ -244,7 +260,7 @@ describe('clienteController', () => {
       mockReq.params = { id: 'inexistente' };
       mockReq.body = { razaoSocial: 'Cliente Atualizado' };
       const error = new Error('Cliente não encontrado');
-      (clienteService.atualizar as jest.Mock).mockRejectedValue(error);
+      mockService.atualizar.mockRejectedValue(error);
 
       await clienteController.atualizar(mockReq as Request, mockRes as Response, mockNext);
 
@@ -255,7 +271,7 @@ describe('clienteController', () => {
   describe('excluir', () => {
     it('deve excluir cliente com sucesso', async () => {
       mockReq.params = { id: '1' };
-      (clienteService.excluir as jest.Mock).mockResolvedValue(undefined);
+      mockService.excluir.mockResolvedValue(undefined);
 
       await clienteController.excluir(mockReq as Request, mockRes as Response, mockNext);
 
@@ -268,7 +284,7 @@ describe('clienteController', () => {
     it('deve chamar next com erro quando falhar', async () => {
       mockReq.params = { id: 'inexistente' };
       const error = new Error('Cliente não encontrado');
-      (clienteService.excluir as jest.Mock).mockRejectedValue(error);
+      mockService.excluir.mockRejectedValue(error);
 
       await clienteController.excluir(mockReq as Request, mockRes as Response, mockNext);
 

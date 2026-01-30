@@ -1,9 +1,6 @@
-import { db } from '../config/firebase';
+import { getTenantDb } from '../utils/tenantDb';
 import { Cliente, PaginatedResponse } from '../models';
-import { COLLECTIONS } from '../utils/constants';
 import { NotFoundError } from '../utils/errors';
-
-const collection = db.collection(COLLECTIONS.CLIENTES);
 
 // Helper para mapear documento do Firestore para Cliente
 function mapDocToCliente(doc: FirebaseFirestore.QueryDocumentSnapshot | FirebaseFirestore.DocumentSnapshot): Cliente {
@@ -16,8 +13,10 @@ function mapDocToCliente(doc: FirebaseFirestore.QueryDocumentSnapshot | Firebase
   } as Cliente;
 }
 
-export const clienteRepository = {
-  async findAll(): Promise<Cliente[]> {
+export function createClienteRepository(tenantId: string) {
+  const collection = getTenantDb(tenantId).collection('clientes');
+
+  async function findAll(): Promise<Cliente[]> {
     const snapshot = await collection.orderBy('razaoSocial').get();
     return snapshot.docs.map(doc => ({
       id: doc.id,
@@ -25,9 +24,9 @@ export const clienteRepository = {
       createdAt: doc.data().createdAt?.toDate(),
       updatedAt: doc.data().updatedAt?.toDate(),
     })) as Cliente[];
-  },
+  }
 
-  async findById(id: string): Promise<Cliente> {
+  async function findById(id: string): Promise<Cliente> {
     const doc = await collection.doc(id).get();
 
     if (!doc.exists) {
@@ -40,9 +39,9 @@ export const clienteRepository = {
       createdAt: doc.data()?.createdAt?.toDate(),
       updatedAt: doc.data()?.updatedAt?.toDate(),
     } as Cliente;
-  },
+  }
 
-  async findByDocumento(documento: string): Promise<Cliente | null> {
+  async function findByDocumento(documento: string): Promise<Cliente | null> {
     const docLimpo = documento.replace(/\D/g, '');
     const snapshot = await collection.where('cnpj', '==', docLimpo).limit(1).get();
 
@@ -57,9 +56,9 @@ export const clienteRepository = {
       createdAt: doc.data().createdAt?.toDate(),
       updatedAt: doc.data().updatedAt?.toDate(),
     } as Cliente;
-  },
+  }
 
-  async search(termo: string): Promise<Cliente[]> {
+  async function search(termo: string): Promise<Cliente[]> {
     // Busca por razão social (case insensitive usando range query)
     const termoUpper = termo.toUpperCase();
     const snapshot = await collection
@@ -75,9 +74,9 @@ export const clienteRepository = {
       createdAt: doc.data().createdAt?.toDate(),
       updatedAt: doc.data().updatedAt?.toDate(),
     })) as Cliente[];
-  },
+  }
 
-  async create(data: Omit<Cliente, 'id' | 'createdAt'>): Promise<Cliente> {
+  async function create(data: Omit<Cliente, 'id' | 'createdAt'>): Promise<Cliente> {
     const cleanCnpj = data.cnpj?.replace(/\D/g, '') || '';
 
     const clienteData = {
@@ -93,9 +92,9 @@ export const clienteRepository = {
       id: docRef.id,
       ...clienteData,
     } as Cliente;
-  },
+  }
 
-  async update(id: string, data: Partial<Cliente>): Promise<Cliente> {
+  async function update(id: string, data: Partial<Cliente>): Promise<Cliente> {
     const doc = await collection.doc(id).get();
 
     if (!doc.exists) {
@@ -117,10 +116,10 @@ export const clienteRepository = {
 
     await collection.doc(id).update(updateData);
 
-    return this.findById(id);
-  },
+    return findById(id);
+  }
 
-  async delete(id: string): Promise<void> {
+  async function deleteCliente(id: string): Promise<void> {
     const doc = await collection.doc(id).get();
 
     if (!doc.exists) {
@@ -128,9 +127,9 @@ export const clienteRepository = {
     }
 
     await collection.doc(id).delete();
-  },
+  }
 
-  async findPaginated(
+  async function findPaginated(
     page: number = 1,
     limit: number = 10,
     filters?: {
@@ -191,11 +190,23 @@ export const clienteRepository = {
       total,
       hasMore,
     };
-  },
+  }
 
-  async count(): Promise<number> {
+  async function count(): Promise<number> {
     // Usar count aggregation do Firestore (mais eficiente)
     const countSnapshot = await collection.count().get();
     return countSnapshot.data().count;
-  },
-};
+  }
+
+  return {
+    findAll,
+    findById,
+    findByDocumento,
+    search,
+    create,
+    update,
+    delete: deleteCliente,
+    findPaginated,
+    count,
+  };
+}

@@ -1,15 +1,15 @@
-import { useState } from 'react';
+import { useState } from "react";
 import {
   useServicos,
   useCriarServico,
   useAtualizarServico,
   useToggleServico,
   useExcluirServico,
-} from '../../../hooks/useServicos';
-import { Modal, Button } from '../../../components/ui';
-import { Servico } from '../../../types';
-import { logger } from '../../../utils/logger';
-import { ConfirmDeleteModal } from '../components/ConfirmDeleteModal';
+} from "../../../hooks/useServicos";
+import { Modal, Button } from "../../../components/ui";
+import { Servico } from "../../../types";
+import { logger } from "../../../utils/logger";
+import { ConfirmDeleteModal } from "../components/ConfirmDeleteModal";
 import {
   Section,
   ItemsList,
@@ -25,7 +25,7 @@ import {
   ErrorAlert,
   TextArea,
   ModalButtons,
-} from '../styles';
+} from "../styles";
 
 export function ServicosTab() {
   const { data: servicos } = useServicos();
@@ -38,11 +38,11 @@ export function ServicosTab() {
   const [editando, setEditando] = useState<Servico | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<Servico | null>(null);
 
-  const [descricao, setDescricao] = useState('');
+  const [descricao, setDescricao] = useState("");
   const [modalError, setModalError] = useState<string | null>(null);
 
   const resetForm = () => {
-    setDescricao('');
+    setDescricao("");
     setEditando(null);
     setModalError(null);
   };
@@ -79,8 +79,12 @@ export function ServicosTab() {
       }
       handleCloseModal();
     } catch (error: any) {
-      logger.error('Erro ao salvar serviço', { error });
-      const errorMessage = error?.response?.data?.error || error?.response?.data?.message || error?.message || 'Erro ao salvar. Tente novamente.';
+      logger.error("Erro ao salvar serviço", { error });
+      const errorMessage =
+        error?.response?.data?.error ||
+        error?.response?.data?.message ||
+        error?.message ||
+        "Erro ao salvar. Tente novamente.";
       setModalError(errorMessage);
     }
   };
@@ -89,7 +93,7 @@ export function ServicosTab() {
     try {
       await toggleServico.mutateAsync(id);
     } catch (error) {
-      logger.error('Erro ao alterar status do serviço', { error });
+      logger.error("Erro ao alterar status do serviço", { error });
     }
   };
 
@@ -100,22 +104,33 @@ export function ServicosTab() {
       await excluirServico.mutateAsync(confirmDelete.id!);
       setConfirmDelete(null);
     } catch (error) {
-      logger.error('Erro ao excluir serviço', { error });
+      logger.error("Erro ao excluir serviço", { error });
     }
   };
 
   const isSaving = criarServico.isLoading || atualizarServico.isLoading;
-  const isSaveDisabled = !descricao.trim() || descricao.trim().length < 10 || isSaving;
+  const isSaveDisabled =
+    !descricao.trim() || descricao.trim().length < 10 || isSaving;
 
   return (
     <>
       <Section>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            marginBottom: 16,
+            flexWrap: "wrap",
+            gap: 12,
+          }}
+        >
           <div>
             <h2>Serviços para Orçamento Completo</h2>
             <p className="description">
-              Cadastre os tipos de serviço que aparecerão no cabeçalho do orçamento completo.
-              Ex: "Assessoria, fornecimento, manutenção e instalação de equipamentos..."
+              Cadastre os tipos de serviço que aparecerão no cabeçalho do
+              orçamento completo. Ex: "Assessoria, fornecimento, manutenção e
+              instalação de equipamentos..."
             </p>
           </div>
           <Button onClick={handleNovoClick}>+ Novo Serviço</Button>
@@ -128,18 +143,29 @@ export function ServicosTab() {
                 <ItemInfo>
                   <div className="titulo">
                     Serviço #{index + 1}
-                    <StatusBadge $ativo={s.ativo}>{s.ativo ? 'Ativo' : 'Inativo'}</StatusBadge>
+                    <StatusBadge $ativo={s.ativo}>
+                      {s.ativo ? "Ativo" : "Inativo"}
+                    </StatusBadge>
                   </div>
                   <div className="descricao">{s.descricao}</div>
                 </ItemInfo>
                 <ItemActions>
-                  <ActionButton $variant="edit" onClick={() => handleEditarClick(s)}>
+                  <ActionButton
+                    $variant="edit"
+                    onClick={() => handleEditarClick(s)}
+                  >
                     Editar
                   </ActionButton>
-                  <ActionButton $variant="toggle" onClick={() => handleToggle(s.id!)}>
-                    {s.ativo ? 'Desativar' : 'Ativar'}
+                  <ActionButton
+                    $variant="toggle"
+                    onClick={() => handleToggle(s.id!)}
+                  >
+                    {s.ativo ? "Desativar" : "Ativar"}
                   </ActionButton>
-                  <ActionButton $variant="delete" onClick={() => setConfirmDelete(s)}>
+                  <ActionButton
+                    $variant="delete"
+                    onClick={() => setConfirmDelete(s)}
+                  >
                     Excluir
                   </ActionButton>
                 </ItemActions>
@@ -149,7 +175,9 @@ export function ServicosTab() {
         ) : (
           <EmptyState>
             <p>Nenhum serviço cadastrado</p>
-            <Button onClick={handleNovoClick}>Cadastrar Primeiro Serviço</Button>
+            <Button onClick={handleNovoClick}>
+              Cadastrar Primeiro Serviço
+            </Button>
           </EmptyState>
         )}
       </Section>
@@ -158,7 +186,7 @@ export function ServicosTab() {
       <Modal
         isOpen={modalOpen}
         onClose={handleCloseModal}
-        title={editando ? 'Editar Serviço' : 'Novo(a) Serviço'}
+        title={editando ? "Editar Serviço" : "Novo(a) Serviço"}
         width="600px"
       >
         {modalError && <ErrorAlert>{modalError}</ErrorAlert>}
@@ -168,18 +196,28 @@ export function ServicosTab() {
           <TextArea
             value={descricao}
             onChange={(e) => setDescricao(e.target.value)}
-            placeholder="Ex: Assessoria, fornecimento, manutenção e instalação de equipamentos e protocolo do pedido de vistoria junto ao Corpo de Bombeiros para fins de obtenção do AVCB, conforme parâmetros do Decreto Estadual nº 69.118/24."
             rows={4}
           />
-          <HelpText>Mínimo de 10 caracteres. Este texto aparecerá no cabeçalho do orçamento.</HelpText>
+          <HelpText>
+            Mínimo de 10 caracteres. Este texto aparecerá no cabeçalho do
+            orçamento.
+          </HelpText>
         </FormGroup>
 
         <ModalButtons>
-          <Button $variant="ghost" onClick={handleCloseModal} disabled={isSaving}>
+          <Button
+            $variant="ghost"
+            onClick={handleCloseModal}
+            disabled={isSaving}
+          >
             Cancelar
           </Button>
           <Button onClick={handleSalvar} disabled={isSaveDisabled}>
-            {isSaving ? 'Salvando...' : editando ? 'Salvar Alterações' : 'Cadastrar'}
+            {isSaving
+              ? "Salvando..."
+              : editando
+                ? "Salvar Alterações"
+                : "Cadastrar"}
           </Button>
         </ModalButtons>
       </Modal>

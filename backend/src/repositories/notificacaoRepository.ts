@@ -1,7 +1,6 @@
 import { db } from '../config/firebase';
+import { getTenantDb } from '../utils/tenantDb';
 import { Notificacao, PaginatedResponse } from '../models';
-
-const COLLECTION = 'notificacoes';
 
 // Helper para mapear documento do Firestore para Notificacao
 const mapDocToNotificacao = (doc: FirebaseFirestore.DocumentSnapshot): Notificacao => ({
@@ -16,74 +15,71 @@ const mapDocToNotificacao = (doc: FirebaseFirestore.DocumentSnapshot): Notificac
 const encodeCursor = (id: string): string => Buffer.from(id).toString('base64');
 const decodeCursor = (cursor: string): string => Buffer.from(cursor, 'base64').toString();
 
-export const notificacaoRepository = {
-  async findAll(): Promise<Notificacao[]> {
-    const snapshot = await db
-      .collection(COLLECTION)
+export function createNotificacaoRepository(tenantId: string) {
+  const collection = getTenantDb(tenantId).collection('notificacoes');
+
+  async function findAll(): Promise<Notificacao[]> {
+    const snapshot = await collection
       .orderBy('dataVencimento', 'asc')
       .get();
 
     return snapshot.docs.map(mapDocToNotificacao);
-  },
+  }
 
-  async findById(id: string): Promise<Notificacao | null> {
-    const doc = await db.collection(COLLECTION).doc(id).get();
+  async function findById(id: string): Promise<Notificacao | null> {
+    const doc = await collection.doc(id).get();
     if (!doc.exists) return null;
     return mapDocToNotificacao(doc);
-  },
+  }
 
-  async findByOrcamentoId(orcamentoId: string): Promise<Notificacao[]> {
-    const snapshot = await db
-      .collection(COLLECTION)
+  async function findByOrcamentoId(orcamentoId: string): Promise<Notificacao[]> {
+    const snapshot = await collection
       .where('orcamentoId', '==', orcamentoId)
       .orderBy('dataVencimento', 'asc')
       .get();
 
     return snapshot.docs.map(mapDocToNotificacao);
-  },
+  }
 
-  async findNaoLidas(): Promise<Notificacao[]> {
-    const snapshot = await db
-      .collection(COLLECTION)
+  async function findNaoLidas(): Promise<Notificacao[]> {
+    const snapshot = await collection
       .where('lida', '==', false)
       .orderBy('dataVencimento', 'asc')
       .get();
 
     return snapshot.docs.map(mapDocToNotificacao);
-  },
+  }
 
-  async findProximas(dias: number = 30): Promise<Notificacao[]> {
+  async function findProximas(dias: number = 30): Promise<Notificacao[]> {
     const hoje = new Date();
     const limite = new Date();
     limite.setDate(limite.getDate() + dias);
 
-    const snapshot = await db
-      .collection(COLLECTION)
+    const snapshot = await collection
       .where('dataVencimento', '>=', hoje)
       .where('dataVencimento', '<=', limite)
       .orderBy('dataVencimento', 'asc')
       .get();
 
     return snapshot.docs.map(mapDocToNotificacao);
-  },
+  }
 
-  async findVencidas(): Promise<Notificacao[]> {
+  async function findVencidas(): Promise<Notificacao[]> {
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
 
     // Busca todas as notificações vencidas, independente se foram lidas ou não
-    const snapshot = await db
-      .collection(COLLECTION)
+    const snapshot = await collection
       .where('dataVencimento', '<', hoje)
       .orderBy('dataVencimento', 'asc')
       .get();
 
     return snapshot.docs.map(mapDocToNotificacao);
-  },
+  }
 
-  async create(data: Omit<Notificacao, 'id' | 'createdAt'>): Promise<Notificacao> {
+  async function create(data: Omit<Notificacao, 'id' | 'createdAt'>): Promise<Notificacao> {
     const now = new Date();
-    const docRef = await db.collection(COLLECTION).add({
+    const docRef = await collection.add({
       ...data,
       createdAt: now,
     });
@@ -93,15 +89,15 @@ export const notificacaoRepository = {
       ...data,
       createdAt: now,
     };
-  },
+  }
 
-  async createMany(notificacoes: Omit<Notificacao, 'id' | 'createdAt'>[]): Promise<Notificacao[]> {
+  async function createMany(notificacoes: Omit<Notificacao, 'id' | 'createdAt'>[]): Promise<Notificacao[]> {
     const batch = db.batch();
     const now = new Date();
     const results: Notificacao[] = [];
 
     for (const data of notificacoes) {
-      const docRef = db.collection(COLLECTION).doc();
+      const docRef = collection.doc();
       batch.set(docRef, {
         ...data,
         createdAt: now,
@@ -115,10 +111,10 @@ export const notificacaoRepository = {
 
     await batch.commit();
     return results;
-  },
+  }
 
-  async marcarComoLida(id: string): Promise<Notificacao | null> {
-    const docRef = db.collection(COLLECTION).doc(id);
+  async function marcarComoLida(id: string): Promise<Notificacao | null> {
+    const docRef = collection.doc(id);
     const doc = await docRef.get();
 
     if (!doc.exists) return null;
@@ -127,11 +123,10 @@ export const notificacaoRepository = {
 
     const updated = await docRef.get();
     return mapDocToNotificacao(updated);
-  },
+  }
 
-  async marcarTodasComoLidas(): Promise<number> {
-    const snapshot = await db
-      .collection(COLLECTION)
+  async function marcarTodasComoLidas(): Promise<number> {
+    const snapshot = await collection
       .where('lida', '==', false)
       .get();
 
@@ -144,21 +139,20 @@ export const notificacaoRepository = {
 
     await batch.commit();
     return snapshot.size;
-  },
+  }
 
-  async delete(id: string): Promise<boolean> {
-    const docRef = db.collection(COLLECTION).doc(id);
+  async function del(id: string): Promise<boolean> {
+    const docRef = collection.doc(id);
     const doc = await docRef.get();
 
     if (!doc.exists) return false;
 
     await docRef.delete();
     return true;
-  },
+  }
 
-  async deleteByOrcamentoId(orcamentoId: string): Promise<number> {
-    const snapshot = await db
-      .collection(COLLECTION)
+  async function deleteByOrcamentoId(orcamentoId: string): Promise<number> {
+    const snapshot = await collection
       .where('orcamentoId', '==', orcamentoId)
       .get();
 
@@ -171,12 +165,11 @@ export const notificacaoRepository = {
 
     await batch.commit();
     return snapshot.size;
-  },
+  }
 
   // Verifica se já existe notificação para este orçamento/item/palavra-chave
-  async exists(orcamentoId: string, itemDescricao: string, palavraChave: string): Promise<boolean> {
-    const snapshot = await db
-      .collection(COLLECTION)
+  async function exists(orcamentoId: string, itemDescricao: string, palavraChave: string): Promise<boolean> {
+    const snapshot = await collection
       .where('orcamentoId', '==', orcamentoId)
       .where('itemDescricao', '==', itemDescricao)
       .where('palavraChave', '==', palavraChave)
@@ -184,35 +177,33 @@ export const notificacaoRepository = {
       .get();
 
     return !snapshot.empty;
-  },
+  }
 
   // Busca notificações ativas (não lidas E que já venceram ou vão vencer em até X dias)
-  async findAtivas(diasAntecedencia: number = 60): Promise<Notificacao[]> {
+  async function findAtivas(diasAntecedencia: number = 60): Promise<Notificacao[]> {
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
     const limite = new Date();
     limite.setDate(limite.getDate() + diasAntecedencia);
 
     // Buscar não lidas que vencem até o limite
-    const snapshot = await db
-      .collection(COLLECTION)
+    const snapshot = await collection
       .where('lida', '==', false)
       .where('dataVencimento', '<=', limite)
       .orderBy('dataVencimento', 'asc')
       .get();
 
     return snapshot.docs.map(mapDocToNotificacao);
-  },
+  }
 
   // ========== MÉTODOS PAGINADOS ==========
 
-  async findAllPaginated(pageSize: number = 10, cursor?: string): Promise<PaginatedResponse<Notificacao>> {
-    let query = db
-      .collection(COLLECTION)
+  async function findAllPaginated(pageSize: number = 10, cursor?: string): Promise<PaginatedResponse<Notificacao>> {
+    let query = collection
       .orderBy('dataVencimento', 'asc');
 
     if (cursor) {
-      const cursorDoc = await db.collection(COLLECTION).doc(decodeCursor(cursor)).get();
+      const cursorDoc = await collection.doc(decodeCursor(cursor)).get();
       if (cursorDoc.exists) {
         query = query.startAfter(cursorDoc);
       }
@@ -226,7 +217,7 @@ export const notificacaoRepository = {
       ? encodeCursor(items[items.length - 1].id!)
       : undefined;
 
-    const countSnapshot = await db.collection(COLLECTION).count().get();
+    const countSnapshot = await collection.count().get();
 
     return {
       items,
@@ -234,16 +225,15 @@ export const notificacaoRepository = {
       hasMore,
       cursor: nextCursor,
     };
-  },
+  }
 
-  async findNaoLidasPaginated(pageSize: number = 10, cursor?: string): Promise<PaginatedResponse<Notificacao>> {
-    let query = db
-      .collection(COLLECTION)
+  async function findNaoLidasPaginated(pageSize: number = 10, cursor?: string): Promise<PaginatedResponse<Notificacao>> {
+    let query = collection
       .where('lida', '==', false)
       .orderBy('dataVencimento', 'asc');
 
     if (cursor) {
-      const cursorDoc = await db.collection(COLLECTION).doc(decodeCursor(cursor)).get();
+      const cursorDoc = await collection.doc(decodeCursor(cursor)).get();
       if (cursorDoc.exists) {
         query = query.startAfter(cursorDoc);
       }
@@ -257,8 +247,7 @@ export const notificacaoRepository = {
       ? encodeCursor(items[items.length - 1].id!)
       : undefined;
 
-    const countSnapshot = await db
-      .collection(COLLECTION)
+    const countSnapshot = await collection
       .where('lida', '==', false)
       .count()
       .get();
@@ -269,19 +258,18 @@ export const notificacaoRepository = {
       hasMore,
       cursor: nextCursor,
     };
-  },
+  }
 
-  async findVencidasPaginated(pageSize: number = 10, cursor?: string): Promise<PaginatedResponse<Notificacao>> {
+  async function findVencidasPaginated(pageSize: number = 10, cursor?: string): Promise<PaginatedResponse<Notificacao>> {
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
 
-    let query = db
-      .collection(COLLECTION)
+    let query = collection
       .where('dataVencimento', '<', hoje)
       .orderBy('dataVencimento', 'asc');
 
     if (cursor) {
-      const cursorDoc = await db.collection(COLLECTION).doc(decodeCursor(cursor)).get();
+      const cursorDoc = await collection.doc(decodeCursor(cursor)).get();
       if (cursorDoc.exists) {
         query = query.startAfter(cursorDoc);
       }
@@ -295,8 +283,7 @@ export const notificacaoRepository = {
       ? encodeCursor(items[items.length - 1].id!)
       : undefined;
 
-    const countSnapshot = await db
-      .collection(COLLECTION)
+    const countSnapshot = await collection
       .where('dataVencimento', '<', hoje)
       .count()
       .get();
@@ -307,20 +294,19 @@ export const notificacaoRepository = {
       hasMore,
       cursor: nextCursor,
     };
-  },
+  }
 
-  async findAtivasPaginated(diasAntecedencia: number = 60, pageSize: number = 10, cursor?: string): Promise<PaginatedResponse<Notificacao>> {
+  async function findAtivasPaginated(diasAntecedencia: number = 60, pageSize: number = 10, cursor?: string): Promise<PaginatedResponse<Notificacao>> {
     const limite = new Date();
     limite.setDate(limite.getDate() + diasAntecedencia);
 
-    let query = db
-      .collection(COLLECTION)
+    let query = collection
       .where('lida', '==', false)
       .where('dataVencimento', '<=', limite)
       .orderBy('dataVencimento', 'asc');
 
     if (cursor) {
-      const cursorDoc = await db.collection(COLLECTION).doc(decodeCursor(cursor)).get();
+      const cursorDoc = await collection.doc(decodeCursor(cursor)).get();
       if (cursorDoc.exists) {
         query = query.startAfter(cursorDoc);
       }
@@ -334,8 +320,7 @@ export const notificacaoRepository = {
       ? encodeCursor(items[items.length - 1].id!)
       : undefined;
 
-    const countSnapshot = await db
-      .collection(COLLECTION)
+    const countSnapshot = await collection
       .where('lida', '==', false)
       .where('dataVencimento', '<=', limite)
       .count()
@@ -347,21 +332,20 @@ export const notificacaoRepository = {
       hasMore,
       cursor: nextCursor,
     };
-  },
+  }
 
-  async findProximasPaginated(dias: number = 30, pageSize: number = 10, cursor?: string): Promise<PaginatedResponse<Notificacao>> {
+  async function findProximasPaginated(dias: number = 30, pageSize: number = 10, cursor?: string): Promise<PaginatedResponse<Notificacao>> {
     const hoje = new Date();
     const limite = new Date();
     limite.setDate(limite.getDate() + dias);
 
-    let query = db
-      .collection(COLLECTION)
+    let query = collection
       .where('dataVencimento', '>=', hoje)
       .where('dataVencimento', '<=', limite)
       .orderBy('dataVencimento', 'asc');
 
     if (cursor) {
-      const cursorDoc = await db.collection(COLLECTION).doc(decodeCursor(cursor)).get();
+      const cursorDoc = await collection.doc(decodeCursor(cursor)).get();
       if (cursorDoc.exists) {
         query = query.startAfter(cursorDoc);
       }
@@ -375,8 +359,7 @@ export const notificacaoRepository = {
       ? encodeCursor(items[items.length - 1].id!)
       : undefined;
 
-    const countSnapshot = await db
-      .collection(COLLECTION)
+    const countSnapshot = await collection
       .where('dataVencimento', '>=', hoje)
       .where('dataVencimento', '<=', limite)
       .count()
@@ -388,5 +371,27 @@ export const notificacaoRepository = {
       hasMore,
       cursor: nextCursor,
     };
-  },
-};
+  }
+
+  return {
+    findAll,
+    findById,
+    findByOrcamentoId,
+    findNaoLidas,
+    findProximas,
+    findVencidas,
+    create,
+    createMany,
+    marcarComoLida,
+    marcarTodasComoLidas,
+    delete: del,
+    deleteByOrcamentoId,
+    exists,
+    findAtivas,
+    findAllPaginated,
+    findNaoLidasPaginated,
+    findVencidasPaginated,
+    findAtivasPaginated,
+    findProximasPaginated,
+  };
+}

@@ -1,7 +1,7 @@
-import { notificacaoService, inicializarEventHandlers } from '../../services/notificacaoService';
-import { notificacaoRepository } from '../../repositories/notificacaoRepository';
-import { orcamentoRepository } from '../../repositories/orcamentoRepository';
-import { palavraChaveRepository } from '../../repositories/palavraChaveRepository';
+import { createNotificacaoService, inicializarEventHandlers } from '../../services/notificacaoService';
+import { createNotificacaoRepository } from '../../repositories/notificacaoRepository';
+import { createOrcamentoRepository } from '../../repositories/orcamentoRepository';
+import { createPalavraChaveRepository } from '../../repositories/palavraChaveRepository';
 import { eventBus, OrcamentoEvents } from '../../events';
 import { NotFoundError } from '../../utils/errors';
 import { Notificacao, Orcamento, PalavraChave } from '../../models';
@@ -11,9 +11,48 @@ jest.mock('../../repositories/notificacaoRepository');
 jest.mock('../../repositories/orcamentoRepository');
 jest.mock('../../repositories/palavraChaveRepository');
 
+const mockNotificacaoRepo = {
+  findAll: jest.fn(),
+  findById: jest.fn(),
+  findNaoLidas: jest.fn(),
+  findVencidas: jest.fn(),
+  findProximas: jest.fn(),
+  findAtivas: jest.fn(),
+  marcarComoLida: jest.fn(),
+  marcarTodasComoLidas: jest.fn(),
+  delete: jest.fn(),
+  deleteByOrcamentoId: jest.fn(),
+  exists: jest.fn(),
+  createMany: jest.fn(),
+  findAllPaginated: jest.fn(),
+  findNaoLidasPaginated: jest.fn(),
+  findVencidasPaginated: jest.fn(),
+  findAtivasPaginated: jest.fn(),
+  findProximasPaginated: jest.fn(),
+};
+
+const mockOrcamentoRepo = {
+  findById: jest.fn(),
+  findByStatus: jest.fn(),
+};
+
+const mockPalavraChaveRepo = {
+  findAtivas: jest.fn(),
+};
+
+(createNotificacaoRepository as jest.Mock).mockReturnValue(mockNotificacaoRepo);
+(createOrcamentoRepository as jest.Mock).mockReturnValue(mockOrcamentoRepo);
+(createPalavraChaveRepository as jest.Mock).mockReturnValue(mockPalavraChaveRepo);
+
 describe('notificacaoService', () => {
+  let service: ReturnType<typeof createNotificacaoService>;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    (createNotificacaoRepository as jest.Mock).mockReturnValue(mockNotificacaoRepo);
+    (createOrcamentoRepository as jest.Mock).mockReturnValue(mockOrcamentoRepo);
+    (createPalavraChaveRepository as jest.Mock).mockReturnValue(mockPalavraChaveRepo);
+    service = createNotificacaoService('test-tenant-id');
   });
 
   const mockNotificacao: Notificacao = {
@@ -83,96 +122,96 @@ describe('notificacaoService', () => {
 
   describe('buscarPorId', () => {
     it('deve retornar notificação por ID', async () => {
-      (notificacaoRepository.findById as jest.Mock).mockResolvedValue(mockNotificacao);
+      mockNotificacaoRepo.findById.mockResolvedValue(mockNotificacao);
 
-      const resultado = await notificacaoService.buscarPorId('1');
+      const resultado = await service.buscarPorId('1');
 
-      expect(notificacaoRepository.findById).toHaveBeenCalledWith('1');
+      expect(mockNotificacaoRepo.findById).toHaveBeenCalledWith('1');
       expect(resultado).toEqual(mockNotificacao);
     });
 
     it('deve lançar NotFoundError quando notificação não existir', async () => {
-      (notificacaoRepository.findById as jest.Mock).mockResolvedValue(null);
+      mockNotificacaoRepo.findById.mockResolvedValue(null);
 
-      await expect(notificacaoService.buscarPorId('inexistente')).rejects.toThrow(NotFoundError);
-      await expect(notificacaoService.buscarPorId('inexistente')).rejects.toThrow('Notificação não encontrada');
+      await expect(service.buscarPorId('inexistente')).rejects.toThrow(NotFoundError);
+      await expect(service.buscarPorId('inexistente')).rejects.toThrow('Notificação não encontrada');
     });
   });
 
   describe('marcarComoLida', () => {
     it('deve marcar notificação como lida', async () => {
       const notificacaoLida = { ...mockNotificacao, lida: true };
-      (notificacaoRepository.marcarComoLida as jest.Mock).mockResolvedValue(notificacaoLida);
+      mockNotificacaoRepo.marcarComoLida.mockResolvedValue(notificacaoLida);
 
-      const resultado = await notificacaoService.marcarComoLida('1');
+      const resultado = await service.marcarComoLida('1');
 
-      expect(notificacaoRepository.marcarComoLida).toHaveBeenCalledWith('1');
+      expect(mockNotificacaoRepo.marcarComoLida).toHaveBeenCalledWith('1');
       expect(resultado.lida).toBe(true);
     });
 
     it('deve lançar NotFoundError quando notificação não existir', async () => {
-      (notificacaoRepository.marcarComoLida as jest.Mock).mockResolvedValue(null);
+      mockNotificacaoRepo.marcarComoLida.mockResolvedValue(null);
 
-      await expect(notificacaoService.marcarComoLida('inexistente')).rejects.toThrow(NotFoundError);
-      await expect(notificacaoService.marcarComoLida('inexistente')).rejects.toThrow('Notificação não encontrada');
+      await expect(service.marcarComoLida('inexistente')).rejects.toThrow(NotFoundError);
+      await expect(service.marcarComoLida('inexistente')).rejects.toThrow('Notificação não encontrada');
     });
   });
 
   describe('marcarTodasComoLidas', () => {
     it('deve marcar todas notificações como lidas', async () => {
-      (notificacaoRepository.marcarTodasComoLidas as jest.Mock).mockResolvedValue(5);
+      mockNotificacaoRepo.marcarTodasComoLidas.mockResolvedValue(5);
 
-      const resultado = await notificacaoService.marcarTodasComoLidas();
+      const resultado = await service.marcarTodasComoLidas();
 
-      expect(notificacaoRepository.marcarTodasComoLidas).toHaveBeenCalled();
+      expect(mockNotificacaoRepo.marcarTodasComoLidas).toHaveBeenCalled();
       expect(resultado).toBe(5);
     });
   });
 
   describe('excluir', () => {
     it('deve excluir notificação com sucesso', async () => {
-      (notificacaoRepository.delete as jest.Mock).mockResolvedValue(true);
+      mockNotificacaoRepo.delete.mockResolvedValue(true);
 
-      await expect(notificacaoService.excluir('1')).resolves.not.toThrow();
+      await expect(service.excluir('1')).resolves.not.toThrow();
 
-      expect(notificacaoRepository.delete).toHaveBeenCalledWith('1');
+      expect(mockNotificacaoRepo.delete).toHaveBeenCalledWith('1');
     });
 
     it('deve lançar NotFoundError quando notificação não existir', async () => {
-      (notificacaoRepository.delete as jest.Mock).mockResolvedValue(false);
+      mockNotificacaoRepo.delete.mockResolvedValue(false);
 
-      await expect(notificacaoService.excluir('inexistente')).rejects.toThrow(NotFoundError);
-      await expect(notificacaoService.excluir('inexistente')).rejects.toThrow('Notificação não encontrada');
+      await expect(service.excluir('inexistente')).rejects.toThrow(NotFoundError);
+      await expect(service.excluir('inexistente')).rejects.toThrow('Notificação não encontrada');
     });
   });
 
   describe('gerarNotificacoesParaOrcamento', () => {
     it('deve gerar notificações para orçamento aceito', async () => {
-      (orcamentoRepository.findById as jest.Mock).mockResolvedValue(mockOrcamento);
-      (palavraChaveRepository.findAtivas as jest.Mock).mockResolvedValue([mockPalavraChave]);
-      (notificacaoRepository.exists as jest.Mock).mockResolvedValue(false);
-      (notificacaoRepository.createMany as jest.Mock).mockResolvedValue([mockNotificacao]);
+      mockOrcamentoRepo.findById.mockResolvedValue(mockOrcamento);
+      mockPalavraChaveRepo.findAtivas.mockResolvedValue([mockPalavraChave]);
+      mockNotificacaoRepo.exists.mockResolvedValue(false);
+      mockNotificacaoRepo.createMany.mockResolvedValue([mockNotificacao]);
 
-      const resultado = await notificacaoService.gerarNotificacoesParaOrcamento('orc1');
+      const resultado = await service.gerarNotificacoesParaOrcamento('orc1');
 
-      expect(orcamentoRepository.findById).toHaveBeenCalledWith('orc1');
+      expect(mockOrcamentoRepo.findById).toHaveBeenCalledWith('orc1');
       expect(resultado).toHaveLength(1);
     });
 
     it('deve retornar array vazio para orçamento não aceito', async () => {
       const orcamentoPendente = { ...mockOrcamento, status: 'pendente' };
-      (orcamentoRepository.findById as jest.Mock).mockResolvedValue(orcamentoPendente);
+      mockOrcamentoRepo.findById.mockResolvedValue(orcamentoPendente);
 
-      const resultado = await notificacaoService.gerarNotificacoesParaOrcamento('orc1');
+      const resultado = await service.gerarNotificacoesParaOrcamento('orc1');
 
       expect(resultado).toEqual([]);
     });
 
     it('deve retornar array vazio para orçamento rejeitado', async () => {
       const orcamentoRejeitado = { ...mockOrcamento, status: 'rejeitado' };
-      (orcamentoRepository.findById as jest.Mock).mockResolvedValue(orcamentoRejeitado);
+      mockOrcamentoRepo.findById.mockResolvedValue(orcamentoRejeitado);
 
-      const resultado = await notificacaoService.gerarNotificacoesParaOrcamento('orc1');
+      const resultado = await service.gerarNotificacoesParaOrcamento('orc1');
 
       expect(resultado).toEqual([]);
     });
@@ -180,31 +219,31 @@ describe('notificacaoService', () => {
 
   describe('processarOrcamento', () => {
     it('deve retornar array vazio quando não há palavras-chave ativas', async () => {
-      (palavraChaveRepository.findAtivas as jest.Mock).mockResolvedValue([]);
+      mockPalavraChaveRepo.findAtivas.mockResolvedValue([]);
 
-      const resultado = await notificacaoService.processarOrcamento(mockOrcamento);
+      const resultado = await service.processarOrcamento(mockOrcamento);
 
       expect(resultado).toEqual([]);
     });
 
     it('deve criar notificações para itens que contêm palavras-chave', async () => {
-      (palavraChaveRepository.findAtivas as jest.Mock).mockResolvedValue([mockPalavraChave]);
-      (notificacaoRepository.exists as jest.Mock).mockResolvedValue(false);
-      (notificacaoRepository.createMany as jest.Mock).mockResolvedValue([mockNotificacao]);
+      mockPalavraChaveRepo.findAtivas.mockResolvedValue([mockPalavraChave]);
+      mockNotificacaoRepo.exists.mockResolvedValue(false);
+      mockNotificacaoRepo.createMany.mockResolvedValue([mockNotificacao]);
 
-      const resultado = await notificacaoService.processarOrcamento(mockOrcamento);
+      const resultado = await service.processarOrcamento(mockOrcamento);
 
-      expect(notificacaoRepository.createMany).toHaveBeenCalled();
+      expect(mockNotificacaoRepo.createMany).toHaveBeenCalled();
       expect(resultado).toHaveLength(1);
     });
 
     it('deve não criar notificação duplicada', async () => {
-      (palavraChaveRepository.findAtivas as jest.Mock).mockResolvedValue([mockPalavraChave]);
-      (notificacaoRepository.exists as jest.Mock).mockResolvedValue(true);
+      mockPalavraChaveRepo.findAtivas.mockResolvedValue([mockPalavraChave]);
+      mockNotificacaoRepo.exists.mockResolvedValue(true);
 
-      const resultado = await notificacaoService.processarOrcamento(mockOrcamento);
+      const resultado = await service.processarOrcamento(mockOrcamento);
 
-      expect(notificacaoRepository.createMany).not.toHaveBeenCalled();
+      expect(mockNotificacaoRepo.createMany).not.toHaveBeenCalled();
       expect(resultado).toEqual([]);
     });
 
@@ -227,25 +266,25 @@ describe('notificacaoService', () => {
           },
         ],
       };
-      (palavraChaveRepository.findAtivas as jest.Mock).mockResolvedValue([mockPalavraChave]);
-      (notificacaoRepository.exists as jest.Mock).mockResolvedValue(false);
-      (notificacaoRepository.createMany as jest.Mock).mockResolvedValue([mockNotificacao]);
+      mockPalavraChaveRepo.findAtivas.mockResolvedValue([mockPalavraChave]);
+      mockNotificacaoRepo.exists.mockResolvedValue(false);
+      mockNotificacaoRepo.createMany.mockResolvedValue([mockNotificacao]);
 
-      const resultado = await notificacaoService.processarOrcamento(orcamentoCompleto);
+      const resultado = await service.processarOrcamento(orcamentoCompleto);
 
-      expect(notificacaoRepository.createMany).toHaveBeenCalled();
+      expect(mockNotificacaoRepo.createMany).toHaveBeenCalled();
       expect(resultado).toHaveLength(1);
     });
 
     it('deve usar dataEmissao quando dataAceite não existir', async () => {
       const orcamentoSemAceite = { ...mockOrcamento, dataAceite: undefined };
-      (palavraChaveRepository.findAtivas as jest.Mock).mockResolvedValue([mockPalavraChave]);
-      (notificacaoRepository.exists as jest.Mock).mockResolvedValue(false);
-      (notificacaoRepository.createMany as jest.Mock).mockResolvedValue([mockNotificacao]);
+      mockPalavraChaveRepo.findAtivas.mockResolvedValue([mockPalavraChave]);
+      mockNotificacaoRepo.exists.mockResolvedValue(false);
+      mockNotificacaoRepo.createMany.mockResolvedValue([mockNotificacao]);
 
-      await notificacaoService.processarOrcamento(orcamentoSemAceite);
+      await service.processarOrcamento(orcamentoSemAceite);
 
-      expect(notificacaoRepository.createMany).toHaveBeenCalled();
+      expect(mockNotificacaoRepo.createMany).toHaveBeenCalled();
     });
 
     it('deve ignorar itens sem descrição', async () => {
@@ -267,9 +306,9 @@ describe('notificacaoService', () => {
           },
         ],
       };
-      (palavraChaveRepository.findAtivas as jest.Mock).mockResolvedValue([mockPalavraChave]);
+      mockPalavraChaveRepo.findAtivas.mockResolvedValue([mockPalavraChave]);
 
-      const resultado = await notificacaoService.processarOrcamento(orcamentoSemDescricao);
+      const resultado = await service.processarOrcamento(orcamentoSemDescricao);
 
       expect(resultado).toEqual([]);
     });
@@ -293,13 +332,13 @@ describe('notificacaoService', () => {
           },
         ],
       };
-      (palavraChaveRepository.findAtivas as jest.Mock).mockResolvedValue([mockPalavraChave]);
-      (notificacaoRepository.exists as jest.Mock).mockResolvedValue(false);
-      (notificacaoRepository.createMany as jest.Mock).mockResolvedValue([mockNotificacao]);
+      mockPalavraChaveRepo.findAtivas.mockResolvedValue([mockPalavraChave]);
+      mockNotificacaoRepo.exists.mockResolvedValue(false);
+      mockNotificacaoRepo.createMany.mockResolvedValue([mockNotificacao]);
 
-      const resultado = await notificacaoService.processarOrcamento(orcamentoMaiusculo);
+      const resultado = await service.processarOrcamento(orcamentoMaiusculo);
 
-      expect(notificacaoRepository.createMany).toHaveBeenCalled();
+      expect(mockNotificacaoRepo.createMany).toHaveBeenCalled();
       expect(resultado).toHaveLength(1);
     });
 
@@ -311,11 +350,11 @@ describe('notificacaoService', () => {
         ativo: true,
         createdAt: new Date(),
       };
-      (palavraChaveRepository.findAtivas as jest.Mock).mockResolvedValue([mockPalavraChave, palavraChave2]);
-      (notificacaoRepository.exists as jest.Mock).mockResolvedValue(false);
-      (notificacaoRepository.createMany as jest.Mock).mockResolvedValue([mockNotificacao, { ...mockNotificacao, id: '2' }]);
+      mockPalavraChaveRepo.findAtivas.mockResolvedValue([mockPalavraChave, palavraChave2]);
+      mockNotificacaoRepo.exists.mockResolvedValue(false);
+      mockNotificacaoRepo.createMany.mockResolvedValue([mockNotificacao, { ...mockNotificacao, id: '2' }]);
 
-      const resultado = await notificacaoService.processarOrcamento(mockOrcamento);
+      const resultado = await service.processarOrcamento(mockOrcamento);
 
       expect(resultado).toHaveLength(2);
     });
@@ -324,22 +363,22 @@ describe('notificacaoService', () => {
   describe('processarTodosOrcamentosAceitos', () => {
     it('deve processar todos orçamentos aceitos', async () => {
       const orcamentos = [mockOrcamento, { ...mockOrcamento, id: 'orc2', numero: 'ORC-002' }];
-      (orcamentoRepository.findByStatus as jest.Mock).mockResolvedValue(orcamentos);
-      (palavraChaveRepository.findAtivas as jest.Mock).mockResolvedValue([mockPalavraChave]);
-      (notificacaoRepository.exists as jest.Mock).mockResolvedValue(false);
-      (notificacaoRepository.createMany as jest.Mock).mockResolvedValue([mockNotificacao]);
+      mockOrcamentoRepo.findByStatus.mockResolvedValue(orcamentos);
+      mockPalavraChaveRepo.findAtivas.mockResolvedValue([mockPalavraChave]);
+      mockNotificacaoRepo.exists.mockResolvedValue(false);
+      mockNotificacaoRepo.createMany.mockResolvedValue([mockNotificacao]);
 
-      const resultado = await notificacaoService.processarTodosOrcamentosAceitos();
+      const resultado = await service.processarTodosOrcamentosAceitos();
 
-      expect(orcamentoRepository.findByStatus).toHaveBeenCalledWith('aceito');
+      expect(mockOrcamentoRepo.findByStatus).toHaveBeenCalledWith('aceito');
       expect(resultado.processados).toBe(2);
       expect(resultado.notificacoesCriadas).toBe(2);
     });
 
     it('deve retornar zero quando não há orçamentos aceitos', async () => {
-      (orcamentoRepository.findByStatus as jest.Mock).mockResolvedValue([]);
+      mockOrcamentoRepo.findByStatus.mockResolvedValue([]);
 
-      const resultado = await notificacaoService.processarTodosOrcamentosAceitos();
+      const resultado = await service.processarTodosOrcamentosAceitos();
 
       expect(resultado.processados).toBe(0);
       expect(resultado.notificacoesCriadas).toBe(0);
@@ -348,28 +387,28 @@ describe('notificacaoService', () => {
 
   describe('removerNotificacoesDoOrcamento', () => {
     it('deve remover notificações do orçamento', async () => {
-      (notificacaoRepository.deleteByOrcamentoId as jest.Mock).mockResolvedValue(3);
+      mockNotificacaoRepo.deleteByOrcamentoId.mockResolvedValue(3);
 
-      const resultado = await notificacaoService.removerNotificacoesDoOrcamento('orc1');
+      const resultado = await service.removerNotificacoesDoOrcamento('orc1');
 
-      expect(notificacaoRepository.deleteByOrcamentoId).toHaveBeenCalledWith('orc1');
+      expect(mockNotificacaoRepo.deleteByOrcamentoId).toHaveBeenCalledWith('orc1');
       expect(resultado).toBe(3);
     });
   });
 
   describe('contarNaoLidas', () => {
     it('deve contar notificações não lidas', async () => {
-      (notificacaoRepository.findNaoLidas as jest.Mock).mockResolvedValue([mockNotificacao, { ...mockNotificacao, id: '2' }]);
+      mockNotificacaoRepo.findNaoLidas.mockResolvedValue([mockNotificacao, { ...mockNotificacao, id: '2' }]);
 
-      const resultado = await notificacaoService.contarNaoLidas();
+      const resultado = await service.contarNaoLidas();
 
       expect(resultado).toBe(2);
     });
 
     it('deve retornar zero quando não há notificações não lidas', async () => {
-      (notificacaoRepository.findNaoLidas as jest.Mock).mockResolvedValue([]);
+      mockNotificacaoRepo.findNaoLidas.mockResolvedValue([]);
 
-      const resultado = await notificacaoService.contarNaoLidas();
+      const resultado = await service.contarNaoLidas();
 
       expect(resultado).toBe(0);
     });
@@ -377,13 +416,13 @@ describe('notificacaoService', () => {
 
   describe('obterResumo', () => {
     it('deve retornar resumo das notificações', async () => {
-      (notificacaoRepository.findAll as jest.Mock).mockResolvedValue([mockNotificacao, { ...mockNotificacao, id: '2' }]);
-      (notificacaoRepository.findNaoLidas as jest.Mock).mockResolvedValue([mockNotificacao]);
-      (notificacaoRepository.findVencidas as jest.Mock).mockResolvedValue([]);
-      (notificacaoRepository.findProximas as jest.Mock).mockResolvedValue([mockNotificacao, { ...mockNotificacao, id: '2' }]);
-      (notificacaoRepository.findAtivas as jest.Mock).mockResolvedValue([mockNotificacao]);
+      mockNotificacaoRepo.findAll.mockResolvedValue([mockNotificacao, { ...mockNotificacao, id: '2' }]);
+      mockNotificacaoRepo.findNaoLidas.mockResolvedValue([mockNotificacao]);
+      mockNotificacaoRepo.findVencidas.mockResolvedValue([]);
+      mockNotificacaoRepo.findProximas.mockResolvedValue([mockNotificacao, { ...mockNotificacao, id: '2' }]);
+      mockNotificacaoRepo.findAtivas.mockResolvedValue([mockNotificacao]);
 
-      const resultado = await notificacaoService.obterResumo();
+      const resultado = await service.obterResumo();
 
       expect(resultado).toEqual({
         total: 2,
@@ -406,30 +445,30 @@ describe('notificacaoService', () => {
     };
 
     it('deve retornar notificações paginadas com valores padrão', async () => {
-      (notificacaoRepository.findAllPaginated as jest.Mock).mockResolvedValue(mockPaginatedResponse);
+      mockNotificacaoRepo.findAllPaginated.mockResolvedValue(mockPaginatedResponse);
 
-      const resultado = await notificacaoService.listarTodasPaginado();
+      const resultado = await service.listarTodasPaginado();
 
-      expect(notificacaoRepository.findAllPaginated).toHaveBeenCalledWith(10, undefined);
+      expect(mockNotificacaoRepo.findAllPaginated).toHaveBeenCalledWith(10, undefined);
       expect(resultado).toEqual(mockPaginatedResponse);
     });
 
     it('deve retornar notificações paginadas com pageSize específico', async () => {
-      (notificacaoRepository.findAllPaginated as jest.Mock).mockResolvedValue(mockPaginatedResponse);
+      mockNotificacaoRepo.findAllPaginated.mockResolvedValue(mockPaginatedResponse);
 
-      const resultado = await notificacaoService.listarTodasPaginado(20);
+      const resultado = await service.listarTodasPaginado(20);
 
-      expect(notificacaoRepository.findAllPaginated).toHaveBeenCalledWith(20, undefined);
+      expect(mockNotificacaoRepo.findAllPaginated).toHaveBeenCalledWith(20, undefined);
       expect(resultado).toEqual(mockPaginatedResponse);
     });
 
     it('deve retornar notificações paginadas com cursor', async () => {
       const responseComCursor = { ...mockPaginatedResponse, hasMore: false, cursor: undefined };
-      (notificacaoRepository.findAllPaginated as jest.Mock).mockResolvedValue(responseComCursor);
+      mockNotificacaoRepo.findAllPaginated.mockResolvedValue(responseComCursor);
 
-      const resultado = await notificacaoService.listarTodasPaginado(10, 'abc123');
+      const resultado = await service.listarTodasPaginado(10, 'abc123');
 
-      expect(notificacaoRepository.findAllPaginated).toHaveBeenCalledWith(10, 'abc123');
+      expect(mockNotificacaoRepo.findAllPaginated).toHaveBeenCalledWith(10, 'abc123');
       expect(resultado.hasMore).toBe(false);
     });
   });
@@ -443,20 +482,20 @@ describe('notificacaoService', () => {
     };
 
     it('deve retornar notificações não lidas paginadas', async () => {
-      (notificacaoRepository.findNaoLidasPaginated as jest.Mock).mockResolvedValue(mockPaginatedResponse);
+      mockNotificacaoRepo.findNaoLidasPaginated.mockResolvedValue(mockPaginatedResponse);
 
-      const resultado = await notificacaoService.listarNaoLidasPaginado();
+      const resultado = await service.listarNaoLidasPaginado();
 
-      expect(notificacaoRepository.findNaoLidasPaginated).toHaveBeenCalledWith(10, undefined);
+      expect(mockNotificacaoRepo.findNaoLidasPaginated).toHaveBeenCalledWith(10, undefined);
       expect(resultado).toEqual(mockPaginatedResponse);
     });
 
     it('deve retornar notificações não lidas paginadas com parâmetros', async () => {
-      (notificacaoRepository.findNaoLidasPaginated as jest.Mock).mockResolvedValue(mockPaginatedResponse);
+      mockNotificacaoRepo.findNaoLidasPaginated.mockResolvedValue(mockPaginatedResponse);
 
-      const resultado = await notificacaoService.listarNaoLidasPaginado(5, 'cursor123');
+      const resultado = await service.listarNaoLidasPaginado(5, 'cursor123');
 
-      expect(notificacaoRepository.findNaoLidasPaginated).toHaveBeenCalledWith(5, 'cursor123');
+      expect(mockNotificacaoRepo.findNaoLidasPaginated).toHaveBeenCalledWith(5, 'cursor123');
       expect(resultado).toEqual(mockPaginatedResponse);
     });
   });
@@ -470,20 +509,20 @@ describe('notificacaoService', () => {
     };
 
     it('deve retornar notificações vencidas paginadas', async () => {
-      (notificacaoRepository.findVencidasPaginated as jest.Mock).mockResolvedValue(mockPaginatedResponse);
+      mockNotificacaoRepo.findVencidasPaginated.mockResolvedValue(mockPaginatedResponse);
 
-      const resultado = await notificacaoService.listarVencidasPaginado();
+      const resultado = await service.listarVencidasPaginado();
 
-      expect(notificacaoRepository.findVencidasPaginated).toHaveBeenCalledWith(10, undefined);
+      expect(mockNotificacaoRepo.findVencidasPaginated).toHaveBeenCalledWith(10, undefined);
       expect(resultado).toEqual(mockPaginatedResponse);
     });
 
     it('deve retornar notificações vencidas paginadas com parâmetros', async () => {
-      (notificacaoRepository.findVencidasPaginated as jest.Mock).mockResolvedValue(mockPaginatedResponse);
+      mockNotificacaoRepo.findVencidasPaginated.mockResolvedValue(mockPaginatedResponse);
 
-      const resultado = await notificacaoService.listarVencidasPaginado(15, 'cursorXYZ');
+      const resultado = await service.listarVencidasPaginado(15, 'cursorXYZ');
 
-      expect(notificacaoRepository.findVencidasPaginated).toHaveBeenCalledWith(15, 'cursorXYZ');
+      expect(mockNotificacaoRepo.findVencidasPaginated).toHaveBeenCalledWith(15, 'cursorXYZ');
       expect(resultado).toEqual(mockPaginatedResponse);
     });
   });
@@ -497,29 +536,29 @@ describe('notificacaoService', () => {
     };
 
     it('deve retornar notificações ativas paginadas com valores padrão', async () => {
-      (notificacaoRepository.findAtivasPaginated as jest.Mock).mockResolvedValue(mockPaginatedResponse);
+      mockNotificacaoRepo.findAtivasPaginated.mockResolvedValue(mockPaginatedResponse);
 
-      const resultado = await notificacaoService.listarAtivasPaginado();
+      const resultado = await service.listarAtivasPaginado();
 
-      expect(notificacaoRepository.findAtivasPaginated).toHaveBeenCalledWith(60, 10, undefined);
+      expect(mockNotificacaoRepo.findAtivasPaginated).toHaveBeenCalledWith(60, 10, undefined);
       expect(resultado).toEqual(mockPaginatedResponse);
     });
 
     it('deve retornar notificações ativas paginadas com dias específico', async () => {
-      (notificacaoRepository.findAtivasPaginated as jest.Mock).mockResolvedValue(mockPaginatedResponse);
+      mockNotificacaoRepo.findAtivasPaginated.mockResolvedValue(mockPaginatedResponse);
 
-      const resultado = await notificacaoService.listarAtivasPaginado(30);
+      const resultado = await service.listarAtivasPaginado(30);
 
-      expect(notificacaoRepository.findAtivasPaginated).toHaveBeenCalledWith(30, 10, undefined);
+      expect(mockNotificacaoRepo.findAtivasPaginated).toHaveBeenCalledWith(30, 10, undefined);
       expect(resultado).toEqual(mockPaginatedResponse);
     });
 
     it('deve retornar notificações ativas paginadas com todos os parâmetros', async () => {
-      (notificacaoRepository.findAtivasPaginated as jest.Mock).mockResolvedValue(mockPaginatedResponse);
+      mockNotificacaoRepo.findAtivasPaginated.mockResolvedValue(mockPaginatedResponse);
 
-      const resultado = await notificacaoService.listarAtivasPaginado(45, 20, 'myCursor');
+      const resultado = await service.listarAtivasPaginado(45, 20, 'myCursor');
 
-      expect(notificacaoRepository.findAtivasPaginated).toHaveBeenCalledWith(45, 20, 'myCursor');
+      expect(mockNotificacaoRepo.findAtivasPaginated).toHaveBeenCalledWith(45, 20, 'myCursor');
       expect(resultado).toEqual(mockPaginatedResponse);
     });
   });
@@ -533,35 +572,52 @@ describe('notificacaoService', () => {
     };
 
     it('deve retornar notificações próximas paginadas com valores padrão', async () => {
-      (notificacaoRepository.findProximasPaginated as jest.Mock).mockResolvedValue(mockPaginatedResponse);
+      mockNotificacaoRepo.findProximasPaginated.mockResolvedValue(mockPaginatedResponse);
 
-      const resultado = await notificacaoService.listarProximasPaginado();
+      const resultado = await service.listarProximasPaginado();
 
-      expect(notificacaoRepository.findProximasPaginated).toHaveBeenCalledWith(30, 10, undefined);
+      expect(mockNotificacaoRepo.findProximasPaginated).toHaveBeenCalledWith(30, 10, undefined);
       expect(resultado).toEqual(mockPaginatedResponse);
     });
 
     it('deve retornar notificações próximas paginadas com dias específico', async () => {
-      (notificacaoRepository.findProximasPaginated as jest.Mock).mockResolvedValue(mockPaginatedResponse);
+      mockNotificacaoRepo.findProximasPaginated.mockResolvedValue(mockPaginatedResponse);
 
-      const resultado = await notificacaoService.listarProximasPaginado(15);
+      const resultado = await service.listarProximasPaginado(15);
 
-      expect(notificacaoRepository.findProximasPaginated).toHaveBeenCalledWith(15, 10, undefined);
+      expect(mockNotificacaoRepo.findProximasPaginated).toHaveBeenCalledWith(15, 10, undefined);
       expect(resultado).toEqual(mockPaginatedResponse);
     });
 
     it('deve retornar notificações próximas paginadas com todos os parâmetros', async () => {
-      (notificacaoRepository.findProximasPaginated as jest.Mock).mockResolvedValue(mockPaginatedResponse);
+      mockNotificacaoRepo.findProximasPaginated.mockResolvedValue(mockPaginatedResponse);
 
-      const resultado = await notificacaoService.listarProximasPaginado(30, 20, 'myCursor');
+      const resultado = await service.listarProximasPaginado(30, 20, 'myCursor');
 
-      expect(notificacaoRepository.findProximasPaginated).toHaveBeenCalledWith(30, 20, 'myCursor');
+      expect(mockNotificacaoRepo.findProximasPaginated).toHaveBeenCalledWith(30, 20, 'myCursor');
       expect(resultado).toEqual(mockPaginatedResponse);
     });
   });
 });
 
 describe('inicializarEventHandlers', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    eventBus.clear();
+    (createNotificacaoRepository as jest.Mock).mockReturnValue({
+      findById: jest.fn(),
+      deleteByOrcamentoId: jest.fn().mockResolvedValue(2),
+      exists: jest.fn(),
+      createMany: jest.fn(),
+    });
+    (createOrcamentoRepository as jest.Mock).mockReturnValue({
+      findById: jest.fn(),
+    });
+    (createPalavraChaveRepository as jest.Mock).mockReturnValue({
+      findAtivas: jest.fn().mockResolvedValue([]),
+    });
+  });
+
   const mockOrcamento: Orcamento = {
     id: 'orc1',
     numero: 1,
@@ -593,16 +649,12 @@ describe('inicializarEventHandlers', () => {
     createdAt: new Date(),
   };
 
-  beforeEach(() => {
-    jest.clearAllMocks();
-    eventBus.clear();
-  });
-
   it('deve registrar handler para STATUS_CHANGED', () => {
     inicializarEventHandlers();
 
     // Verificar que o handler foi registrado (o evento existe)
     expect(() => eventBus.emit(OrcamentoEvents.STATUS_CHANGED, {
+      tenantId: 'test-tenant-id',
       orcamentoId: 'test',
       statusAnterior: 'pendente',
       statusNovo: 'aceito',
@@ -610,12 +662,19 @@ describe('inicializarEventHandlers', () => {
   });
 
   it('deve gerar notificações quando status muda para aceito', async () => {
-    (orcamentoRepository.findById as jest.Mock).mockResolvedValue(mockOrcamento);
-    (palavraChaveRepository.findAtivas as jest.Mock).mockResolvedValue([]);
+    const mockOrcRepo = {
+      findById: jest.fn().mockResolvedValue(mockOrcamento),
+    };
+    const mockPcRepo = {
+      findAtivas: jest.fn().mockResolvedValue([]),
+    };
+    (createOrcamentoRepository as jest.Mock).mockReturnValue(mockOrcRepo);
+    (createPalavraChaveRepository as jest.Mock).mockReturnValue(mockPcRepo);
 
     inicializarEventHandlers();
 
     await eventBus.emit(OrcamentoEvents.STATUS_CHANGED, {
+      tenantId: 'test-tenant-id',
       orcamentoId: 'orc1',
       statusAnterior: 'pendente',
       statusNovo: 'aceito',
@@ -624,15 +683,22 @@ describe('inicializarEventHandlers', () => {
     // Aguarda um tick para o handler assíncrono executar
     await new Promise(resolve => setTimeout(resolve, 10));
 
-    expect(orcamentoRepository.findById).toHaveBeenCalledWith('orc1');
+    expect(mockOrcRepo.findById).toHaveBeenCalledWith('orc1');
   });
 
   it('deve remover notificações quando status muda de aceito para outro', async () => {
-    (notificacaoRepository.deleteByOrcamentoId as jest.Mock).mockResolvedValue(2);
+    const mockNotifRepo = {
+      findById: jest.fn(),
+      deleteByOrcamentoId: jest.fn().mockResolvedValue(2),
+      exists: jest.fn(),
+      createMany: jest.fn(),
+    };
+    (createNotificacaoRepository as jest.Mock).mockReturnValue(mockNotifRepo);
 
     inicializarEventHandlers();
 
     await eventBus.emit(OrcamentoEvents.STATUS_CHANGED, {
+      tenantId: 'test-tenant-id',
       orcamentoId: 'orc1',
       statusAnterior: 'aceito',
       statusNovo: 'rejeitado',
@@ -641,13 +707,26 @@ describe('inicializarEventHandlers', () => {
     // Aguarda um tick para o handler assíncrono executar
     await new Promise(resolve => setTimeout(resolve, 10));
 
-    expect(notificacaoRepository.deleteByOrcamentoId).toHaveBeenCalledWith('orc1');
+    expect(mockNotifRepo.deleteByOrcamentoId).toHaveBeenCalledWith('orc1');
   });
 
   it('deve não fazer nada quando status não envolve aceito', async () => {
+    const mockOrcRepo = {
+      findById: jest.fn(),
+    };
+    const mockNotifRepo = {
+      findById: jest.fn(),
+      deleteByOrcamentoId: jest.fn(),
+      exists: jest.fn(),
+      createMany: jest.fn(),
+    };
+    (createOrcamentoRepository as jest.Mock).mockReturnValue(mockOrcRepo);
+    (createNotificacaoRepository as jest.Mock).mockReturnValue(mockNotifRepo);
+
     inicializarEventHandlers();
 
     await eventBus.emit(OrcamentoEvents.STATUS_CHANGED, {
+      tenantId: 'test-tenant-id',
       orcamentoId: 'orc1',
       statusAnterior: 'pendente',
       statusNovo: 'rejeitado',
@@ -656,17 +735,21 @@ describe('inicializarEventHandlers', () => {
     // Aguarda um tick para o handler assíncrono executar
     await new Promise(resolve => setTimeout(resolve, 10));
 
-    expect(orcamentoRepository.findById).not.toHaveBeenCalled();
-    expect(notificacaoRepository.deleteByOrcamentoId).not.toHaveBeenCalled();
+    expect(mockOrcRepo.findById).not.toHaveBeenCalled();
+    expect(mockNotifRepo.deleteByOrcamentoId).not.toHaveBeenCalled();
   });
 
   it('deve capturar erro sem propagar quando handler falha', async () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-    (orcamentoRepository.findById as jest.Mock).mockRejectedValue(new Error('DB Error'));
+    const mockOrcRepo = {
+      findById: jest.fn().mockRejectedValue(new Error('DB Error')),
+    };
+    (createOrcamentoRepository as jest.Mock).mockReturnValue(mockOrcRepo);
 
     inicializarEventHandlers();
 
     await eventBus.emit(OrcamentoEvents.STATUS_CHANGED, {
+      tenantId: 'test-tenant-id',
       orcamentoId: 'orc1',
       statusAnterior: 'pendente',
       statusNovo: 'aceito',

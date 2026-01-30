@@ -417,7 +417,7 @@ export const ItemCompletoContainer = styled.div`
 
 export const ItemCompletoRow1 = styled.div`
   display: grid;
-  grid-template-columns: 120px 160px 1fr;
+  grid-template-columns: 160px 1fr;
   gap: 8px;
   align-items: flex-end;
   margin-bottom: 8px;
@@ -431,9 +431,8 @@ export const ItemCompletoRow1 = styled.div`
   @media (max-width: 900px) {
     grid-template-columns: 1fr 1fr;
 
-    > div:nth-child(1) { grid-column: 1 / 2; } /* Etapa */
-    > div:nth-child(2) { grid-column: 2 / 3; } /* Categoria */
-    > div:nth-child(3) { grid-column: 1 / 3; } /* Descrição */
+    > div:nth-child(1) { grid-column: 1 / 2; } /* Categoria */
+    > div:nth-child(2) { grid-column: 1 / 3; } /* Descrição */
   }
 
   @media (max-width: 480px) {

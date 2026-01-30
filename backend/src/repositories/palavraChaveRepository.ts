@@ -1,21 +1,21 @@
-import { db } from '../config/firebase';
+import { getTenantDb } from '../utils/tenantDb';
 import { PalavraChave } from '../models';
 
-const COLLECTION = 'palavrasChave';
+export function createPalavraChaveRepository(tenantId: string) {
+  const collection = getTenantDb(tenantId).collection('palavrasChave');
 
-export const palavraChaveRepository = {
-  async findAll(): Promise<PalavraChave[]> {
-    const snapshot = await db.collection(COLLECTION).orderBy('palavra').get();
+  async function findAll(): Promise<PalavraChave[]> {
+    const snapshot = await collection.orderBy('palavra').get();
     return snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
       createdAt: doc.data().createdAt?.toDate(),
       updatedAt: doc.data().updatedAt?.toDate(),
     })) as PalavraChave[];
-  },
+  }
 
-  async findById(id: string): Promise<PalavraChave | null> {
-    const doc = await db.collection(COLLECTION).doc(id).get();
+  async function findById(id: string): Promise<PalavraChave | null> {
+    const doc = await collection.doc(id).get();
     if (!doc.exists) return null;
     return {
       id: doc.id,
@@ -23,11 +23,10 @@ export const palavraChaveRepository = {
       createdAt: doc.data()?.createdAt?.toDate(),
       updatedAt: doc.data()?.updatedAt?.toDate(),
     } as PalavraChave;
-  },
+  }
 
-  async findByPalavra(palavra: string): Promise<PalavraChave | null> {
-    const snapshot = await db
-      .collection(COLLECTION)
+  async function findByPalavra(palavra: string): Promise<PalavraChave | null> {
+    const snapshot = await collection
       .where('palavra', '==', palavra.toLowerCase())
       .limit(1)
       .get();
@@ -41,11 +40,10 @@ export const palavraChaveRepository = {
       createdAt: doc.data().createdAt?.toDate(),
       updatedAt: doc.data().updatedAt?.toDate(),
     } as PalavraChave;
-  },
+  }
 
-  async findAtivas(): Promise<PalavraChave[]> {
-    const snapshot = await db
-      .collection(COLLECTION)
+  async function findAtivas(): Promise<PalavraChave[]> {
+    const snapshot = await collection
       .where('ativo', '==', true)
       .orderBy('palavra')
       .get();
@@ -56,11 +54,11 @@ export const palavraChaveRepository = {
       createdAt: doc.data().createdAt?.toDate(),
       updatedAt: doc.data().updatedAt?.toDate(),
     })) as PalavraChave[];
-  },
+  }
 
-  async create(data: Omit<PalavraChave, 'id' | 'createdAt' | 'updatedAt'>): Promise<PalavraChave> {
+  async function create(data: Omit<PalavraChave, 'id' | 'createdAt' | 'updatedAt'>): Promise<PalavraChave> {
     const now = new Date();
-    const docRef = await db.collection(COLLECTION).add({
+    const docRef = await collection.add({
       ...data,
       palavra: data.palavra.toLowerCase(),
       createdAt: now,
@@ -74,10 +72,10 @@ export const palavraChaveRepository = {
       createdAt: now,
       updatedAt: now,
     };
-  },
+  }
 
-  async update(id: string, data: Partial<Omit<PalavraChave, 'id' | 'createdAt'>>): Promise<PalavraChave | null> {
-    const docRef = db.collection(COLLECTION).doc(id);
+  async function update(id: string, data: Partial<Omit<PalavraChave, 'id' | 'createdAt'>>): Promise<PalavraChave | null> {
+    const docRef = collection.doc(id);
     const doc = await docRef.get();
 
     if (!doc.exists) return null;
@@ -100,15 +98,25 @@ export const palavraChaveRepository = {
       createdAt: updated.data()?.createdAt?.toDate(),
       updatedAt: updated.data()?.updatedAt?.toDate(),
     } as PalavraChave;
-  },
+  }
 
-  async delete(id: string): Promise<boolean> {
-    const docRef = db.collection(COLLECTION).doc(id);
+  async function del(id: string): Promise<boolean> {
+    const docRef = collection.doc(id);
     const doc = await docRef.get();
 
     if (!doc.exists) return false;
 
     await docRef.delete();
     return true;
-  },
-};
+  }
+
+  return {
+    findAll,
+    findById,
+    findByPalavra,
+    findAtivas,
+    create,
+    update,
+    delete: del,
+  };
+}

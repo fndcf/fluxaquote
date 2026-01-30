@@ -1,11 +1,15 @@
 import { Request, Response, NextFunction } from 'express';
-import { notificacaoService } from '../services/notificacaoService';
+import { createNotificacaoService } from '../services/notificacaoService';
+import { AuthRequest } from '../middlewares/authMiddleware';
+import { getTenantId } from '../utils/requestContext';
 
 export const notificacaoController = {
   async buscarPorId(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createNotificacaoService(tenantId);
       const { id } = req.params;
-      const notificacao = await notificacaoService.buscarPorId(id);
+      const notificacao = await service.buscarPorId(id);
       res.json(notificacao);
     } catch (error) {
       next(error);
@@ -14,8 +18,10 @@ export const notificacaoController = {
 
   async marcarComoLida(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createNotificacaoService(tenantId);
       const { id } = req.params;
-      const notificacao = await notificacaoService.marcarComoLida(id);
+      const notificacao = await service.marcarComoLida(id);
       res.json(notificacao);
     } catch (error) {
       next(error);
@@ -24,7 +30,9 @@ export const notificacaoController = {
 
   async marcarTodasComoLidas(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const quantidade = await notificacaoService.marcarTodasComoLidas();
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createNotificacaoService(tenantId);
+      const quantidade = await service.marcarTodasComoLidas();
       res.json({ marcadas: quantidade });
     } catch (error) {
       next(error);
@@ -33,8 +41,10 @@ export const notificacaoController = {
 
   async excluir(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createNotificacaoService(tenantId);
       const { id } = req.params;
-      await notificacaoService.excluir(id);
+      await service.excluir(id);
       res.status(204).send();
     } catch (error) {
       next(error);
@@ -43,8 +53,10 @@ export const notificacaoController = {
 
   async gerarParaOrcamento(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createNotificacaoService(tenantId);
       const { orcamentoId } = req.params;
-      const notificacoes = await notificacaoService.gerarNotificacoesParaOrcamento(orcamentoId);
+      const notificacoes = await service.gerarNotificacoesParaOrcamento(orcamentoId);
       res.json(notificacoes);
     } catch (error) {
       next(error);
@@ -53,7 +65,9 @@ export const notificacaoController = {
 
   async processarTodos(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const resultado = await notificacaoService.processarTodosOrcamentosAceitos();
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createNotificacaoService(tenantId);
+      const resultado = await service.processarTodosOrcamentosAceitos();
       res.json(resultado);
     } catch (error) {
       next(error);
@@ -62,7 +76,9 @@ export const notificacaoController = {
 
   async obterResumo(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const resumo = await notificacaoService.obterResumo();
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createNotificacaoService(tenantId);
+      const resumo = await service.obterResumo();
       res.json(resumo);
     } catch (error) {
       next(error);
@@ -71,7 +87,9 @@ export const notificacaoController = {
 
   async contarNaoLidas(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const quantidade = await notificacaoService.contarNaoLidas();
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createNotificacaoService(tenantId);
+      const quantidade = await service.contarNaoLidas();
       res.json({ quantidade });
     } catch (error) {
       next(error);
@@ -82,9 +100,11 @@ export const notificacaoController = {
 
   async listarPaginado(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createNotificacaoService(tenantId);
       const pageSize = req.query.pageSize ? parseInt(req.query.pageSize as string) : 10;
       const cursor = req.query.cursor as string | undefined;
-      const resultado = await notificacaoService.listarTodasPaginado(pageSize, cursor);
+      const resultado = await service.listarTodasPaginado(pageSize, cursor);
       res.json(resultado);
     } catch (error) {
       next(error);
@@ -93,9 +113,11 @@ export const notificacaoController = {
 
   async listarNaoLidasPaginado(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createNotificacaoService(tenantId);
       const pageSize = req.query.pageSize ? parseInt(req.query.pageSize as string) : 10;
       const cursor = req.query.cursor as string | undefined;
-      const resultado = await notificacaoService.listarNaoLidasPaginado(pageSize, cursor);
+      const resultado = await service.listarNaoLidasPaginado(pageSize, cursor);
       res.json(resultado);
     } catch (error) {
       next(error);
@@ -104,9 +126,11 @@ export const notificacaoController = {
 
   async listarVencidasPaginado(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createNotificacaoService(tenantId);
       const pageSize = req.query.pageSize ? parseInt(req.query.pageSize as string) : 10;
       const cursor = req.query.cursor as string | undefined;
-      const resultado = await notificacaoService.listarVencidasPaginado(pageSize, cursor);
+      const resultado = await service.listarVencidasPaginado(pageSize, cursor);
       res.json(resultado);
     } catch (error) {
       next(error);
@@ -115,10 +139,12 @@ export const notificacaoController = {
 
   async listarAtivasPaginado(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createNotificacaoService(tenantId);
       const dias = req.query.dias ? parseInt(req.query.dias as string) : 60;
       const pageSize = req.query.pageSize ? parseInt(req.query.pageSize as string) : 10;
       const cursor = req.query.cursor as string | undefined;
-      const resultado = await notificacaoService.listarAtivasPaginado(dias, pageSize, cursor);
+      const resultado = await service.listarAtivasPaginado(dias, pageSize, cursor);
       res.json(resultado);
     } catch (error) {
       next(error);
@@ -127,10 +153,12 @@ export const notificacaoController = {
 
   async listarProximasPaginado(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const tenantId = getTenantId(req as AuthRequest);
+      const service = createNotificacaoService(tenantId);
       const dias = req.query.dias ? parseInt(req.query.dias as string) : 30;
       const pageSize = req.query.pageSize ? parseInt(req.query.pageSize as string) : 10;
       const cursor = req.query.cursor as string | undefined;
-      const resultado = await notificacaoService.listarProximasPaginado(dias, pageSize, cursor);
+      const resultado = await service.listarProximasPaginado(dias, pageSize, cursor);
       res.json(resultado);
     } catch (error) {
       next(error);

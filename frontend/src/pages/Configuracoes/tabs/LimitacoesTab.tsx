@@ -132,11 +132,10 @@ export function LimitacoesTab() {
           }}
         >
           <div>
-            <h2>Observações e Limitações</h2>
+            <h2>Observações</h2>
             <p className="description">
-              Cadastre os parágrafos de observações e limitações que podem ser
-              selecionados no orçamento completo. No orçamento, você escolhe
-              quais incluir.
+              Cadastre os parágrafos de observações que podem ser selecionados
+              no orçamento completo. No orçamento, você escolhe quais incluir.
             </p>
           </div>
           <Button onClick={handleNovoClick}>+ Nova Observação</Button>
@@ -198,11 +197,10 @@ export function LimitacoesTab() {
         {modalError && <ErrorAlert>{modalError}</ErrorAlert>}
 
         <FormGroup>
-          <Label>Texto da Observação/Limitação</Label>
+          <Label>Texto da Observação</Label>
           <TextArea
             value={texto}
             onChange={(e) => setTexto(e.target.value)}
-            placeholder="Ex: O Contratante deverá nos informar procedimentos e rotinas operacionais ligadas à saúde e segurança a serem observadas e seguidas por nossos profissionais durante a execução dos trabalhos de campo."
             rows={5}
             maxLength={MAX_CARACTERES}
           />
@@ -236,11 +234,19 @@ export function LimitacoesTab() {
         </FormGroup>
 
         <ModalButtons>
-          <Button $variant="ghost" onClick={handleCloseModal} disabled={isSaving}>
+          <Button
+            $variant="ghost"
+            onClick={handleCloseModal}
+            disabled={isSaving}
+          >
             Cancelar
           </Button>
           <Button onClick={handleSalvar} disabled={isSaveDisabled}>
-            {isSaving ? "Salvando..." : editando ? "Salvar Alterações" : "Cadastrar"}
+            {isSaving
+              ? "Salvando..."
+              : editando
+                ? "Salvar Alterações"
+                : "Cadastrar"}
           </Button>
         </ModalButtons>
       </Modal>
@@ -252,7 +258,7 @@ export function LimitacoesTab() {
         onConfirm={handleExcluir}
         itemDescription={`a limitação "${confirmDelete?.texto.substring(
           0,
-          50
+          50,
         )}..."`}
       />
     </>

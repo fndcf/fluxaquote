@@ -1,22 +1,21 @@
-import { db } from '../config/firebase';
+import { getTenantDb } from '../utils/tenantDb';
 import { Limitacao } from '../models';
 
-const COLLECTION = 'limitacoes';
+export function createLimitacaoRepository(tenantId: string) {
+  const collection = getTenantDb(tenantId).collection('limitacoes');
 
-export const limitacaoRepository = {
-  async findAll(): Promise<Limitacao[]> {
-    const snapshot = await db.collection(COLLECTION).orderBy('ordem', 'asc').get();
+  async function findAll(): Promise<Limitacao[]> {
+    const snapshot = await collection.orderBy('ordem', 'asc').get();
     return snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
       createdAt: doc.data().createdAt?.toDate(),
       updatedAt: doc.data().updatedAt?.toDate(),
     })) as Limitacao[];
-  },
+  }
 
-  async findAtivas(): Promise<Limitacao[]> {
-    const snapshot = await db
-      .collection(COLLECTION)
+  async function findAtivas(): Promise<Limitacao[]> {
+    const snapshot = await collection
       .where('ativo', '==', true)
       .orderBy('ordem', 'asc')
       .get();
@@ -26,10 +25,10 @@ export const limitacaoRepository = {
       createdAt: doc.data().createdAt?.toDate(),
       updatedAt: doc.data().updatedAt?.toDate(),
     })) as Limitacao[];
-  },
+  }
 
-  async findById(id: string): Promise<Limitacao | null> {
-    const doc = await db.collection(COLLECTION).doc(id).get();
+  async function findById(id: string): Promise<Limitacao | null> {
+    const doc = await collection.doc(id).get();
     if (!doc.exists) return null;
     return {
       id: doc.id,
@@ -37,11 +36,10 @@ export const limitacaoRepository = {
       createdAt: doc.data()?.createdAt?.toDate(),
       updatedAt: doc.data()?.updatedAt?.toDate(),
     } as Limitacao;
-  },
+  }
 
-  async findByTexto(texto: string): Promise<Limitacao | null> {
-    const snapshot = await db
-      .collection(COLLECTION)
+  async function findByTexto(texto: string): Promise<Limitacao | null> {
+    const snapshot = await collection
       .where('texto', '==', texto)
       .limit(1)
       .get();
@@ -53,13 +51,13 @@ export const limitacaoRepository = {
       createdAt: doc.data()?.createdAt?.toDate(),
       updatedAt: doc.data()?.updatedAt?.toDate(),
     } as Limitacao;
-  },
+  }
 
-  async findByIds(ids: string[]): Promise<Limitacao[]> {
+  async function findByIds(ids: string[]): Promise<Limitacao[]> {
     if (ids.length === 0) return [];
     const limitacoes: Limitacao[] = [];
     for (const id of ids) {
-      const doc = await db.collection(COLLECTION).doc(id).get();
+      const doc = await collection.doc(id).get();
       if (doc.exists) {
         limitacoes.push({
           id: doc.id,
@@ -70,10 +68,10 @@ export const limitacaoRepository = {
       }
     }
     return limitacoes;
-  },
+  }
 
-  async create(data: Omit<Limitacao, 'id' | 'createdAt'>): Promise<Limitacao> {
-    const docRef = await db.collection(COLLECTION).add({
+  async function create(data: Omit<Limitacao, 'id' | 'createdAt'>): Promise<Limitacao> {
+    const docRef = await collection.add({
       ...data,
       createdAt: new Date(),
     });
@@ -83,10 +81,10 @@ export const limitacaoRepository = {
       ...doc.data(),
       createdAt: doc.data()?.createdAt?.toDate(),
     } as Limitacao;
-  },
+  }
 
-  async update(id: string, data: Partial<Limitacao>): Promise<Limitacao | null> {
-    const docRef = db.collection(COLLECTION).doc(id);
+  async function update(id: string, data: Partial<Limitacao>): Promise<Limitacao | null> {
+    const docRef = collection.doc(id);
     await docRef.update({
       ...data,
       updatedAt: new Date(),
@@ -99,16 +97,28 @@ export const limitacaoRepository = {
       createdAt: doc.data()?.createdAt?.toDate(),
       updatedAt: doc.data()?.updatedAt?.toDate(),
     } as Limitacao;
-  },
+  }
 
-  async delete(id: string): Promise<boolean> {
-    await db.collection(COLLECTION).doc(id).delete();
+  async function del(id: string): Promise<boolean> {
+    await collection.doc(id).delete();
     return true;
-  },
+  }
 
-  async getNextOrdem(): Promise<number> {
-    const snapshot = await db.collection(COLLECTION).orderBy('ordem', 'desc').limit(1).get();
+  async function getNextOrdem(): Promise<number> {
+    const snapshot = await collection.orderBy('ordem', 'desc').limit(1).get();
     if (snapshot.empty) return 1;
     return (snapshot.docs[0].data().ordem || 0) + 1;
-  },
-};
+  }
+
+  return {
+    findAll,
+    findAtivas,
+    findById,
+    findByTexto,
+    findByIds,
+    create,
+    update,
+    delete: del,
+    getNextOrdem,
+  };
+}

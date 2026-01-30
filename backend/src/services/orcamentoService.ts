@@ -1,6 +1,6 @@
-import { orcamentoRepository } from "../repositories/orcamentoRepository";
-import { clienteRepository } from "../repositories/clienteRepository";
-import { configuracoesGeraisRepository } from "../repositories/configuracoesGeraisRepository";
+import { createOrcamentoRepository } from "../repositories/orcamentoRepository";
+import { createClienteRepository } from "../repositories/clienteRepository";
+import { createConfiguracoesGeraisRepository } from "../repositories/configuracoesGeraisRepository";
 import {
   Orcamento,
   OrcamentoItemCompleto,
@@ -68,13 +68,14 @@ interface CriarOrcamentoDTO {
   servicoDescricao?: string;
   itensCompleto?: OrcamentoItemCompleto[];
   limitacoesSelecionadas?: string[];
-  prazoExecucaoServicos?: number;
+  prazoExecucaoServicos?: number | null;
   prazoVistoriaBombeiros?: number;
   condicaoPagamento?: "a_vista" | "a_combinar" | "parcelado";
   parcelamentoTexto?: string;
   parcelamentoDados?: ParcelamentoDados;
   descontoAVista?: DescontoAVistaDados;
   mostrarValoresDetalhados?: boolean;
+  introducao?: string;
   // Campos comuns
   observacoes?: string;
   diasValidade?: number;
@@ -91,13 +92,14 @@ interface AtualizarOrcamentoDTO {
   servicoDescricao?: string;
   itensCompleto?: OrcamentoItemCompleto[];
   limitacoesSelecionadas?: string[];
-  prazoExecucaoServicos?: number;
+  prazoExecucaoServicos?: number | null;
   prazoVistoriaBombeiros?: number;
   condicaoPagamento?: "a_vista" | "a_combinar" | "parcelado";
   parcelamentoTexto?: string;
   parcelamentoDados?: ParcelamentoDados;
   descontoAVista?: DescontoAVistaDados;
   mostrarValoresDetalhados?: boolean;
+  introducao?: string;
   // Campos comuns
   observacoes?: string;
   dataValidade?: Date;
@@ -108,12 +110,16 @@ interface AtualizarOrcamentoDTO {
   enderecoServico?: string;
 }
 
-export const orcamentoService = {
-  async listar(): Promise<Orcamento[]> {
-    return orcamentoRepository.findAll();
-  },
+export function createOrcamentoService(tenantId: string) {
+  const orcamentoRepo = createOrcamentoRepository(tenantId);
+  const clienteRepo = createClienteRepository(tenantId);
+  const configRepo = createConfiguracoesGeraisRepository(tenantId);
 
-  async listarPaginado(
+  const listar = async (): Promise<Orcamento[]> => {
+    return orcamentoRepo.findAll();
+  };
+
+  const listarPaginado = async (
     page: number = 1,
     limit: number = 10,
     filters?: {
@@ -121,34 +127,34 @@ export const orcamentoService = {
       clienteId?: string;
       busca?: string;
     }
-  ): Promise<PaginatedResponse<Orcamento>> {
-    return orcamentoRepository.findPaginated(page, limit, filters);
-  },
+  ): Promise<PaginatedResponse<Orcamento>> => {
+    return orcamentoRepo.findPaginated(page, limit, filters);
+  };
 
-  async buscarPorId(id: string): Promise<Orcamento> {
-    return orcamentoRepository.findById(id);
-  },
+  const buscarPorId = async (id: string): Promise<Orcamento> => {
+    return orcamentoRepo.findById(id);
+  };
 
-  async buscarPorCliente(clienteId: string): Promise<Orcamento[]> {
-    return orcamentoRepository.findByClienteId(clienteId);
-  },
+  const buscarPorCliente = async (clienteId: string): Promise<Orcamento[]> => {
+    return orcamentoRepo.findByClienteId(clienteId);
+  };
 
-  async getHistoricoCliente(clienteId: string, limit: number = 5): Promise<{
+  const getHistoricoCliente = async (clienteId: string, limit: number = 5): Promise<{
     orcamentos: Orcamento[];
     resumo: {
       total: number;
       aceitos: number;
       valorTotalAceitos: number;
     };
-  }> {
-    return orcamentoRepository.getHistoricoCliente(clienteId, limit);
-  },
+  }> => {
+    return orcamentoRepo.getHistoricoCliente(clienteId, limit);
+  };
 
-  async buscarPorStatus(status: OrcamentoStatus): Promise<Orcamento[]> {
-    return orcamentoRepository.findByStatus(status);
-  },
+  const buscarPorStatus = async (status: OrcamentoStatus): Promise<Orcamento[]> => {
+    return orcamentoRepo.findByStatus(status);
+  };
 
-  async buscarPorPeriodo(dataInicio: string, dataFim: string): Promise<Orcamento[]> {
+  const buscarPorPeriodo = async (dataInicio: string, dataFim: string): Promise<Orcamento[]> => {
     const inicio = new Date(dataInicio);
     const fim = new Date(dataFim);
 
@@ -159,21 +165,21 @@ export const orcamentoService = {
     // Ajustar fim para o final do dia
     fim.setHours(23, 59, 59, 999);
 
-    return orcamentoRepository.findByPeriodo(inicio, fim);
-  },
+    return orcamentoRepo.findByPeriodo(inicio, fim);
+  };
 
-  async criar(data: CriarOrcamentoDTO): Promise<Orcamento> {
+  const criar = async (data: CriarOrcamentoDTO): Promise<Orcamento> => {
     // Validar cliente
-    const cliente = await clienteRepository.findById(data.clienteId);
+    const cliente = await clienteRepo.findById(data.clienteId);
     if (!cliente) {
       throw new NotFoundError("Cliente não encontrado");
     }
 
     // Obter próximo número
-    const numero = await orcamentoRepository.getNextNumero();
+    const numero = await orcamentoRepo.getNextNumero();
 
     // Buscar configuração de dias de validade
-    const configuracoes = await configuracoesGeraisRepository.get();
+    const configuracoes = await configRepo.get();
     const diasValidadeConfig = configuracoes.diasValidadeOrcamento || 30;
 
     // Definir datas
@@ -286,12 +292,14 @@ export const orcamentoService = {
     if (data.descontoAVista) orcamento.descontoAVista = data.descontoAVista;
     if (data.mostrarValoresDetalhados !== undefined)
       orcamento.mostrarValoresDetalhados = data.mostrarValoresDetalhados;
+    if (data.introducao?.trim())
+      orcamento.introducao = data.introducao.trim();
 
-    return orcamentoRepository.create(orcamento);
-  },
+    return orcamentoRepo.create(orcamento);
+  };
 
-  async atualizar(id: string, data: AtualizarOrcamentoDTO): Promise<Orcamento> {
-    const orcamento = await orcamentoRepository.findById(id);
+  const atualizar = async (id: string, data: AtualizarOrcamentoDTO): Promise<Orcamento> => {
+    const orcamento = await orcamentoRepo.findById(id);
 
     // Só permite atualizar se estiver aberto
     if (orcamento.status !== "aberto") {
@@ -372,11 +380,14 @@ export const orcamentoService = {
     ) {
       updateData.limitacoesSelecionadas = data.limitacoesSelecionadas;
     }
-    if (
-      data.prazoExecucaoServicos !== undefined &&
-      data.prazoExecucaoServicos !== orcamento.prazoExecucaoServicos
-    ) {
-      updateData.prazoExecucaoServicos = data.prazoExecucaoServicos;
+    // prazoExecucaoServicos - pode ser null para remover
+    if (data.prazoExecucaoServicos !== undefined) {
+      if (data.prazoExecucaoServicos !== orcamento.prazoExecucaoServicos) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        updateData.prazoExecucaoServicos = data.prazoExecucaoServicos
+          ? data.prazoExecucaoServicos
+          : (FieldValue.delete() as any);
+      }
     }
     // prazoVistoriaBombeiros - pode ser null para remover
     if (data.prazoVistoriaBombeiros !== undefined) {
@@ -440,13 +451,21 @@ export const orcamentoService = {
       updateData.mostrarValoresDetalhados = data.mostrarValoresDetalhados;
     }
 
+    // Introdução - só atualiza se mudou
+    if (data.introducao !== undefined) {
+      const novaIntro = data.introducao?.trim() || "";
+      if (novaIntro !== (orcamento.introducao || "")) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        updateData.introducao = novaIntro ? novaIntro : (FieldValue.delete() as any);
+      }
+    }
+
     // Observações - só atualiza se mudou
     if (data.observacoes !== undefined) {
       const novaObs = data.observacoes?.trim() || "";
       if (novaObs !== (orcamento.observacoes || "")) {
-        if (novaObs) {
-          updateData.observacoes = novaObs;
-        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        updateData.observacoes = novaObs ? novaObs : (FieldValue.delete() as any);
       }
     }
 
@@ -509,18 +528,18 @@ export const orcamentoService = {
 
     if (hasChanges) {
       updateData.versao = (orcamento.versao || 0) + 1;
-      return orcamentoRepository.update(id, updateData);
+      return orcamentoRepo.update(id, updateData);
     }
 
     // Se não houve mudanças, retorna o orçamento sem atualizar
     return orcamento;
-  },
+  };
 
-  async atualizarStatus(
+  const atualizarStatus = async (
     id: string,
     status: OrcamentoStatus
-  ): Promise<Orcamento> {
-    const orcamento = await orcamentoRepository.findById(id);
+  ): Promise<Orcamento> => {
+    const orcamento = await orcamentoRepo.findById(id);
 
     // Validar transições de status
     const transicoesValidas: Record<OrcamentoStatus, OrcamentoStatus[]> = {
@@ -539,7 +558,7 @@ export const orcamentoService = {
     const dataAceite = status === "aceito" ? new Date() : undefined;
     const statusAnterior = orcamento.status;
 
-    const orcamentoAtualizado = await orcamentoRepository.updateStatus(
+    const orcamentoAtualizado = await orcamentoRepo.updateStatus(
       id,
       status,
       dataAceite
@@ -548,32 +567,33 @@ export const orcamentoService = {
     // Emite evento de mudança de status - notificacaoService escuta e reage
     // Isso elimina a dependência circular entre os serviços
     eventBus.emit(OrcamentoEvents.STATUS_CHANGED, {
+      tenantId,
       orcamentoId: id,
       statusAnterior,
       statusNovo: status,
     });
 
     return orcamentoAtualizado;
-  },
+  };
 
-  async excluir(id: string): Promise<void> {
-    const orcamento = await orcamentoRepository.findById(id);
+  const excluir = async (id: string): Promise<void> => {
+    const orcamento = await orcamentoRepo.findById(id);
 
     // Só permite excluir se não estiver aceito
     if (orcamento.status === "aceito") {
       throw new ValidationError("Não é possível excluir um orçamento aceito");
     }
 
-    return orcamentoRepository.delete(id);
-  },
+    return orcamentoRepo.delete(id);
+  };
 
-  async duplicar(id: string): Promise<Orcamento> {
-    const orcamentoOriginal = await orcamentoRepository.findById(id);
+  const duplicar = async (id: string): Promise<Orcamento> => {
+    const orcamentoOriginal = await orcamentoRepo.findById(id);
 
     // Verificar se o cliente ainda existe
     let cliente;
     try {
-      cliente = await clienteRepository.findById(orcamentoOriginal.clienteId);
+      cliente = await clienteRepo.findById(orcamentoOriginal.clienteId);
     } catch {
       throw new ValidationError(
         "Cliente do orçamento original não existe mais"
@@ -581,10 +601,10 @@ export const orcamentoService = {
     }
 
     // Obter próximo número
-    const numero = await orcamentoRepository.getNextNumero();
+    const numero = await orcamentoRepo.getNextNumero();
 
     // Buscar configuração de dias de validade
-    const configuracoes = await configuracoesGeraisRepository.get();
+    const configuracoes = await configRepo.get();
     const diasValidade = configuracoes.diasValidadeOrcamento || 30;
 
     // Definir novas datas
@@ -654,40 +674,42 @@ export const orcamentoService = {
     if (orcamentoOriginal.mostrarValoresDetalhados !== undefined)
       novoOrcamento.mostrarValoresDetalhados =
         orcamentoOriginal.mostrarValoresDetalhados;
+    if (orcamentoOriginal.introducao)
+      novoOrcamento.introducao = orcamentoOriginal.introducao;
     if (orcamentoOriginal.valorTotalMaoDeObra)
       novoOrcamento.valorTotalMaoDeObra = orcamentoOriginal.valorTotalMaoDeObra;
     if (orcamentoOriginal.valorTotalMaterial)
       novoOrcamento.valorTotalMaterial = orcamentoOriginal.valorTotalMaterial;
 
-    return orcamentoRepository.create(novoOrcamento);
-  },
+    return orcamentoRepo.create(novoOrcamento);
+  };
 
-  async getEstatisticas() {
-    return orcamentoRepository.getEstatisticas();
-  },
+  const getEstatisticas = async () => {
+    return orcamentoRepo.getEstatisticas();
+  };
 
-  async verificarExpirados(): Promise<number> {
-    const orcamentosAbertos = await orcamentoRepository.findByStatus("aberto");
+  const verificarExpirados = async (): Promise<number> => {
+    const orcamentosAbertos = await orcamentoRepo.findByStatus("aberto");
     const hoje = new Date();
     let expirados = 0;
 
     for (const orcamento of orcamentosAbertos) {
       if (orcamento.dataValidade < hoje) {
-        await orcamentoRepository.updateStatus(orcamento.id!, "expirado");
+        await orcamentoRepo.updateStatus(orcamento.id!, "expirado");
         expirados++;
       }
     }
 
     return expirados;
-  },
+  };
 
-  async getDashboardStats(): Promise<DashboardStats> {
+  const getDashboardStats = async (): Promise<DashboardStats> => {
     const MONTH_NAMES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
     // Buscar todos os orçamentos e clientes em paralelo
     const [orcamentos, clientes] = await Promise.all([
-      orcamentoRepository.findAll(),
-      clienteRepository.findAll(),
+      orcamentoRepo.findAll(),
+      clienteRepo.findAll(),
     ]);
 
     // Calcular estatísticas básicas
@@ -762,5 +784,23 @@ export const orcamentoService = {
       totalClientes: clientes.length,
       porMes,
     };
-  },
-};
+  };
+
+  return {
+    listar,
+    listarPaginado,
+    buscarPorId,
+    buscarPorCliente,
+    getHistoricoCliente,
+    buscarPorStatus,
+    buscarPorPeriodo,
+    criar,
+    atualizar,
+    atualizarStatus,
+    excluir,
+    duplicar,
+    getEstatisticas,
+    verificarExpirados,
+    getDashboardStats,
+  };
+}

@@ -1,9 +1,23 @@
 import { Request, Response, NextFunction } from 'express';
 import { limitacaoController } from '../../controllers/limitacaoController';
-import { limitacaoService } from '../../services/limitacaoService';
+import { createLimitacaoService } from '../../services/limitacaoService';
 
 // Mock do limitacaoService
 jest.mock('../../services/limitacaoService');
+jest.mock('../../utils/requestContext', () => ({
+  getTenantId: jest.fn().mockReturnValue('test-tenant-id'),
+}));
+
+const mockService = {
+  listar: jest.fn(),
+  listarAtivas: jest.fn(),
+  buscarPorId: jest.fn(),
+  criar: jest.fn(),
+  atualizar: jest.fn(),
+  excluir: jest.fn(),
+  toggleAtivo: jest.fn(),
+};
+(createLimitacaoService as jest.Mock).mockReturnValue(mockService);
 
 describe('limitacaoController', () => {
   let mockReq: Partial<Request>;
@@ -32,6 +46,7 @@ describe('limitacaoController', () => {
 
     mockNext = jest.fn();
     jest.clearAllMocks();
+    (createLimitacaoService as jest.Mock).mockReturnValue(mockService);
   });
 
   describe('listar', () => {
@@ -40,7 +55,7 @@ describe('limitacaoController', () => {
         { id: '1', texto: 'Limitação 1 com texto suficiente', ativo: true, ordem: 1 },
         { id: '2', texto: 'Limitação 2 com texto suficiente', ativo: true, ordem: 2 },
       ];
-      (limitacaoService.listar as jest.Mock).mockResolvedValue(limitacoes);
+      mockService.listar.mockResolvedValue(limitacoes);
 
       await limitacaoController.listar(mockReq as Request, mockRes as Response, mockNext);
 
@@ -49,7 +64,7 @@ describe('limitacaoController', () => {
 
     it('deve chamar next com erro quando falhar', async () => {
       const error = new Error('Erro no banco');
-      (limitacaoService.listar as jest.Mock).mockRejectedValue(error);
+      mockService.listar.mockRejectedValue(error);
 
       await limitacaoController.listar(mockReq as Request, mockRes as Response, mockNext);
 
@@ -60,7 +75,7 @@ describe('limitacaoController', () => {
   describe('listarAtivas', () => {
     it('deve retornar lista de limitações ativas com sucesso', async () => {
       const limitacoes = [{ id: '1', texto: 'Limitação 1 com texto suficiente', ativo: true, ordem: 1 }];
-      (limitacaoService.listarAtivas as jest.Mock).mockResolvedValue(limitacoes);
+      mockService.listarAtivas.mockResolvedValue(limitacoes);
 
       await limitacaoController.listarAtivas(mockReq as Request, mockRes as Response, mockNext);
 
@@ -69,7 +84,7 @@ describe('limitacaoController', () => {
 
     it('deve chamar next com erro quando falhar', async () => {
       const error = new Error('Erro no banco');
-      (limitacaoService.listarAtivas as jest.Mock).mockRejectedValue(error);
+      mockService.listarAtivas.mockRejectedValue(error);
 
       await limitacaoController.listarAtivas(mockReq as Request, mockRes as Response, mockNext);
 
@@ -81,7 +96,7 @@ describe('limitacaoController', () => {
     it('deve retornar limitação por ID com sucesso', async () => {
       const limitacao = { id: '1', texto: 'Limitação 1 com texto suficiente', ativo: true, ordem: 1 };
       mockReq.params = { id: '1' };
-      (limitacaoService.buscarPorId as jest.Mock).mockResolvedValue(limitacao);
+      mockService.buscarPorId.mockResolvedValue(limitacao);
 
       await limitacaoController.buscarPorId(mockReq as Request, mockRes as Response, mockNext);
 
@@ -91,7 +106,7 @@ describe('limitacaoController', () => {
     it('deve chamar next com erro quando não encontrar', async () => {
       mockReq.params = { id: 'inexistente' };
       const error = new Error('Limitação não encontrada');
-      (limitacaoService.buscarPorId as jest.Mock).mockRejectedValue(error);
+      mockService.buscarPorId.mockRejectedValue(error);
 
       await limitacaoController.buscarPorId(mockReq as Request, mockRes as Response, mockNext);
 
@@ -104,7 +119,7 @@ describe('limitacaoController', () => {
       const novaLimitacao = { texto: 'Nova Limitação com pelo menos 20 caracteres para validação', ativo: true };
       const limitacaoCriada = { id: '1', ...novaLimitacao, ordem: 1 };
       mockReq.body = novaLimitacao;
-      (limitacaoService.criar as jest.Mock).mockResolvedValue(limitacaoCriada);
+      mockService.criar.mockResolvedValue(limitacaoCriada);
 
       await limitacaoController.criar(mockReq as Request, mockRes as Response, mockNext);
 
@@ -115,7 +130,7 @@ describe('limitacaoController', () => {
     it('deve chamar next com erro quando falhar', async () => {
       mockReq.body = { texto: 'curto' };
       const error = new Error('Texto muito curto');
-      (limitacaoService.criar as jest.Mock).mockRejectedValue(error);
+      mockService.criar.mockRejectedValue(error);
 
       await limitacaoController.criar(mockReq as Request, mockRes as Response, mockNext);
 
@@ -134,7 +149,7 @@ describe('limitacaoController', () => {
       };
       mockReq.params = { id: '1' };
       mockReq.body = dadosAtualizacao;
-      (limitacaoService.atualizar as jest.Mock).mockResolvedValue(limitacaoAtualizada);
+      mockService.atualizar.mockResolvedValue(limitacaoAtualizada);
 
       await limitacaoController.atualizar(mockReq as Request, mockRes as Response, mockNext);
 
@@ -145,7 +160,7 @@ describe('limitacaoController', () => {
       mockReq.params = { id: 'inexistente' };
       mockReq.body = { texto: 'Limitação Atualizada' };
       const error = new Error('Limitação não encontrada');
-      (limitacaoService.atualizar as jest.Mock).mockRejectedValue(error);
+      mockService.atualizar.mockRejectedValue(error);
 
       await limitacaoController.atualizar(mockReq as Request, mockRes as Response, mockNext);
 
@@ -156,7 +171,7 @@ describe('limitacaoController', () => {
   describe('excluir', () => {
     it('deve excluir limitação com sucesso', async () => {
       mockReq.params = { id: '1' };
-      (limitacaoService.excluir as jest.Mock).mockResolvedValue(undefined);
+      mockService.excluir.mockResolvedValue(undefined);
 
       await limitacaoController.excluir(mockReq as Request, mockRes as Response, mockNext);
 
@@ -167,7 +182,7 @@ describe('limitacaoController', () => {
     it('deve chamar next com erro quando falhar', async () => {
       mockReq.params = { id: 'inexistente' };
       const error = new Error('Limitação não encontrada');
-      (limitacaoService.excluir as jest.Mock).mockRejectedValue(error);
+      mockService.excluir.mockRejectedValue(error);
 
       await limitacaoController.excluir(mockReq as Request, mockRes as Response, mockNext);
 
@@ -179,7 +194,7 @@ describe('limitacaoController', () => {
     it('deve alternar status ativo com sucesso', async () => {
       const limitacaoAlternada = { id: '1', texto: 'Limitação 1 com texto suficiente', ativo: false, ordem: 1 };
       mockReq.params = { id: '1' };
-      (limitacaoService.toggleAtivo as jest.Mock).mockResolvedValue(limitacaoAlternada);
+      mockService.toggleAtivo.mockResolvedValue(limitacaoAlternada);
 
       await limitacaoController.toggleAtivo(mockReq as Request, mockRes as Response, mockNext);
 
@@ -189,7 +204,7 @@ describe('limitacaoController', () => {
     it('deve chamar next com erro quando falhar', async () => {
       mockReq.params = { id: 'inexistente' };
       const error = new Error('Limitação não encontrada');
-      (limitacaoService.toggleAtivo as jest.Mock).mockRejectedValue(error);
+      mockService.toggleAtivo.mockRejectedValue(error);
 
       await limitacaoController.toggleAtivo(mockReq as Request, mockRes as Response, mockNext);
 
