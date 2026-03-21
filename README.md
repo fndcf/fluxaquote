@@ -23,7 +23,7 @@ Sistema multi-tenant de gestão de orçamentos com personalização visual por e
 
 ### Gestão de Orçamentos
 
-- **Orçamento Completo**: Detalhamento por serviços, categorias, separação de mão de obra e materiais, limites de escopo selecionáveis e observações, formas de pagamento com parcelamentos, opções de entrada personalizada, **desconto para pagamento à vista** e prazos de execução
+- **Orçamento Completo**: Detalhamento por serviços, categorias, separação de mão de obra e materiais, limites de escopo selecionáveis e observações, formas de pagamento com parcelamentos, opções de entrada personalizada, **desconto por percentual ou valor em R$** (à vista e parcelado) e prazos de execução
 - **Versionamento**: Controle de versões dos orçamentos
 - **Status**: Acompanhamento (aberto, aceito, recusado, expirado)
 - **Duplicação**: Criação de novos orçamentos baseados em existentes
@@ -48,8 +48,9 @@ Sistema multi-tenant de gestão de orçamentos com personalização visual por e
 
 ### Condições de Pagamento
 
+- **À Vista com Desconto**: Desconto por percentual ou valor absoluto em R$, com cálculo automático bidirecional e exibição no PDF
+- **Parcelamento com Desconto**: Mesmo sistema de desconto (% ou R$) disponível no parcelamento — o desconto é aplicado antes do cálculo de entrada e parcelas
 - **Parcelamento**: Configuração de número de parcelas com taxa de juros, valor mínimo de parcela e opção de entrada personalizada
-- **À Vista com Desconto**: Aplicação de desconto percentual para pagamentos à vista, com cálculo automático do valor final e exibição no PDF
 
 ### Notificações
 
