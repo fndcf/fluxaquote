@@ -32,4 +32,5 @@ npm-debug.log*
 # TypeScript
 *.tsbuildinfo
 
-
+# Claude Code
+.claude/
