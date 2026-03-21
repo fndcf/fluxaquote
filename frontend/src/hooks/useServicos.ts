@@ -6,6 +6,7 @@ export function useServicos() {
   return useQuery<Servico[]>({
     queryKey: ['servicos'],
     queryFn: servicoService.listar,
+    staleTime: 5 * 60 * 1000, // 5 minutos - dados de catálogo
   });
 }
 
@@ -13,6 +14,7 @@ export function useServicosAtivos() {
   return useQuery<Servico[]>({
     queryKey: ['servicos-ativos'],
     queryFn: servicoService.listarAtivos,
+    staleTime: 5 * 60 * 1000, // 5 minutos - dados de catálogo
   });
 }
 

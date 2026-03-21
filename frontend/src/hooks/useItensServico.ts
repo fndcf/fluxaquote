@@ -13,6 +13,7 @@ export function useItensServico() {
   return useQuery<ItemServico[]>({
     queryKey: ['itens-servico'],
     queryFn: itemServicoService.listar,
+    staleTime: 5 * 60 * 1000, // 5 minutos - dados de catálogo
   });
 }
 
@@ -21,6 +22,7 @@ export function useItensServicoPorCategoria(categoriaId: string | undefined) {
     queryKey: ['itens-servico', 'categoria', categoriaId],
     queryFn: () => itemServicoService.listarPorCategoria(categoriaId!),
     enabled: !!categoriaId,
+    staleTime: 5 * 60 * 1000, // 5 minutos - dados de catálogo
   });
 }
 

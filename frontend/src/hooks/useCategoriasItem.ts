@@ -6,6 +6,7 @@ export function useCategoriasItem() {
   return useQuery<CategoriaItem[]>({
     queryKey: ['categorias-item'],
     queryFn: categoriaItemService.listar,
+    staleTime: 5 * 60 * 1000, // 5 minutos - dados de catálogo
   });
 }
 
@@ -13,6 +14,7 @@ export function useCategoriasItemAtivas() {
   return useQuery<CategoriaItem[]>({
     queryKey: ['categorias-item-ativas'],
     queryFn: categoriaItemService.listarAtivas,
+    staleTime: 5 * 60 * 1000, // 5 minutos - dados de catálogo
   });
 }
 

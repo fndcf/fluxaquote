@@ -26,6 +26,7 @@ import { Loading } from "../components/ui";
 import {
   formatCurrency,
   formatOrcamentoNumeroSimples,
+  getValorEfetivo,
 } from "../utils/constants";
 import {
   OrcamentoStatus,
@@ -268,10 +269,10 @@ export function Relatorios() {
     );
 
     const valorTotal = orcamentosFiltrados.reduce(
-      (sum, o) => sum + o.valorTotal,
+      (sum, o) => sum + getValorEfetivo(o),
       0
     );
-    const valorAceitos = aceitos.reduce((sum, o) => sum + o.valorTotal, 0);
+    const valorAceitos = aceitos.reduce((sum, o) => sum + getValorEfetivo(o), 0);
 
     const taxaConversao = total > 0 ? (aceitos.length / total) * 100 : 0;
     const ticketMedio = aceitos.length > 0 ? valorAceitos / aceitos.length : 0;
@@ -320,7 +321,7 @@ export function Relatorios() {
     };
 
     orcamentosFiltrados.forEach((orc) => {
-      valores[orc.status] += orc.valorTotal;
+      valores[orc.status] += getValorEfetivo(orc);
     });
 
     return Object.entries(valores)
@@ -341,9 +342,9 @@ export function Relatorios() {
       if (!dailyData[data]) {
         dailyData[data] = { total: 0, aceitos: 0 };
       }
-      dailyData[data].total += orc.valorTotal;
+      dailyData[data].total += getValorEfetivo(orc);
       if (orc.status === "aceito") {
-        dailyData[data].aceitos += orc.valorTotal;
+        dailyData[data].aceitos += getValorEfetivo(orc);
       }
     });
 
@@ -376,7 +377,7 @@ export function Relatorios() {
             quantidade: 0,
           };
         }
-        clienteStats[orc.clienteId].valor += orc.valorTotal;
+        clienteStats[orc.clienteId].valor += getValorEfetivo(orc);
         clienteStats[orc.clienteId].quantidade++;
       });
 
@@ -816,7 +817,7 @@ export function Relatorios() {
     // Valor total de orçamentos aceitos no período
     const valorTotalAceitos = orcamentosFiltrados
       .filter((o) => o.status === "aceito")
-      .reduce((sum, o) => sum + o.valorTotal, 0);
+      .reduce((sum, o) => sum + getValorEfetivo(o), 0);
 
     // Lucro bruto (se tiver análise de lucro com custos de itens - já inclui impostos)
     const lucroBruto = analiseLucro?.lucroTotal || 0;
@@ -967,7 +968,7 @@ export function Relatorios() {
         STATUS_LABELS[orc.status],
         new Date(orc.dataEmissao).toLocaleDateString("pt-BR"),
         new Date(orc.dataValidade).toLocaleDateString("pt-BR"),
-        orc.valorTotal.toFixed(2).replace(".", ","),
+        getValorEfetivo(orc).toFixed(2).replace(".", ","),
         vendaMaterial.toFixed(2).replace(".", ","),
         vendaMaoDeObra.toFixed(2).replace(".", ","),
         custoMaterial.toFixed(2).replace(".", ","),

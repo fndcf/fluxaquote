@@ -287,12 +287,13 @@ export function createOrcamentoRepository(tenantId: string) {
     // O Firestore suporta sum aggregation a partir da versão mais recente
     const aceitosSnapshot = await collection
       .where('status', '==', 'aceito')
-      .select('valorTotal')
+      .select('valorTotal', 'descontoAVista')
       .get();
 
     let valorTotalAceitos = 0;
     aceitosSnapshot.docs.forEach(doc => {
-      valorTotalAceitos += doc.data().valorTotal || 0;
+      const data = doc.data();
+      valorTotalAceitos += data.descontoAVista?.valorFinal ?? data.valorTotal ?? 0;
     });
 
     return {
@@ -418,7 +419,7 @@ export function createOrcamentoRepository(tenantId: string) {
       collection
         .where('clienteId', '==', clienteId)
         .where('status', '==', 'aceito')
-        .select('valorTotal')
+        .select('valorTotal', 'descontoAVista')
         .get(),
     ]);
 
@@ -426,7 +427,8 @@ export function createOrcamentoRepository(tenantId: string) {
 
     let valorTotalAceitos = 0;
     aceitosSnapshot.docs.forEach(doc => {
-      valorTotalAceitos += doc.data().valorTotal || 0;
+      const data = doc.data();
+      valorTotalAceitos += data.descontoAVista?.valorFinal ?? data.valorTotal ?? 0;
     });
 
     return {

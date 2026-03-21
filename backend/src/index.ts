@@ -5,6 +5,8 @@ import * as functions from "firebase-functions";
 import * as functionsV1 from "firebase-functions/v1";
 import routes from "./routes";
 import { errorHandler } from "./middlewares/errorHandler";
+import { requestLogger } from "./middlewares/requestLogger";
+import { authenticatedRateLimiter } from "./middlewares/rateLimiter";
 import { inicializarEventHandlers } from "./services/notificacaoService";
 import { auth } from "./config/firebase";
 import { logger } from "./utils/logger";
@@ -17,13 +19,19 @@ inicializarEventHandlers();
 const app = express();
 
 // Middlewares
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
+  : [process.env.FRONTEND_URL || "http://localhost:5173"];
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: allowedOrigins,
     credentials: true,
   })
 );
 app.use(express.json({ limit: "2mb" }));
+app.use(requestLogger);
+app.use(authenticatedRateLimiter);
 
 // Rotas (v1)
 app.use("/api/v1", routes);
@@ -34,7 +42,10 @@ app.use("/api", routes);
 app.use(errorHandler);
 
 // Export para Firebase Cloud Functions
-export const api = functions.https.onRequest(app);
+export const api = functions.https.onRequest(
+  { minInstances: 1 },
+  app
+);
 
 /**
  * Trigger: desabilitar novos usuários automaticamente.

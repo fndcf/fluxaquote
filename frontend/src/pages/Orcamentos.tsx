@@ -44,6 +44,7 @@ import {
   formatCurrency,
   formatDate,
   formatOrcamentoNumero,
+  getValorEfetivo,
 } from "../utils/constants";
 import Footer from "@/components/layout/Footer";
 import {
@@ -329,7 +330,7 @@ export function Orcamentos() {
                       </td>
                       <td>{formatDate(orcamento.dataEmissao)}</td>
                       <td>{formatDate(orcamento.dataValidade)}</td>
-                      <td>{formatCurrency(orcamento.valorTotal)}</td>
+                      <td>{formatCurrency(getValorEfetivo(orcamento))}</td>
                       <td>
                         <StatusBadge $status={orcamento.status}>
                           {statusLabels[orcamento.status]}
@@ -438,7 +439,7 @@ export function Orcamentos() {
                         className="value"
                         style={{ fontSize: "1.1rem", color: "var(--primary)" }}
                       >
-                        {formatCurrency(orcamento.valorTotal)}
+                        {formatCurrency(getValorEfetivo(orcamento))}
                       </span>
                     </MobileCardField>
                   </MobileCardBody>

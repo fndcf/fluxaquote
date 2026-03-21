@@ -55,7 +55,7 @@ export function useOrcamentos() {
   return useQuery({
     queryKey: ['orcamentos'],
     queryFn: orcamentoService.listar,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 1 * 60 * 1000, // 1 minuto - dados de negócio
   });
 }
 
@@ -64,6 +64,7 @@ export function useOrcamento(id: string) {
     queryKey: ['orcamento', id],
     queryFn: () => orcamentoService.buscarPorId(id),
     enabled: !!id,
+    staleTime: 1 * 60 * 1000, // 1 minuto - dados de negócio
   });
 }
 
@@ -72,6 +73,7 @@ export function useOrcamentosPorCliente(clienteId: string) {
     queryKey: ['orcamentos', 'cliente', clienteId],
     queryFn: () => orcamentoService.buscarPorCliente(clienteId),
     enabled: !!clienteId,
+    staleTime: 1 * 60 * 1000, // 1 minuto - dados de negócio
   });
 }
 
@@ -80,6 +82,7 @@ export function useHistoricoCliente(clienteId: string, limit: number = 5) {
     queryKey: ['orcamentos', 'historico', clienteId, limit],
     queryFn: () => orcamentoService.getHistoricoCliente(clienteId, limit),
     enabled: !!clienteId,
+    staleTime: 1 * 60 * 1000, // 1 minuto - dados de negócio
   });
 }
 
@@ -87,6 +90,7 @@ export function useOrcamentosPorStatus(status: OrcamentoStatus) {
   return useQuery({
     queryKey: ['orcamentos', 'status', status],
     queryFn: () => orcamentoService.buscarPorStatus(status),
+    staleTime: 1 * 60 * 1000, // 1 minuto - dados de negócio
   });
 }
 
@@ -95,7 +99,7 @@ export function useOrcamentosPorPeriodo(dataInicio: string, dataFim: string) {
     queryKey: ['orcamentos', 'periodo', dataInicio, dataFim],
     queryFn: () => orcamentoService.buscarPorPeriodo(dataInicio, dataFim),
     enabled: !!dataInicio && !!dataFim,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 1 * 60 * 1000, // 1 minuto - dados de negócio
   });
 }
 
@@ -112,7 +116,7 @@ export function useOrcamentosPaginados(
     queryKey: ['orcamentos', 'paginated', page, limit, filters],
     queryFn: () => orcamentoService.listarPaginado(page, limit, filters),
     placeholderData: keepPreviousData, // Mantém dados anteriores enquanto carrega nova página
-    staleTime: 30 * 1000, // 30 segundos
+    staleTime: 1 * 60 * 1000, // 1 minuto - dados de negócio
   });
 }
 
@@ -120,6 +124,7 @@ export function useEstatisticasOrcamentos() {
   return useQuery({
     queryKey: ['orcamentos', 'estatisticas'],
     queryFn: orcamentoService.getEstatisticas,
+    staleTime: 1 * 60 * 1000, // 1 minuto - dados de negócio
   });
 }
 
@@ -127,7 +132,7 @@ export function useDashboardStats() {
   return useQuery({
     queryKey: ['orcamentos', 'dashboard-stats'],
     queryFn: () => orcamentoService.getDashboardStats(),
-    staleTime: 2 * 60 * 1000, // 2 minutos
+    staleTime: 1 * 60 * 1000, // 1 minuto - dados de negócio
   });
 }
 

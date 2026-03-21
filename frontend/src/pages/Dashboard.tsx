@@ -16,7 +16,7 @@ import {
 } from "recharts";
 import { useOrcamentos, useDashboardStats } from "../hooks/useOrcamentos";
 import { Loading } from "../components/ui";
-import { formatCurrency, formatOrcamentoNumero } from "../utils/constants";
+import { formatCurrency, formatOrcamentoNumero, getValorEfetivo } from "../utils/constants";
 import { Orcamento, OrcamentoStatus } from "../types";
 import { OrcamentoViewModal } from "../components/orcamentos/OrcamentoViewModal";
 import Footer from "@/components/layout/Footer";
@@ -300,7 +300,7 @@ export function Dashboard() {
                   <span className="cliente">{orcamento.clienteNome}</span>
                 </div>
                 <span className="valor">
-                  {formatCurrency(orcamento.valorTotal)}
+                  {formatCurrency(getValorEfetivo(orcamento))}
                 </span>
               </RecentItem>
             ))}

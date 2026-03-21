@@ -14,6 +14,18 @@ export const formatCurrency = (value: number): string => {
   }).format(value);
 };
 
+// Valor efetivo do orçamento (com desconto aplicado, se houver)
+export const getValorEfetivo = (orcamento: {
+  valorTotal: number;
+  descontoAVista?: { valorFinal: number } | null;
+  condicaoPagamento?: string;
+}): number => {
+  if (orcamento.descontoAVista && orcamento.descontoAVista.valorFinal > 0) {
+    return orcamento.descontoAVista.valorFinal;
+  }
+  return orcamento.valorTotal;
+};
+
 // Formatação de data
 export const formatDate = (date: Date | string): string => {
   const d = typeof date === "string" ? new Date(date) : date;

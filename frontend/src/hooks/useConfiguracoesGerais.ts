@@ -6,6 +6,7 @@ export function useConfiguracoesGerais() {
   return useQuery<ConfiguracoesGerais>({
     queryKey: ['configuracoes-gerais'],
     queryFn: configuracoesGeraisService.buscar,
+    staleTime: 5 * 60 * 1000, // 5 minutos - dados de catálogo
   });
 }
 

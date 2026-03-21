@@ -6,6 +6,7 @@ export function usePalavrasChave() {
   return useQuery<PalavraChave[]>({
     queryKey: ['palavrasChave'],
     queryFn: palavraChaveService.listar,
+    staleTime: 5 * 60 * 1000, // 5 minutos - dados de catálogo
   });
 }
 
@@ -13,6 +14,7 @@ export function usePalavrasChaveAtivas() {
   return useQuery<PalavraChave[]>({
     queryKey: ['palavrasChaveAtivas'],
     queryFn: palavraChaveService.listarAtivas,
+    staleTime: 5 * 60 * 1000, // 5 minutos - dados de catálogo
   });
 }
 

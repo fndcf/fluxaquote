@@ -6,7 +6,7 @@ export function useClientes() {
   return useQuery({
     queryKey: ['clientes'],
     queryFn: clienteService.listar,
-    staleTime: 5 * 60 * 1000, // 5 minutos
+    staleTime: 1 * 60 * 1000, // 1 minuto - dados de negócio
   });
 }
 
@@ -21,7 +21,7 @@ export function useClientesPaginados(
     queryKey: ['clientes', 'paginated', page, limit, filters],
     queryFn: () => clienteService.listarPaginado(page, limit, filters),
     placeholderData: keepPreviousData, // Mantém dados anteriores enquanto carrega nova página
-    staleTime: 30 * 1000, // 30 segundos
+    staleTime: 1 * 60 * 1000, // 1 minuto - dados de negócio
   });
 }
 
@@ -51,6 +51,7 @@ export function useCliente(id: string) {
     queryKey: ['cliente', id],
     queryFn: () => clienteService.buscarPorId(id),
     enabled: !!id,
+    staleTime: 1 * 60 * 1000, // 1 minuto - dados de negócio
   });
 }
 
@@ -59,7 +60,7 @@ export function usePesquisarClientes(termo: string) {
     queryKey: ['clientes', 'pesquisa', termo],
     queryFn: () => clienteService.pesquisar(termo),
     enabled: termo.length >= 2,
-    staleTime: 30 * 1000, // 30 segundos
+    staleTime: 1 * 60 * 1000, // 1 minuto - dados de negócio
   });
 }
 

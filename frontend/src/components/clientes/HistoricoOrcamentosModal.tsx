@@ -2,7 +2,7 @@ import styled from 'styled-components';
 import { Cliente, OrcamentoStatus } from '../../types';
 import { useHistoricoCliente } from '../../hooks/useOrcamentos';
 import { Modal, Loading, EmptyState } from '../ui';
-import { formatCurrency, formatDate, formatOrcamentoNumero } from '../../utils/constants';
+import { formatCurrency, formatDate, formatOrcamentoNumero, getValorEfetivo } from '../../utils/constants';
 import { gerarPDFOrcamento } from '../orcamentos/OrcamentoPDF';
 
 const ClienteHeader = styled.div`
@@ -317,7 +317,7 @@ export function HistoricoOrcamentosModal({
                   </span>
                 </OrcamentoInfo>
                 <OrcamentoRight>
-                  <ValorTotal>{formatCurrency(orcamento.valorTotal)}</ValorTotal>
+                  <ValorTotal>{formatCurrency(getValorEfetivo(orcamento))}</ValorTotal>
                   <StatusBadge $status={orcamento.status}>
                     {statusLabels[orcamento.status]}
                   </StatusBadge>

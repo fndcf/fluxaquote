@@ -16,6 +16,44 @@ service cloud.firestore {
       allow read: if isTenantOwner(tenantId);
       allow update: if isTenantOwner(tenantId);
       allow create, delete: if false;
+
+      // Subcollections permitidas (somente owner do tenant)
+      match /clientes/{docId} {
+        allow read, write: if isTenantOwner(tenantId);
+      }
+      match /orcamentos/{docId} {
+        allow read, write: if isTenantOwner(tenantId);
+      }
+      match /servicos/{docId} {
+        allow read, write: if isTenantOwner(tenantId);
+      }
+      match /categoriasItem/{docId} {
+        allow read, write: if isTenantOwner(tenantId);
+      }
+      match /itensServico/{docId} {
+        allow read, write: if isTenantOwner(tenantId);
+      }
+      match /limitacoes/{docId} {
+        allow read, write: if isTenantOwner(tenantId);
+      }
+      match /palavrasChave/{docId} {
+        allow read, write: if isTenantOwner(tenantId);
+      }
+      match /notificacoes/{docId} {
+        allow read, write: if isTenantOwner(tenantId);
+      }
+      match /configuracoes/{docId} {
+        allow read, write: if isTenantOwner(tenantId);
+      }
+      match /contadores/{docId} {
+        allow read, write: if isTenantOwner(tenantId);
+      }
+      match /historicoValoresItens/{docId} {
+        allow read, write: if isTenantOwner(tenantId);
+      }
+      match /historicoConfiguracoes/{docId} {
+        allow read, write: if isTenantOwner(tenantId);
+      }
     }
 
     // SLUG LOOKUP - público para leitura (validação no registro)
@@ -28,16 +66,6 @@ service cloud.firestore {
     match /userTenants/{uid} {
       allow read: if isAuthenticated() && request.auth.uid == uid;
       allow write: if false;
-    }
-
-    // SUBCOLLECTIONS DO TENANT - somente owner do tenant
-    match /tenants/{tenantId}/{collection}/{docId} {
-      allow read, write: if isTenantOwner(tenantId);
-    }
-
-    // SUBCOLLECTIONS ANINHADAS (ex: configuracoes dentro do tenant)
-    match /tenants/{tenantId}/{collection}/{docId}/{subcol}/{subdocId} {
-      allow read, write: if isTenantOwner(tenantId);
     }
 
     // REGRA PADRAO - NEGAR TUDO

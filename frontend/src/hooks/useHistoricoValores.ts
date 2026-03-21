@@ -7,7 +7,7 @@ export function useHistoricoItens(dataInicio: string, dataFim: string, enabled =
     queryKey: ['historico-itens', dataInicio, dataFim],
     queryFn: () => historicoValoresService.buscarHistoricoItens(dataInicio, dataFim),
     enabled: enabled && !!dataInicio && !!dataFim,
-    staleTime: 5 * 60 * 1000, // 5 minutos
+    staleTime: 1 * 60 * 1000, // 1 minuto - dados de negócio
   });
 }
 
@@ -16,6 +16,6 @@ export function useHistoricoConfiguracoes(dataInicio: string, dataFim: string, e
     queryKey: ['historico-configuracoes', dataInicio, dataFim],
     queryFn: () => historicoValoresService.buscarHistoricoConfiguracoes(dataInicio, dataFim),
     enabled: enabled && !!dataInicio && !!dataFim,
-    staleTime: 5 * 60 * 1000, // 5 minutos
+    staleTime: 1 * 60 * 1000, // 1 minuto - dados de negócio
   });
 }

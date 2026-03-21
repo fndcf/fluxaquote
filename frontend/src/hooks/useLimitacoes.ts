@@ -6,6 +6,7 @@ export function useLimitacoes() {
   return useQuery<Limitacao[]>({
     queryKey: ['limitacoes'],
     queryFn: limitacaoService.listar,
+    staleTime: 5 * 60 * 1000, // 5 minutos - dados de catálogo
   });
 }
 
@@ -13,6 +14,7 @@ export function useLimitacoesAtivas() {
   return useQuery<Limitacao[]>({
     queryKey: ['limitacoes-ativas'],
     queryFn: limitacaoService.listarAtivas,
+    staleTime: 5 * 60 * 1000, // 5 minutos - dados de catálogo
   });
 }
 
