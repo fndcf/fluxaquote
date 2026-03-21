@@ -28,20 +28,20 @@ export function Configuracoes() {
   const [activeTab, setActiveTab] = useState<TabType>("empresa");
 
   // Verificação de loading para todas as queries
-  const { isLoading: loadingPalavras } = usePalavrasChave();
-  const { isLoading: loadingServicos } = useServicos();
-  const { isLoading: loadingCategorias } = useCategoriasItem();
-  const { isLoading: loadingLimitacoes } = useLimitacoes();
-  const { isLoading: loadingConfiguracoes } = useConfiguracoesGerais();
+  const { isPending: loadingPalavras } = usePalavrasChave();
+  const { isPending: loadingServicos } = useServicos();
+  const { isPending: loadingCategorias } = useCategoriasItem();
+  const { isPending: loadingLimitacoes } = useLimitacoes();
+  const { isPending: loadingConfiguracoes } = useConfiguracoesGerais();
 
-  const isLoading =
+  const isPending =
     loadingPalavras ||
     loadingServicos ||
     loadingCategorias ||
     loadingLimitacoes ||
     loadingConfiguracoes;
 
-  if (isLoading) {
+  if (isPending) {
     return (
       <Container>
         <PageHeader>

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from 'react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HistoricoOrcamentosModal } from '../../../components/clientes/HistoricoOrcamentosModal';
 import { useHistoricoCliente } from '../../../hooks/useOrcamentos';
 import { formatOrcamentoNumero } from '../../../utils/constants';
@@ -132,7 +132,7 @@ describe('HistoricoOrcamentosModal', () => {
   it('não deve renderizar quando cliente é null', () => {
     vi.mocked(useHistoricoCliente).mockReturnValue({
       data: createMockHistorico([]),
-      isLoading: false,
+      isPending: false,
     } as any);
 
     const { container } = render(
@@ -150,7 +150,7 @@ describe('HistoricoOrcamentosModal', () => {
   it('deve mostrar loading quando está carregando', () => {
     vi.mocked(useHistoricoCliente).mockReturnValue({
       data: undefined,
-      isLoading: true,
+      isPending: true,
     } as any);
 
     render(
@@ -168,7 +168,7 @@ describe('HistoricoOrcamentosModal', () => {
   it('deve renderizar informações do cliente', () => {
     vi.mocked(useHistoricoCliente).mockReturnValue({
       data: createMockHistorico([]),
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(
@@ -189,7 +189,7 @@ describe('HistoricoOrcamentosModal', () => {
   it('deve mostrar mensagem quando não há orçamentos', () => {
     vi.mocked(useHistoricoCliente).mockReturnValue({
       data: createMockHistorico([]),
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(
@@ -208,7 +208,7 @@ describe('HistoricoOrcamentosModal', () => {
   it('deve renderizar lista de orçamentos', () => {
     vi.mocked(useHistoricoCliente).mockReturnValue({
       data: createMockHistorico(mockOrcamentos),
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(
@@ -229,7 +229,7 @@ describe('HistoricoOrcamentosModal', () => {
   it('deve exibir quantidade de itens corretamente', () => {
     vi.mocked(useHistoricoCliente).mockReturnValue({
       data: createMockHistorico(mockOrcamentos),
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(
@@ -248,7 +248,7 @@ describe('HistoricoOrcamentosModal', () => {
   it('deve exibir badges de status corretos', () => {
     vi.mocked(useHistoricoCliente).mockReturnValue({
       data: createMockHistorico(mockOrcamentos),
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(
@@ -267,7 +267,7 @@ describe('HistoricoOrcamentosModal', () => {
   it('deve exibir resumo com totais corretos', () => {
     vi.mocked(useHistoricoCliente).mockReturnValue({
       data: createMockHistorico(mockOrcamentos),
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(
@@ -294,7 +294,7 @@ describe('HistoricoOrcamentosModal', () => {
   it('deve ter botões de PDF para cada orçamento', () => {
     vi.mocked(useHistoricoCliente).mockReturnValue({
       data: createMockHistorico(mockOrcamentos),
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(
@@ -315,7 +315,7 @@ describe('HistoricoOrcamentosModal', () => {
 
     vi.mocked(useHistoricoCliente).mockReturnValue({
       data: createMockHistorico(mockOrcamentos),
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(
@@ -336,7 +336,7 @@ describe('HistoricoOrcamentosModal', () => {
   it('deve exibir cliente sem nome fantasia', () => {
     vi.mocked(useHistoricoCliente).mockReturnValue({
       data: createMockHistorico([]),
-      isLoading: false,
+      isPending: false,
     } as any);
 
     const clienteSemFantasia = {
@@ -378,7 +378,7 @@ describe('HistoricoOrcamentosModal', () => {
             valorTotalAceitos: 25000,
           },
         },
-        isLoading: false,
+        isPending: false,
       } as any);
 
       render(
@@ -397,7 +397,7 @@ describe('HistoricoOrcamentosModal', () => {
     it('não deve mostrar mensagem de limite quando todos os orçamentos são exibidos', () => {
       vi.mocked(useHistoricoCliente).mockReturnValue({
         data: createMockHistorico(mockOrcamentos),
-        isLoading: false,
+        isPending: false,
       } as any);
 
       render(
@@ -424,7 +424,7 @@ describe('HistoricoOrcamentosModal', () => {
             valorTotalAceitos: 500000,
           },
         },
-        isLoading: false,
+        isPending: false,
       } as any);
 
       render(
@@ -444,7 +444,7 @@ describe('HistoricoOrcamentosModal', () => {
     it('deve chamar useHistoricoCliente com clienteId e limite', () => {
       vi.mocked(useHistoricoCliente).mockReturnValue({
         data: createMockHistorico([]),
-        isLoading: false,
+        isPending: false,
       } as any);
 
       render(

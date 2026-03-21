@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from 'react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { orcamentoService } from '../services/orcamentoService';
 import { OrcamentoItemCompleto, OrcamentoStatus, OrcamentoTipo, ParcelamentoDados, DescontoAVistaDados } from '../types';
 
@@ -52,48 +52,51 @@ interface AtualizarOrcamentoDTO {
 }
 
 export function useOrcamentos() {
-  return useQuery('orcamentos', orcamentoService.listar, {
+  return useQuery({
+    queryKey: ['orcamentos'],
+    queryFn: orcamentoService.listar,
     staleTime: 5 * 60 * 1000,
   });
 }
 
 export function useOrcamento(id: string) {
-  return useQuery(['orcamento', id], () => orcamentoService.buscarPorId(id), {
+  return useQuery({
+    queryKey: ['orcamento', id],
+    queryFn: () => orcamentoService.buscarPorId(id),
     enabled: !!id,
   });
 }
 
 export function useOrcamentosPorCliente(clienteId: string) {
-  return useQuery(
-    ['orcamentos', 'cliente', clienteId],
-    () => orcamentoService.buscarPorCliente(clienteId),
-    { enabled: !!clienteId }
-  );
+  return useQuery({
+    queryKey: ['orcamentos', 'cliente', clienteId],
+    queryFn: () => orcamentoService.buscarPorCliente(clienteId),
+    enabled: !!clienteId,
+  });
 }
 
 export function useHistoricoCliente(clienteId: string, limit: number = 5) {
-  return useQuery(
-    ['orcamentos', 'historico', clienteId, limit],
-    () => orcamentoService.getHistoricoCliente(clienteId, limit),
-    { enabled: !!clienteId }
-  );
+  return useQuery({
+    queryKey: ['orcamentos', 'historico', clienteId, limit],
+    queryFn: () => orcamentoService.getHistoricoCliente(clienteId, limit),
+    enabled: !!clienteId,
+  });
 }
 
 export function useOrcamentosPorStatus(status: OrcamentoStatus) {
-  return useQuery(['orcamentos', 'status', status], () =>
-    orcamentoService.buscarPorStatus(status)
-  );
+  return useQuery({
+    queryKey: ['orcamentos', 'status', status],
+    queryFn: () => orcamentoService.buscarPorStatus(status),
+  });
 }
 
 export function useOrcamentosPorPeriodo(dataInicio: string, dataFim: string) {
-  return useQuery(
-    ['orcamentos', 'periodo', dataInicio, dataFim],
-    () => orcamentoService.buscarPorPeriodo(dataInicio, dataFim),
-    {
-      enabled: !!dataInicio && !!dataFim,
-      staleTime: 5 * 60 * 1000,
-    }
-  );
+  return useQuery({
+    queryKey: ['orcamentos', 'periodo', dataInicio, dataFim],
+    queryFn: () => orcamentoService.buscarPorPeriodo(dataInicio, dataFim),
+    enabled: !!dataInicio && !!dataFim,
+    staleTime: 5 * 60 * 1000,
+  });
 }
 
 export function useOrcamentosPaginados(
@@ -105,108 +108,95 @@ export function useOrcamentosPaginados(
     busca?: string;
   }
 ) {
-  return useQuery(
-    ['orcamentos', 'paginated', page, limit, filters],
-    () => orcamentoService.listarPaginado(page, limit, filters),
-    {
-      keepPreviousData: true, // Mantém dados anteriores enquanto carrega nova página
-      staleTime: 30 * 1000, // 30 segundos
-    }
-  );
+  return useQuery({
+    queryKey: ['orcamentos', 'paginated', page, limit, filters],
+    queryFn: () => orcamentoService.listarPaginado(page, limit, filters),
+    placeholderData: keepPreviousData, // Mantém dados anteriores enquanto carrega nova página
+    staleTime: 30 * 1000, // 30 segundos
+  });
 }
 
 export function useEstatisticasOrcamentos() {
-  return useQuery(['orcamentos', 'estatisticas'], orcamentoService.getEstatisticas);
+  return useQuery({
+    queryKey: ['orcamentos', 'estatisticas'],
+    queryFn: orcamentoService.getEstatisticas,
+  });
 }
 
 export function useDashboardStats() {
-  return useQuery(
-    ['orcamentos', 'dashboard-stats'],
-    () => orcamentoService.getDashboardStats(),
-    {
-      staleTime: 2 * 60 * 1000, // 2 minutos
-    }
-  );
+  return useQuery({
+    queryKey: ['orcamentos', 'dashboard-stats'],
+    queryFn: () => orcamentoService.getDashboardStats(),
+    staleTime: 2 * 60 * 1000, // 2 minutos
+  });
 }
 
 export function useCriarOrcamento() {
   const queryClient = useQueryClient();
 
-  return useMutation(
-    (data: CriarOrcamentoDTO) => orcamentoService.criar(data),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries('orcamentos');
-      },
-    }
-  );
+  return useMutation({
+    mutationFn: (data: CriarOrcamentoDTO) => orcamentoService.criar(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orcamentos'] });
+    },
+  });
 }
 
 export function useAtualizarOrcamento() {
   const queryClient = useQueryClient();
 
-  return useMutation(
-    ({ id, data }: { id: string; data: AtualizarOrcamentoDTO }) =>
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: AtualizarOrcamentoDTO }) =>
       orcamentoService.atualizar(id, data),
-    {
-      onSuccess: (_, { id }) => {
-        queryClient.invalidateQueries('orcamentos');
-        queryClient.invalidateQueries(['orcamento', id]);
-      },
-    }
-  );
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ['orcamentos'] });
+      queryClient.invalidateQueries({ queryKey: ['orcamento', id] });
+    },
+  });
 }
 
 export function useAtualizarStatusOrcamento() {
   const queryClient = useQueryClient();
 
-  return useMutation(
-    ({ id, status }: { id: string; status: OrcamentoStatus }) =>
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: OrcamentoStatus }) =>
       orcamentoService.atualizarStatus(id, status),
-    {
-      onSuccess: (_, { id }) => {
-        queryClient.invalidateQueries('orcamentos');
-        queryClient.invalidateQueries(['orcamento', id]);
-      },
-    }
-  );
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ['orcamentos'] });
+      queryClient.invalidateQueries({ queryKey: ['orcamento', id] });
+    },
+  });
 }
 
 export function useExcluirOrcamento() {
   const queryClient = useQueryClient();
 
-  return useMutation(
-    (id: string) => orcamentoService.excluir(id),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries('orcamentos');
-      },
-    }
-  );
+  return useMutation({
+    mutationFn: (id: string) => orcamentoService.excluir(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orcamentos'] });
+    },
+  });
 }
 
 export function useDuplicarOrcamento() {
   const queryClient = useQueryClient();
 
-  return useMutation(
-    (id: string) => orcamentoService.duplicar(id),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries('orcamentos');
-      },
-    }
-  );
+  return useMutation({
+    mutationFn: (id: string) => orcamentoService.duplicar(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orcamentos'] });
+    },
+  });
 }
 
 export function useVerificarExpirados() {
   const queryClient = useQueryClient();
 
-  return useMutation(
-    () => orcamentoService.verificarExpirados(),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries('orcamentos');
-      },
-    }
-  );
+  return useMutation({
+    mutationFn: () => orcamentoService.verificarExpirados(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orcamentos'] });
+    },
+  });
 }

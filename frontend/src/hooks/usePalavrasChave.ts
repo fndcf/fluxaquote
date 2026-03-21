@@ -1,52 +1,55 @@
-import { useQuery, useMutation, useQueryClient } from 'react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { palavraChaveService } from '../services/palavraChaveService';
 import { PalavraChave } from '../types';
 
 export function usePalavrasChave() {
-  return useQuery<PalavraChave[]>('palavrasChave', palavraChaveService.listar);
+  return useQuery<PalavraChave[]>({
+    queryKey: ['palavrasChave'],
+    queryFn: palavraChaveService.listar,
+  });
 }
 
 export function usePalavrasChaveAtivas() {
-  return useQuery<PalavraChave[]>('palavrasChaveAtivas', palavraChaveService.listarAtivas);
+  return useQuery<PalavraChave[]>({
+    queryKey: ['palavrasChaveAtivas'],
+    queryFn: palavraChaveService.listarAtivas,
+  });
 }
 
 export function useCriarPalavraChave() {
   const queryClient = useQueryClient();
 
-  return useMutation(
-    (data: { palavra: string; prazoDias: number; ativo?: boolean }) =>
+  return useMutation({
+    mutationFn: (data: { palavra: string; prazoDias: number; ativo?: boolean }) =>
       palavraChaveService.criar(data),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries('palavrasChave');
-        queryClient.invalidateQueries('palavrasChaveAtivas');
-      },
-    }
-  );
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['palavrasChave'] });
+      queryClient.invalidateQueries({ queryKey: ['palavrasChaveAtivas'] });
+    },
+  });
 }
 
 export function useAtualizarPalavraChave() {
   const queryClient = useQueryClient();
 
-  return useMutation(
-    ({ id, data }: { id: string; data: { palavra?: string; prazoDias?: number; ativo?: boolean } }) =>
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: { palavra?: string; prazoDias?: number; ativo?: boolean } }) =>
       palavraChaveService.atualizar(id, data),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries('palavrasChave');
-        queryClient.invalidateQueries('palavrasChaveAtivas');
-      },
-    }
-  );
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['palavrasChave'] });
+      queryClient.invalidateQueries({ queryKey: ['palavrasChaveAtivas'] });
+    },
+  });
 }
 
 export function useTogglePalavraChave() {
   const queryClient = useQueryClient();
 
-  return useMutation((id: string) => palavraChaveService.toggleAtivo(id), {
+  return useMutation({
+    mutationFn: (id: string) => palavraChaveService.toggleAtivo(id),
     onSuccess: () => {
-      queryClient.invalidateQueries('palavrasChave');
-      queryClient.invalidateQueries('palavrasChaveAtivas');
+      queryClient.invalidateQueries({ queryKey: ['palavrasChave'] });
+      queryClient.invalidateQueries({ queryKey: ['palavrasChaveAtivas'] });
     },
   });
 }
@@ -54,10 +57,11 @@ export function useTogglePalavraChave() {
 export function useExcluirPalavraChave() {
   const queryClient = useQueryClient();
 
-  return useMutation((id: string) => palavraChaveService.excluir(id), {
+  return useMutation({
+    mutationFn: (id: string) => palavraChaveService.excluir(id),
     onSuccess: () => {
-      queryClient.invalidateQueries('palavrasChave');
-      queryClient.invalidateQueries('palavrasChaveAtivas');
+      queryClient.invalidateQueries({ queryKey: ['palavrasChave'] });
+      queryClient.invalidateQueries({ queryKey: ['palavrasChaveAtivas'] });
     },
   });
 }

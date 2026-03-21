@@ -111,7 +111,7 @@ export function LimitacoesTab() {
   const MAX_CARACTERES = 1000;
   const MIN_CARACTERES = 20;
   const caracteresUsados = texto.length;
-  const isSaving = criarLimitacao.isLoading || atualizarLimitacao.isLoading;
+  const isSaving = criarLimitacao.isPending || atualizarLimitacao.isPending;
   const isSaveDisabled =
     !texto.trim() ||
     texto.trim().length < MIN_CARACTERES ||

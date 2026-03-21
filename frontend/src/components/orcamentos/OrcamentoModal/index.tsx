@@ -152,7 +152,7 @@ export function OrcamentoModal({
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-    isLoading: isLoadingClientes,
+    isPending: isLoadingClientes,
   } = useClientesInfiniteScroll(debouncedSearch || undefined, 20);
 
   // Busca cliente específico para edição/duplicação

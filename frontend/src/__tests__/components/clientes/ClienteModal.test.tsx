@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from 'react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ClienteModal } from '../../../components/clientes/ClienteModal';
 import { useBuscarCnpjBrasilAPI } from '../../../hooks/useClientes';
 

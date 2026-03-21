@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from 'react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
 import { Orcamentos } from '../../pages/Orcamentos';
 import {
@@ -127,7 +127,7 @@ const mockOrcamentos = [
 const mockMutations = {
   mutateAsync: vi.fn(),
   mutate: vi.fn(),
-  isLoading: false,
+  isPending: false,
 };
 
 describe('Orcamentos', () => {
@@ -143,7 +143,7 @@ describe('Orcamentos', () => {
   it('deve mostrar loading quando está carregando', () => {
     vi.mocked(useOrcamentosPaginados).mockReturnValue({
       data: undefined,
-      isLoading: true,
+      isPending: true,
     } as any);
 
     render(<Orcamentos />, { wrapper: createWrapper() });
@@ -155,7 +155,7 @@ describe('Orcamentos', () => {
   it('deve mostrar mensagem quando não há orçamentos', () => {
     vi.mocked(useOrcamentosPaginados).mockReturnValue({
       data: { items: [], total: 0 },
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Orcamentos />, { wrapper: createWrapper() });
@@ -167,7 +167,7 @@ describe('Orcamentos', () => {
   it('deve renderizar lista de orçamentos', () => {
     vi.mocked(useOrcamentosPaginados).mockReturnValue({
       data: { items: mockOrcamentos, total: mockOrcamentos.length },
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Orcamentos />, { wrapper: createWrapper() });
@@ -184,7 +184,7 @@ describe('Orcamentos', () => {
   it('deve filtrar orçamentos por número (backend filtering)', () => {
     vi.mocked(useOrcamentosPaginados).mockReturnValue({
       data: { items: mockOrcamentos, total: mockOrcamentos.length },
-      isLoading: false,
+      isPending: false,
       isFetching: false,
     } as any);
 
@@ -200,7 +200,7 @@ describe('Orcamentos', () => {
   it('deve filtrar orçamentos por cliente (backend filtering)', () => {
     vi.mocked(useOrcamentosPaginados).mockReturnValue({
       data: { items: mockOrcamentos, total: mockOrcamentos.length },
-      isLoading: false,
+      isPending: false,
       isFetching: false,
     } as any);
 
@@ -216,7 +216,7 @@ describe('Orcamentos', () => {
   it('deve filtrar orçamentos por status (backend filtering)', () => {
     vi.mocked(useOrcamentosPaginados).mockReturnValue({
       data: { items: mockOrcamentos, total: mockOrcamentos.length },
-      isLoading: false,
+      isPending: false,
       isFetching: false,
     } as any);
 
@@ -232,7 +232,7 @@ describe('Orcamentos', () => {
   it('deve abrir modal para novo orçamento', async () => {
     vi.mocked(useOrcamentosPaginados).mockReturnValue({
       data: { items: mockOrcamentos, total: mockOrcamentos.length },
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Orcamentos />, { wrapper: createWrapper() });
@@ -248,7 +248,7 @@ describe('Orcamentos', () => {
   it('deve mostrar botão de editar apenas para orçamentos abertos', () => {
     vi.mocked(useOrcamentosPaginados).mockReturnValue({
       data: { items: mockOrcamentos, total: mockOrcamentos.length },
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Orcamentos />, { wrapper: createWrapper() });
@@ -261,7 +261,7 @@ describe('Orcamentos', () => {
   it('deve abrir modal de visualização ao clicar no orçamento', async () => {
     vi.mocked(useOrcamentosPaginados).mockReturnValue({
       data: { items: mockOrcamentos, total: mockOrcamentos.length },
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Orcamentos />, { wrapper: createWrapper() });
@@ -282,7 +282,7 @@ describe('Orcamentos', () => {
   it('deve abrir modal de confirmação de exclusão', async () => {
     vi.mocked(useOrcamentosPaginados).mockReturnValue({
       data: { items: mockOrcamentos, total: mockOrcamentos.length },
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Orcamentos />, { wrapper: createWrapper() });
@@ -300,7 +300,7 @@ describe('Orcamentos', () => {
   it('deve fechar modal de exclusão ao clicar em cancelar', async () => {
     vi.mocked(useOrcamentosPaginados).mockReturnValue({
       data: { items: mockOrcamentos, total: mockOrcamentos.length },
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Orcamentos />, { wrapper: createWrapper() });
@@ -322,7 +322,7 @@ describe('Orcamentos', () => {
   it('deve abrir modal de alteração de status', async () => {
     vi.mocked(useOrcamentosPaginados).mockReturnValue({
       data: { items: mockOrcamentos, total: mockOrcamentos.length },
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Orcamentos />, { wrapper: createWrapper() });
@@ -338,7 +338,7 @@ describe('Orcamentos', () => {
   it('deve exibir badges de status corretos', () => {
     vi.mocked(useOrcamentosPaginados).mockReturnValue({
       data: { items: mockOrcamentos, total: mockOrcamentos.length },
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Orcamentos />, { wrapper: createWrapper() });
@@ -353,7 +353,7 @@ describe('Orcamentos', () => {
   it('deve duplicar orçamento ao clicar em duplicar', async () => {
     vi.mocked(useOrcamentosPaginados).mockReturnValue({
       data: { items: mockOrcamentos, total: mockOrcamentos.length },
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Orcamentos />, { wrapper: createWrapper() });
@@ -370,7 +370,7 @@ describe('Orcamentos', () => {
   it('não deve mostrar botão de excluir para orçamentos aceitos', () => {
     vi.mocked(useOrcamentosPaginados).mockReturnValue({
       data: { items: [mockOrcamentos[1]], total: 1 }, // Apenas o orçamento aceito
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Orcamentos />, { wrapper: createWrapper() });
@@ -387,7 +387,7 @@ describe('Orcamentos', () => {
 
     vi.mocked(useOrcamentosPaginados).mockReturnValue({
       data: { items: manyOrcamentos, total: 15 },
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Orcamentos />, { wrapper: createWrapper() });
@@ -399,7 +399,7 @@ describe('Orcamentos', () => {
     // Backend retorna lista vazia quando busca não encontra resultados
     vi.mocked(useOrcamentosPaginados).mockReturnValue({
       data: { items: [], total: 0 },
-      isLoading: false,
+      isPending: false,
       isFetching: false,
     } as any);
 
@@ -411,7 +411,7 @@ describe('Orcamentos', () => {
   it('deve ter todos os status no select', () => {
     vi.mocked(useOrcamentosPaginados).mockReturnValue({
       data: { items: mockOrcamentos, total: mockOrcamentos.length },
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Orcamentos />, { wrapper: createWrapper() });
@@ -427,7 +427,7 @@ describe('Orcamentos', () => {
     mockMutations.mutateAsync.mockResolvedValue(undefined);
     vi.mocked(useOrcamentosPaginados).mockReturnValue({
       data: { items: mockOrcamentos, total: mockOrcamentos.length },
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Orcamentos />, { wrapper: createWrapper() });
@@ -454,7 +454,7 @@ describe('Orcamentos', () => {
     mockMutations.mutateAsync.mockResolvedValue(undefined);
     vi.mocked(useOrcamentosPaginados).mockReturnValue({
       data: { items: mockOrcamentos, total: mockOrcamentos.length },
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Orcamentos />, { wrapper: createWrapper() });
@@ -472,7 +472,7 @@ describe('Orcamentos', () => {
   it('deve fechar modal de status ao clicar em cancelar', async () => {
     vi.mocked(useOrcamentosPaginados).mockReturnValue({
       data: { items: mockOrcamentos, total: mockOrcamentos.length },
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Orcamentos />, { wrapper: createWrapper() });
@@ -494,7 +494,7 @@ describe('Orcamentos', () => {
   it('deve renderizar view modal com opções de editar e duplicar', async () => {
     vi.mocked(useOrcamentosPaginados).mockReturnValue({
       data: { items: mockOrcamentos, total: mockOrcamentos.length },
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Orcamentos />, { wrapper: createWrapper() });
@@ -527,7 +527,7 @@ describe('Orcamentos', () => {
 
     vi.mocked(useOrcamentosPaginados).mockReturnValue({
       data: { items: manyOrcamentos, total: 25 },
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Orcamentos />, { wrapper: createWrapper() });
@@ -539,7 +539,7 @@ describe('Orcamentos', () => {
   it('deve filtrar por status expirado (backend filtering)', () => {
     vi.mocked(useOrcamentosPaginados).mockReturnValue({
       data: { items: mockOrcamentos, total: mockOrcamentos.length },
-      isLoading: false,
+      isPending: false,
       isFetching: false,
     } as any);
 
@@ -555,7 +555,7 @@ describe('Orcamentos', () => {
   it('deve filtrar por status recusado (backend filtering)', () => {
     vi.mocked(useOrcamentosPaginados).mockReturnValue({
       data: { items: mockOrcamentos, total: mockOrcamentos.length },
-      isLoading: false,
+      isPending: false,
       isFetching: false,
     } as any);
 
@@ -571,7 +571,7 @@ describe('Orcamentos', () => {
   it('deve abrir modal de edição a partir do view modal', async () => {
     vi.mocked(useOrcamentosPaginados).mockReturnValue({
       data: { items: mockOrcamentos, total: mockOrcamentos.length },
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Orcamentos />, { wrapper: createWrapper() });
@@ -605,7 +605,7 @@ describe('Orcamentos', () => {
   it('deve abrir modal de duplicação a partir do view modal', async () => {
     vi.mocked(useOrcamentosPaginados).mockReturnValue({
       data: { items: mockOrcamentos, total: mockOrcamentos.length },
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Orcamentos />, { wrapper: createWrapper() });
@@ -639,7 +639,7 @@ describe('Orcamentos', () => {
   it('deve filtrar por status aceito (backend filtering)', () => {
     vi.mocked(useOrcamentosPaginados).mockReturnValue({
       data: { items: mockOrcamentos, total: mockOrcamentos.length },
-      isLoading: false,
+      isPending: false,
       isFetching: false,
     } as any);
 

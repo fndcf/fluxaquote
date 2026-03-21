@@ -25,7 +25,9 @@ app.use(
 );
 app.use(express.json({ limit: "2mb" }));
 
-// Rotas
+// Rotas (v1)
+app.use("/api/v1", routes);
+// Retrocompatibilidade: /api continua funcionando
 app.use("/api", routes);
 
 // Error Handler

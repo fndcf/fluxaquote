@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from 'react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { CategoriasTab } from '../../../../pages/Configuracoes/tabs/CategoriasTab';
 import {
   useCategoriasItem,
@@ -67,7 +67,7 @@ describe('CategoriasTab', () => {
 
     vi.mocked(useCategoriasItem).mockReturnValue({
       data: mockCategorias,
-      isLoading: false,
+      isPending: false,
     } as any);
 
     vi.mocked(useCriarCategoriaItem).mockReturnValue({
@@ -91,7 +91,7 @@ describe('CategoriasTab', () => {
         pages: [{ itens: mockItensServico, total: mockItensServico.length }],
         pageParams: [undefined],
       },
-      isLoading: false,
+      isPending: false,
       fetchNextPage: vi.fn(),
       hasNextPage: false,
       isFetchingNextPage: false,
@@ -145,7 +145,7 @@ describe('CategoriasTab', () => {
     it('deve mostrar estado vazio quando nao ha categorias', () => {
       vi.mocked(useCategoriasItem).mockReturnValue({
         data: [],
-        isLoading: false,
+        isPending: false,
       } as any);
 
       render(<CategoriasTab />, { wrapper: createWrapper() });
@@ -182,7 +182,7 @@ describe('CategoriasTab', () => {
     it('deve abrir modal ao clicar em cadastrar primeira categoria', async () => {
       vi.mocked(useCategoriasItem).mockReturnValue({
         data: [],
-        isLoading: false,
+        isPending: false,
       } as any);
 
       render(<CategoriasTab />, { wrapper: createWrapper() });
@@ -461,7 +461,7 @@ describe('CategoriasTab', () => {
     it('deve mostrar loading ao carregar itens', async () => {
       vi.mocked(useInfiniteItensServicoPorCategoria).mockReturnValue({
         data: undefined,
-        isLoading: true,
+        isPending: true,
         fetchNextPage: vi.fn(),
         hasNextPage: false,
         isFetchingNextPage: false,
@@ -483,7 +483,7 @@ describe('CategoriasTab', () => {
           pages: [{ itens: [], total: 0 }],
           pageParams: [undefined],
         },
-        isLoading: false,
+        isPending: false,
         fetchNextPage: vi.fn(),
         hasNextPage: false,
         isFetchingNextPage: false,

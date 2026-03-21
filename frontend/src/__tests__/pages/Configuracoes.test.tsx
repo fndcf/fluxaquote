@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from 'react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Configuracoes } from '../../pages/Configuracoes';
 import {
   usePalavrasChave,
@@ -157,7 +157,7 @@ const mockLimitacoes = [
 
 const mockMutations = {
   mutateAsync: vi.fn(),
-  isLoading: false,
+  isPending: false,
 };
 
 const mockConfiguracoesGerais = {
@@ -176,7 +176,7 @@ describe('Configuracoes', () => {
     // Mock palavras-chave hooks
     vi.mocked(usePalavrasChave).mockReturnValue({
       data: mockPalavrasChave,
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useCriarPalavraChave).mockReturnValue(mockMutations as any);
     vi.mocked(useAtualizarPalavraChave).mockReturnValue(mockMutations as any);
@@ -186,7 +186,7 @@ describe('Configuracoes', () => {
     // Mock serviços hooks
     vi.mocked(useServicos).mockReturnValue({
       data: mockServicos,
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useCriarServico).mockReturnValue(mockMutations as any);
     vi.mocked(useAtualizarServico).mockReturnValue(mockMutations as any);
@@ -196,7 +196,7 @@ describe('Configuracoes', () => {
     // Mock categorias hooks
     vi.mocked(useCategoriasItem).mockReturnValue({
       data: mockCategorias,
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useCriarCategoriaItem).mockReturnValue(mockMutations as any);
     vi.mocked(useAtualizarCategoriaItem).mockReturnValue(mockMutations as any);
@@ -206,7 +206,7 @@ describe('Configuracoes', () => {
     // Mock limitações hooks
     vi.mocked(useLimitacoes).mockReturnValue({
       data: mockLimitacoes,
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useCriarLimitacao).mockReturnValue(mockMutations as any);
     vi.mocked(useAtualizarLimitacao).mockReturnValue(mockMutations as any);
@@ -216,7 +216,7 @@ describe('Configuracoes', () => {
     // Mock configurações gerais hooks
     vi.mocked(useConfiguracoesGerais).mockReturnValue({
       data: mockConfiguracoesGerais,
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useAtualizarConfiguracoesGerais).mockReturnValue(mockMutations as any);
 
@@ -224,7 +224,7 @@ describe('Configuracoes', () => {
     vi.mocked(useInfiniteItensServicoPorCategoria).mockReturnValue({
       data: { pages: [{ itens: [], total: 0 }], pageParams: [undefined] },
       itens: [],
-      isLoading: false,
+      isPending: false,
       isFetchingNextPage: false,
       hasNextPage: false,
       fetchNextPage: vi.fn(),
@@ -240,11 +240,11 @@ describe('Configuracoes', () => {
     it('deve mostrar loading quando está carregando', () => {
       vi.mocked(usePalavrasChave).mockReturnValue({
         data: undefined,
-        isLoading: true,
+        isPending: true,
       } as any);
       vi.mocked(useConfiguracoesGerais).mockReturnValue({
         data: undefined,
-        isLoading: true,
+        isPending: true,
       } as any);
 
       render(<Configuracoes />, { wrapper: createWrapper() });
@@ -323,7 +323,7 @@ describe('Configuracoes', () => {
     it('deve mostrar estado vazio quando não houver palavras-chave', async () => {
       vi.mocked(usePalavrasChave).mockReturnValue({
         data: [],
-        isLoading: false,
+        isPending: false,
       } as any);
 
       render(<Configuracoes />, { wrapper: createWrapper() });
@@ -350,7 +350,7 @@ describe('Configuracoes', () => {
     it('deve mostrar estado vazio quando não houver serviços', async () => {
       vi.mocked(useServicos).mockReturnValue({
         data: [],
-        isLoading: false,
+        isPending: false,
       } as any);
 
       render(<Configuracoes />, { wrapper: createWrapper() });
@@ -378,7 +378,7 @@ describe('Configuracoes', () => {
     it('deve mostrar estado vazio quando não houver categorias', async () => {
       vi.mocked(useCategoriasItem).mockReturnValue({
         data: [],
-        isLoading: false,
+        isPending: false,
       } as any);
 
       render(<Configuracoes />, { wrapper: createWrapper() });
@@ -405,7 +405,7 @@ describe('Configuracoes', () => {
     it('deve mostrar estado vazio quando não houver limitações', async () => {
       vi.mocked(useLimitacoes).mockReturnValue({
         data: [],
-        isLoading: false,
+        isPending: false,
       } as any);
 
       render(<Configuracoes />, { wrapper: createWrapper() });
@@ -750,7 +750,7 @@ describe('Configuracoes', () => {
       vi.mocked(useInfiniteItensServicoPorCategoria).mockReturnValue({
         data: { pages: [{ itens: mockItens, total: mockItens.length }], pageParams: [undefined] },
         itens: mockItens,
-        isLoading: false,
+        isPending: false,
         isFetchingNextPage: false,
         hasNextPage: false,
         fetchNextPage: vi.fn(),
@@ -787,7 +787,7 @@ describe('Configuracoes', () => {
       vi.mocked(useInfiniteItensServicoPorCategoria).mockReturnValue({
         data: { pages: [{ itens: mockItens, total: mockItens.length }], pageParams: [undefined] },
         itens: mockItens,
-        isLoading: false,
+        isPending: false,
         isFetchingNextPage: false,
         hasNextPage: false,
         fetchNextPage: vi.fn(),
@@ -857,7 +857,7 @@ describe('Configuracoes', () => {
       vi.mocked(useInfiniteItensServicoPorCategoria).mockReturnValue({
         data: { pages: [{ itens: [], total: 0 }], pageParams: [undefined] },
         itens: [],
-        isLoading: false,
+        isPending: false,
         isFetchingNextPage: false,
         hasNextPage: false,
         fetchNextPage: vi.fn(),
@@ -902,7 +902,7 @@ describe('Configuracoes', () => {
       vi.mocked(useInfiniteItensServicoPorCategoria).mockReturnValue({
         data: { pages: [{ itens: [], total: 0 }], pageParams: [undefined] },
         itens: [],
-        isLoading: false,
+        isPending: false,
         isFetchingNextPage: false,
         hasNextPage: false,
         fetchNextPage: vi.fn(),

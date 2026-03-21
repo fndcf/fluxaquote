@@ -277,7 +277,7 @@ export function HistoricoOrcamentosModal({
   onClose,
   cliente,
 }: HistoricoOrcamentosModalProps) {
-  const { data: historico, isLoading } = useHistoricoCliente(cliente?.id || '', LIMITE_ORCAMENTOS);
+  const { data: historico, isPending } = useHistoricoCliente(cliente?.id || '', LIMITE_ORCAMENTOS);
 
   const orcamentos = historico?.orcamentos || [];
   const resumo = historico?.resumo || { total: 0, aceitos: 0, valorTotalAceitos: 0 };
@@ -297,7 +297,7 @@ export function HistoricoOrcamentosModal({
         <p>CNPJ/CPF: {cliente.cnpj}</p>
       </ClienteHeader>
 
-      {isLoading ? (
+      {isPending ? (
         <Loading />
       ) : orcamentos.length > 0 ? (
         <>

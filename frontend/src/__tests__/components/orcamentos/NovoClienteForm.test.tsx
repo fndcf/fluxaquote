@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from 'react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { NovoClienteForm } from '../../../components/orcamentos/OrcamentoModal/NovoClienteForm';
 import {
   useCriarCliente,
@@ -32,12 +32,12 @@ describe('NovoClienteForm', () => {
 
     vi.mocked(useCriarCliente).mockReturnValue({
       mutateAsync: mockCriarMutateAsync,
-      isLoading: false,
+      isPending: false,
     } as any);
 
     vi.mocked(useBuscarCnpjBrasilAPI).mockReturnValue({
       mutateAsync: mockBuscarCnpjMutateAsync,
-      isLoading: false,
+      isPending: false,
     } as any);
   });
 
@@ -359,7 +359,7 @@ describe('NovoClienteForm', () => {
     it('deve desabilitar botao buscar quando carregando', () => {
       vi.mocked(useBuscarCnpjBrasilAPI).mockReturnValue({
         mutateAsync: mockBuscarCnpjMutateAsync,
-        isLoading: true,
+        isPending: true,
       } as any);
 
       render(

@@ -231,9 +231,9 @@ export function NovoClienteForm({ onClienteCriado }: NovoClienteFormProps) {
             type="button"
             $variant="secondary"
             onClick={handleBuscarCnpj}
-            disabled={buscarCnpj.isLoading}
+            disabled={buscarCnpj.isPending}
           >
-            {buscarCnpj.isLoading ? "Buscando..." : "Buscar CNPJ"}
+            {buscarCnpj.isPending ? "Buscando..." : "Buscar CNPJ"}
           </Button>
         )}
       </DocumentRow>

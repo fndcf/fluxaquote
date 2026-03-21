@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from 'react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Clientes } from '../../pages/Clientes';
 import {
   useClientesPaginados,
@@ -98,7 +98,7 @@ const mockOrcamentos = [
 
 const mockMutations = {
   mutateAsync: vi.fn(),
-  isLoading: false,
+  isPending: false,
 };
 
 describe('Clientes', () => {
@@ -112,11 +112,11 @@ describe('Clientes', () => {
   it('deve mostrar loading quando está carregando', () => {
     vi.mocked(useClientesPaginados).mockReturnValue({
       data: undefined,
-      isLoading: true,
+      isPending: true,
     } as any);
     vi.mocked(useOrcamentos).mockReturnValue({
       data: [],
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Clientes />, { wrapper: createWrapper() });
@@ -128,11 +128,11 @@ describe('Clientes', () => {
   it('deve mostrar mensagem quando não há clientes', () => {
     vi.mocked(useClientesPaginados).mockReturnValue({
       data: { items: [], total: 0 },
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useOrcamentos).mockReturnValue({
       data: [],
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Clientes />, { wrapper: createWrapper() });
@@ -144,11 +144,11 @@ describe('Clientes', () => {
   it('deve renderizar lista de clientes', () => {
     vi.mocked(useClientesPaginados).mockReturnValue({
       data: { items: mockClientes, total: mockClientes.length },
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useOrcamentos).mockReturnValue({
       data: [],
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Clientes />, { wrapper: createWrapper() });
@@ -162,11 +162,11 @@ describe('Clientes', () => {
   it('deve filtrar clientes por razão social', () => {
     vi.mocked(useClientesPaginados).mockReturnValue({
       data: { items: mockClientes, total: mockClientes.length },
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useOrcamentos).mockReturnValue({
       data: [],
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Clientes />, { wrapper: createWrapper() });
@@ -185,12 +185,12 @@ describe('Clientes', () => {
     // Primeiro render mostra todos os clientes
     vi.mocked(useClientesPaginados).mockReturnValue({
       data: { items: mockClientes, total: mockClientes.length },
-      isLoading: false,
+      isPending: false,
       isFetching: false,
     } as any);
     vi.mocked(useOrcamentos).mockReturnValue({
       data: [],
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Clientes />, { wrapper: createWrapper() });
@@ -205,11 +205,11 @@ describe('Clientes', () => {
   it('deve abrir modal para novo cliente', async () => {
     vi.mocked(useClientesPaginados).mockReturnValue({
       data: { items: mockClientes, total: mockClientes.length },
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useOrcamentos).mockReturnValue({
       data: [],
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Clientes />, { wrapper: createWrapper() });
@@ -225,11 +225,11 @@ describe('Clientes', () => {
   it('deve abrir modal para editar cliente', async () => {
     vi.mocked(useClientesPaginados).mockReturnValue({
       data: { items: mockClientes, total: mockClientes.length },
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useOrcamentos).mockReturnValue({
       data: [],
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Clientes />, { wrapper: createWrapper() });
@@ -246,11 +246,11 @@ describe('Clientes', () => {
   it('deve abrir modal de histórico ao clicar no cliente', async () => {
     vi.mocked(useClientesPaginados).mockReturnValue({
       data: { items: mockClientes, total: mockClientes.length },
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useOrcamentos).mockReturnValue({
       data: [],
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Clientes />, { wrapper: createWrapper() });
@@ -267,11 +267,11 @@ describe('Clientes', () => {
   it('deve desabilitar exclusão quando cliente tem orçamentos', () => {
     vi.mocked(useClientesPaginados).mockReturnValue({
       data: { items: mockClientes, total: mockClientes.length },
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useOrcamentos).mockReturnValue({
       data: mockOrcamentos,
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Clientes />, { wrapper: createWrapper() });
@@ -286,11 +286,11 @@ describe('Clientes', () => {
   it('deve abrir modal de confirmação ao clicar em excluir', async () => {
     vi.mocked(useClientesPaginados).mockReturnValue({
       data: { items: mockClientes, total: mockClientes.length },
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useOrcamentos).mockReturnValue({
       data: [],
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Clientes />, { wrapper: createWrapper() });
@@ -307,11 +307,11 @@ describe('Clientes', () => {
   it('deve fechar modal de confirmação ao clicar em cancelar', async () => {
     vi.mocked(useClientesPaginados).mockReturnValue({
       data: { items: mockClientes, total: mockClientes.length },
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useOrcamentos).mockReturnValue({
       data: [],
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Clientes />, { wrapper: createWrapper() });
@@ -331,15 +331,15 @@ describe('Clientes', () => {
   });
 
   it('deve excluir cliente ao confirmar', async () => {
-    const excluirMock = { mutateAsync: vi.fn(), isLoading: false };
+    const excluirMock = { mutateAsync: vi.fn(), isPending: false };
     vi.mocked(useExcluirCliente).mockReturnValue(excluirMock as any);
     vi.mocked(useClientesPaginados).mockReturnValue({
       data: { items: mockClientes, total: mockClientes.length },
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useOrcamentos).mockReturnValue({
       data: [],
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Clientes />, { wrapper: createWrapper() });
@@ -364,12 +364,12 @@ describe('Clientes', () => {
     // Backend retorna lista vazia quando busca não encontra resultados
     vi.mocked(useClientesPaginados).mockReturnValue({
       data: { items: [], total: 0 },
-      isLoading: false,
+      isPending: false,
       isFetching: false,
     } as any);
     vi.mocked(useOrcamentos).mockReturnValue({
       data: [],
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Clientes />, { wrapper: createWrapper() });
@@ -380,11 +380,11 @@ describe('Clientes', () => {
   it('deve formatar documento corretamente', () => {
     vi.mocked(useClientesPaginados).mockReturnValue({
       data: { items: mockClientes, total: mockClientes.length },
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useOrcamentos).mockReturnValue({
       data: [],
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Clientes />, { wrapper: createWrapper() });
@@ -408,12 +408,12 @@ describe('Clientes', () => {
 
     vi.mocked(useClientesPaginados).mockReturnValue({
       data: { items: pageClientes, total: 15 },
-      isLoading: false,
+      isPending: false,
       isFetching: false,
     } as any);
     vi.mocked(useOrcamentos).mockReturnValue({
       data: [],
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Clientes />, { wrapper: createWrapper() });

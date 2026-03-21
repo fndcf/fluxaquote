@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from 'react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
   useItensServico,
   useItensServicoPorCategoria,
@@ -100,7 +100,7 @@ describe('useItensServico hooks', () => {
         wrapper: createWrapper(),
       });
 
-      expect(result.current.isLoading).toBe(true);
+      expect(result.current.isPending).toBe(true);
     });
 
     it('deve retornar erro quando falhar', async () => {
@@ -136,7 +136,7 @@ describe('useItensServico hooks', () => {
         wrapper: createWrapper(),
       });
 
-      expect(result.current.isIdle).toBe(true);
+      expect(result.current.fetchStatus).toBe('idle');
       expect(itemServicoService.listarPorCategoria).not.toHaveBeenCalled();
     });
   });
@@ -161,7 +161,7 @@ describe('useItensServico hooks', () => {
         wrapper: createWrapper(),
       });
 
-      expect(result.current.isIdle).toBe(true);
+      expect(result.current.fetchStatus).toBe('idle');
       expect(itemServicoService.listarAtivosPorCategoria).not.toHaveBeenCalled();
     });
 
@@ -239,7 +239,7 @@ describe('useItensServico hooks', () => {
         wrapper: createWrapper(),
       });
 
-      expect(result.current.isIdle).toBe(true);
+      expect(result.current.fetchStatus).toBe('idle');
       expect(itemServicoService.listarAtivosPorCategoriaPaginado).not.toHaveBeenCalled();
     });
   });
@@ -288,7 +288,7 @@ describe('useItensServico hooks', () => {
         wrapper: createWrapper(),
       });
 
-      expect(result.current.isIdle).toBe(true);
+      expect(result.current.fetchStatus).toBe('idle');
       expect(itemServicoService.listarPorCategoriaPaginado).not.toHaveBeenCalled();
     });
   });

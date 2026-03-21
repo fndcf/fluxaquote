@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from 'react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode } from 'react';
 import {
   useOrcamentos,
@@ -100,7 +100,7 @@ describe('useOrcamentos hooks', () => {
         wrapper: createWrapper(),
       });
 
-      expect(result.current.isIdle).toBe(true);
+      expect(result.current.fetchStatus).toBe('idle');
       expect(orcamentoService.buscarPorId).not.toHaveBeenCalled();
     });
   });
@@ -125,7 +125,7 @@ describe('useOrcamentos hooks', () => {
         wrapper: createWrapper(),
       });
 
-      expect(result.current.isIdle).toBe(true);
+      expect(result.current.fetchStatus).toBe('idle');
       expect(orcamentoService.buscarPorCliente).not.toHaveBeenCalled();
     });
   });
@@ -176,7 +176,7 @@ describe('useOrcamentos hooks', () => {
         wrapper: createWrapper(),
       });
 
-      expect(result.current.isIdle).toBe(true);
+      expect(result.current.fetchStatus).toBe('idle');
       expect(orcamentoService.getHistoricoCliente).not.toHaveBeenCalled();
     });
 
@@ -244,7 +244,7 @@ describe('useOrcamentos hooks', () => {
         wrapper: createWrapper(),
       });
 
-      expect(result.current.isIdle).toBe(true);
+      expect(result.current.fetchStatus).toBe('idle');
       expect(orcamentoService.buscarPorPeriodo).not.toHaveBeenCalled();
     });
 
@@ -253,7 +253,7 @@ describe('useOrcamentos hooks', () => {
         wrapper: createWrapper(),
       });
 
-      expect(result.current.isIdle).toBe(true);
+      expect(result.current.fetchStatus).toBe('idle');
       expect(orcamentoService.buscarPorPeriodo).not.toHaveBeenCalled();
     });
   });

@@ -1,10 +1,11 @@
-import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from 'react-query';
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { notificacaoService, NotificacaoResumo } from '../services/notificacaoService';
 import { Notificacao, PaginatedResponse } from '../types';
-import { logger } from '../utils/logger';
 
 export function useNotificacaoResumo() {
-  return useQuery<NotificacaoResumo>('notificacaoResumo', notificacaoService.obterResumo, {
+  return useQuery<NotificacaoResumo>({
+    queryKey: ['notificacaoResumo'],
+    queryFn: notificacaoService.obterResumo,
     refetchInterval: 60000, // Atualiza a cada 1 minuto
   });
 }
@@ -12,14 +13,15 @@ export function useNotificacaoResumo() {
 export function useMarcarNotificacaoComoLida() {
   const queryClient = useQueryClient();
 
-  return useMutation((id: string) => notificacaoService.marcarComoLida(id), {
+  return useMutation({
+    mutationFn: (id: string) => notificacaoService.marcarComoLida(id),
     onSuccess: () => {
-      queryClient.invalidateQueries('notificacaoResumo');
-      queryClient.invalidateQueries('notificacoesPaginadas');
-      queryClient.invalidateQueries('notificacoesNaoLidasPaginadas');
-      queryClient.invalidateQueries('notificacoesVencidasPaginadas');
-      queryClient.invalidateQueries('notificacoesAtivasPaginadas');
-      queryClient.invalidateQueries('notificacoesProximasPaginadas');
+      queryClient.invalidateQueries({ queryKey: ['notificacaoResumo'] });
+      queryClient.invalidateQueries({ queryKey: ['notificacoesPaginadas'] });
+      queryClient.invalidateQueries({ queryKey: ['notificacoesNaoLidasPaginadas'] });
+      queryClient.invalidateQueries({ queryKey: ['notificacoesVencidasPaginadas'] });
+      queryClient.invalidateQueries({ queryKey: ['notificacoesAtivasPaginadas'] });
+      queryClient.invalidateQueries({ queryKey: ['notificacoesProximasPaginadas'] });
     },
   });
 }
@@ -27,14 +29,15 @@ export function useMarcarNotificacaoComoLida() {
 export function useMarcarTodasNotificacoesComoLidas() {
   const queryClient = useQueryClient();
 
-  return useMutation(() => notificacaoService.marcarTodasComoLidas(), {
+  return useMutation({
+    mutationFn: () => notificacaoService.marcarTodasComoLidas(),
     onSuccess: () => {
-      queryClient.invalidateQueries('notificacaoResumo');
-      queryClient.invalidateQueries('notificacoesPaginadas');
-      queryClient.invalidateQueries('notificacoesNaoLidasPaginadas');
-      queryClient.invalidateQueries('notificacoesVencidasPaginadas');
-      queryClient.invalidateQueries('notificacoesAtivasPaginadas');
-      queryClient.invalidateQueries('notificacoesProximasPaginadas');
+      queryClient.invalidateQueries({ queryKey: ['notificacaoResumo'] });
+      queryClient.invalidateQueries({ queryKey: ['notificacoesPaginadas'] });
+      queryClient.invalidateQueries({ queryKey: ['notificacoesNaoLidasPaginadas'] });
+      queryClient.invalidateQueries({ queryKey: ['notificacoesVencidasPaginadas'] });
+      queryClient.invalidateQueries({ queryKey: ['notificacoesAtivasPaginadas'] });
+      queryClient.invalidateQueries({ queryKey: ['notificacoesProximasPaginadas'] });
     },
   });
 }
@@ -42,14 +45,15 @@ export function useMarcarTodasNotificacoesComoLidas() {
 export function useExcluirNotificacao() {
   const queryClient = useQueryClient();
 
-  return useMutation((id: string) => notificacaoService.excluir(id), {
+  return useMutation({
+    mutationFn: (id: string) => notificacaoService.excluir(id),
     onSuccess: () => {
-      queryClient.invalidateQueries('notificacaoResumo');
-      queryClient.invalidateQueries('notificacoesPaginadas');
-      queryClient.invalidateQueries('notificacoesNaoLidasPaginadas');
-      queryClient.invalidateQueries('notificacoesVencidasPaginadas');
-      queryClient.invalidateQueries('notificacoesAtivasPaginadas');
-      queryClient.invalidateQueries('notificacoesProximasPaginadas');
+      queryClient.invalidateQueries({ queryKey: ['notificacaoResumo'] });
+      queryClient.invalidateQueries({ queryKey: ['notificacoesPaginadas'] });
+      queryClient.invalidateQueries({ queryKey: ['notificacoesNaoLidasPaginadas'] });
+      queryClient.invalidateQueries({ queryKey: ['notificacoesVencidasPaginadas'] });
+      queryClient.invalidateQueries({ queryKey: ['notificacoesAtivasPaginadas'] });
+      queryClient.invalidateQueries({ queryKey: ['notificacoesProximasPaginadas'] });
     },
   });
 }
@@ -57,14 +61,15 @@ export function useExcluirNotificacao() {
 export function useGerarNotificacoesOrcamento() {
   const queryClient = useQueryClient();
 
-  return useMutation((orcamentoId: string) => notificacaoService.gerarParaOrcamento(orcamentoId), {
+  return useMutation({
+    mutationFn: (orcamentoId: string) => notificacaoService.gerarParaOrcamento(orcamentoId),
     onSuccess: () => {
-      queryClient.invalidateQueries('notificacaoResumo');
-      queryClient.invalidateQueries('notificacoesPaginadas');
-      queryClient.invalidateQueries('notificacoesNaoLidasPaginadas');
-      queryClient.invalidateQueries('notificacoesVencidasPaginadas');
-      queryClient.invalidateQueries('notificacoesAtivasPaginadas');
-      queryClient.invalidateQueries('notificacoesProximasPaginadas');
+      queryClient.invalidateQueries({ queryKey: ['notificacaoResumo'] });
+      queryClient.invalidateQueries({ queryKey: ['notificacoesPaginadas'] });
+      queryClient.invalidateQueries({ queryKey: ['notificacoesNaoLidasPaginadas'] });
+      queryClient.invalidateQueries({ queryKey: ['notificacoesVencidasPaginadas'] });
+      queryClient.invalidateQueries({ queryKey: ['notificacoesAtivasPaginadas'] });
+      queryClient.invalidateQueries({ queryKey: ['notificacoesProximasPaginadas'] });
     },
   });
 }
@@ -72,14 +77,15 @@ export function useGerarNotificacoesOrcamento() {
 export function useProcessarTodasNotificacoes() {
   const queryClient = useQueryClient();
 
-  return useMutation(() => notificacaoService.processarTodos(), {
+  return useMutation({
+    mutationFn: () => notificacaoService.processarTodos(),
     onSuccess: () => {
-      queryClient.invalidateQueries('notificacaoResumo');
-      queryClient.invalidateQueries('notificacoesPaginadas');
-      queryClient.invalidateQueries('notificacoesNaoLidasPaginadas');
-      queryClient.invalidateQueries('notificacoesVencidasPaginadas');
-      queryClient.invalidateQueries('notificacoesAtivasPaginadas');
-      queryClient.invalidateQueries('notificacoesProximasPaginadas');
+      queryClient.invalidateQueries({ queryKey: ['notificacaoResumo'] });
+      queryClient.invalidateQueries({ queryKey: ['notificacoesPaginadas'] });
+      queryClient.invalidateQueries({ queryKey: ['notificacoesNaoLidasPaginadas'] });
+      queryClient.invalidateQueries({ queryKey: ['notificacoesVencidasPaginadas'] });
+      queryClient.invalidateQueries({ queryKey: ['notificacoesAtivasPaginadas'] });
+      queryClient.invalidateQueries({ queryKey: ['notificacoesProximasPaginadas'] });
     },
   });
 }
@@ -87,68 +93,48 @@ export function useProcessarTodasNotificacoes() {
 // ========== HOOKS PAGINADOS ==========
 
 export function useNotificacoesPaginadas(pageSize: number = 10) {
-  return useInfiniteQuery<PaginatedResponse<Notificacao>>(
-    ['notificacoesPaginadas', pageSize],
-    ({ pageParam }) => notificacaoService.listarPaginado(pageSize, pageParam),
-    {
-      getNextPageParam: (lastPage) => lastPage.cursor,
-      onError: (error) => {
-        logger.error('Erro ao buscar notificações paginadas', { error });
-      },
-    }
-  );
+  return useInfiniteQuery<PaginatedResponse<Notificacao>>({
+    queryKey: ['notificacoesPaginadas', pageSize],
+    queryFn: ({ pageParam }) => notificacaoService.listarPaginado(pageSize, pageParam as string | undefined),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.cursor,
+  });
 }
 
 export function useNotificacoesNaoLidasPaginadas(pageSize: number = 10) {
-  return useInfiniteQuery<PaginatedResponse<Notificacao>>(
-    ['notificacoesNaoLidasPaginadas', pageSize],
-    ({ pageParam }) => notificacaoService.listarNaoLidasPaginado(pageSize, pageParam),
-    {
-      getNextPageParam: (lastPage) => lastPage.cursor,
-      refetchInterval: 60000,
-      onError: (error) => {
-        logger.error('Erro ao buscar notificações não lidas paginadas', { error });
-      },
-    }
-  );
+  return useInfiniteQuery<PaginatedResponse<Notificacao>>({
+    queryKey: ['notificacoesNaoLidasPaginadas', pageSize],
+    queryFn: ({ pageParam }) => notificacaoService.listarNaoLidasPaginado(pageSize, pageParam as string | undefined),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.cursor,
+    refetchInterval: 60000,
+  });
 }
 
 export function useNotificacoesVencidasPaginadas(pageSize: number = 10) {
-  return useInfiniteQuery<PaginatedResponse<Notificacao>>(
-    ['notificacoesVencidasPaginadas', pageSize],
-    ({ pageParam }) => notificacaoService.listarVencidasPaginado(pageSize, pageParam),
-    {
-      getNextPageParam: (lastPage) => lastPage.cursor,
-      onError: (error) => {
-        logger.error('Erro ao buscar notificações vencidas paginadas', { error });
-      },
-    }
-  );
+  return useInfiniteQuery<PaginatedResponse<Notificacao>>({
+    queryKey: ['notificacoesVencidasPaginadas', pageSize],
+    queryFn: ({ pageParam }) => notificacaoService.listarVencidasPaginado(pageSize, pageParam as string | undefined),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.cursor,
+  });
 }
 
 export function useNotificacoesAtivasPaginadas(dias: number = 60, pageSize: number = 10) {
-  return useInfiniteQuery<PaginatedResponse<Notificacao>>(
-    ['notificacoesAtivasPaginadas', dias, pageSize],
-    ({ pageParam }) => notificacaoService.listarAtivasPaginado(dias, pageSize, pageParam),
-    {
-      getNextPageParam: (lastPage) => lastPage.cursor,
-      refetchInterval: 60000,
-      onError: (error) => {
-        logger.error('Erro ao buscar notificações ativas paginadas', { error });
-      },
-    }
-  );
+  return useInfiniteQuery<PaginatedResponse<Notificacao>>({
+    queryKey: ['notificacoesAtivasPaginadas', dias, pageSize],
+    queryFn: ({ pageParam }) => notificacaoService.listarAtivasPaginado(dias, pageSize, pageParam as string | undefined),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.cursor,
+    refetchInterval: 60000,
+  });
 }
 
 export function useNotificacoesProximasPaginadas(dias: number = 30, pageSize: number = 10) {
-  return useInfiniteQuery<PaginatedResponse<Notificacao>>(
-    ['notificacoesProximasPaginadas', dias, pageSize],
-    ({ pageParam }) => notificacaoService.listarProximasPaginado(dias, pageSize, pageParam),
-    {
-      getNextPageParam: (lastPage) => lastPage.cursor,
-      onError: (error) => {
-        logger.error('Erro ao buscar notificações próximas paginadas', { error });
-      },
-    }
-  );
+  return useInfiniteQuery<PaginatedResponse<Notificacao>>({
+    queryKey: ['notificacoesProximasPaginadas', dias, pageSize],
+    queryFn: ({ pageParam }) => notificacaoService.listarProximasPaginado(dias, pageSize, pageParam as string | undefined),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.cursor,
+  });
 }

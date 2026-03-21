@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from 'react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
 import { NotificacaoDropdown } from '../../../components/notificacoes/NotificacaoDropdown';
 import {
@@ -99,8 +99,8 @@ const mockResumo = {
   ativas: 3,
 };
 
-const mockMarcarLida = { mutate: vi.fn(), isLoading: false };
-const mockMarcarTodasLidas = { mutate: vi.fn(), isLoading: false };
+const mockMarcarLida = { mutate: vi.fn(), isPending: false };
+const mockMarcarTodasLidas = { mutate: vi.fn(), isPending: false };
 const mockRefetch = vi.fn();
 const mockFetchNextPage = vi.fn();
 
@@ -123,7 +123,7 @@ describe('NotificacaoDropdown', () => {
 
     vi.mocked(useNotificacoesAtivasPaginadas).mockReturnValue({
       data: createPaginatedResponse(mockNotificacoes),
-      isLoading: false,
+      isPending: false,
       isError: false,
       refetch: mockRefetch,
       fetchNextPage: mockFetchNextPage,
@@ -231,7 +231,7 @@ describe('NotificacaoDropdown', () => {
   it('deve mostrar estado vazio quando não houver notificações', () => {
     vi.mocked(useNotificacoesAtivasPaginadas).mockReturnValue({
       data: createPaginatedResponse([]),
-      isLoading: false,
+      isPending: false,
       isError: false,
       refetch: mockRefetch,
       fetchNextPage: mockFetchNextPage,
@@ -249,7 +249,7 @@ describe('NotificacaoDropdown', () => {
   it('deve mostrar estado de carregamento', () => {
     vi.mocked(useNotificacoesAtivasPaginadas).mockReturnValue({
       data: undefined,
-      isLoading: true,
+      isPending: true,
       isError: false,
       refetch: mockRefetch,
       fetchNextPage: mockFetchNextPage,
@@ -267,7 +267,7 @@ describe('NotificacaoDropdown', () => {
   it('deve mostrar estado de erro', () => {
     vi.mocked(useNotificacoesAtivasPaginadas).mockReturnValue({
       data: undefined,
-      isLoading: false,
+      isPending: false,
       isError: true,
       refetch: mockRefetch,
       fetchNextPage: mockFetchNextPage,
@@ -410,7 +410,7 @@ describe('NotificacaoDropdown', () => {
 
     vi.mocked(useNotificacoesAtivasPaginadas).mockReturnValue({
       data: createPaginatedResponse(manyNotifications, true),
-      isLoading: false,
+      isPending: false,
       isError: false,
       refetch: mockRefetch,
       fetchNextPage: mockFetchNextPage,
@@ -432,7 +432,7 @@ describe('NotificacaoDropdown', () => {
   it('deve mostrar indicador de carregando mais ao buscar próxima página', () => {
     vi.mocked(useNotificacoesAtivasPaginadas).mockReturnValue({
       data: createPaginatedResponse(mockNotificacoes, true),
-      isLoading: false,
+      isPending: false,
       isError: false,
       refetch: mockRefetch,
       fetchNextPage: mockFetchNextPage,
@@ -450,7 +450,7 @@ describe('NotificacaoDropdown', () => {
   it('deve chamar fetchNextPage ao clicar em carregar mais', () => {
     vi.mocked(useNotificacoesAtivasPaginadas).mockReturnValue({
       data: createPaginatedResponse(mockNotificacoes, true),
-      isLoading: false,
+      isPending: false,
       isError: false,
       refetch: mockRefetch,
       fetchNextPage: mockFetchNextPage,

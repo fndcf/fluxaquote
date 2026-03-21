@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import styled, { keyframes } from 'styled-components';
 
 const spin = keyframes`
@@ -26,13 +27,13 @@ interface LoadingProps {
   size?: number;
 }
 
-export function Loading({ size }: LoadingProps) {
+export const Loading = memo(function Loading({ size }: LoadingProps) {
   return (
     <SpinnerContainer data-testid="loading">
       <Spinner $size={size} />
     </SpinnerContainer>
   );
-}
+});
 
 export const LoadingOverlay = styled.div`
   position: absolute;

@@ -108,7 +108,7 @@ export function ServicosTab() {
     }
   };
 
-  const isSaving = criarServico.isLoading || atualizarServico.isLoading;
+  const isSaving = criarServico.isPending || atualizarServico.isPending;
   const isSaveDisabled =
     !descricao.trim() || descricao.trim().length < 10 || isSaving;
 

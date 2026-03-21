@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from 'react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode } from 'react';
 import { useHistoricoItens, useHistoricoConfiguracoes } from '../../hooks/useHistoricoValores';
 import { historicoValoresService } from '../../services/historicoValoresService';
@@ -69,7 +69,7 @@ describe('useHistoricoValores hooks', () => {
         wrapper: createWrapper(),
       });
 
-      expect(result.current.isIdle).toBe(true);
+      expect(result.current.fetchStatus).toBe('idle');
       expect(historicoValoresService.buscarHistoricoItens).not.toHaveBeenCalled();
     });
 
@@ -78,7 +78,7 @@ describe('useHistoricoValores hooks', () => {
         wrapper: createWrapper(),
       });
 
-      expect(result.current.isIdle).toBe(true);
+      expect(result.current.fetchStatus).toBe('idle');
       expect(historicoValoresService.buscarHistoricoItens).not.toHaveBeenCalled();
     });
 
@@ -87,7 +87,7 @@ describe('useHistoricoValores hooks', () => {
         wrapper: createWrapper(),
       });
 
-      expect(result.current.isIdle).toBe(true);
+      expect(result.current.fetchStatus).toBe('idle');
       expect(historicoValoresService.buscarHistoricoItens).not.toHaveBeenCalled();
     });
 
@@ -139,7 +139,7 @@ describe('useHistoricoValores hooks', () => {
         wrapper: createWrapper(),
       });
 
-      expect(result.current.isIdle).toBe(true);
+      expect(result.current.fetchStatus).toBe('idle');
       expect(historicoValoresService.buscarHistoricoConfiguracoes).not.toHaveBeenCalled();
     });
 
@@ -148,7 +148,7 @@ describe('useHistoricoValores hooks', () => {
         wrapper: createWrapper(),
       });
 
-      expect(result.current.isIdle).toBe(true);
+      expect(result.current.fetchStatus).toBe('idle');
       expect(historicoValoresService.buscarHistoricoConfiguracoes).not.toHaveBeenCalled();
     });
 
@@ -157,7 +157,7 @@ describe('useHistoricoValores hooks', () => {
         wrapper: createWrapper(),
       });
 
-      expect(result.current.isIdle).toBe(true);
+      expect(result.current.fetchStatus).toBe('idle');
       expect(historicoValoresService.buscarHistoricoConfiguracoes).not.toHaveBeenCalled();
     });
 

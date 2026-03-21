@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from 'react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { OrcamentoModal } from '../../../components/orcamentos/OrcamentoModal';
 import { useClientesInfiniteScroll, useCliente, useCriarCliente, useBuscarCnpjBrasilAPI } from '../../../hooks/useClientes';
 import { useServicosAtivos } from '../../../hooks/useServicos';
@@ -33,7 +33,7 @@ vi.mock('../../../hooks/useItensServico', () => ({
   useItensServicoAtivosPorCategoria: vi.fn(),
   useInfiniteItensServicoAtivos: vi.fn(() => ({
     itens: [],
-    isLoading: false,
+    isPending: false,
     isFetchingNextPage: false,
     hasNextPage: false,
     fetchNextPage: vi.fn(),
@@ -158,38 +158,38 @@ describe('OrcamentoModal', () => {
         pages: [{ items: mockClientes, total: mockClientes.length, hasMore: false }],
         pageParams: [1],
       },
-      isLoading: false,
+      isPending: false,
       isFetchingNextPage: false,
       hasNextPage: false,
       fetchNextPage: vi.fn(),
     } as any);
     vi.mocked(useCliente).mockReturnValue({
       data: undefined,
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useCriarCliente).mockReturnValue({
       mutateAsync: vi.fn(),
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useBuscarCnpjBrasilAPI).mockReturnValue({
       mutateAsync: vi.fn(),
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useServicosAtivos).mockReturnValue({
       data: [{ id: 's1', descricao: 'Serviço Teste', ativo: true, ordem: 1, createdAt: new Date() }],
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useCategoriasItemAtivas).mockReturnValue({
       data: [{ id: 'cat1', nome: 'Categoria Teste', ativo: true, ordem: 1, createdAt: new Date() }],
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useLimitacoesAtivas).mockReturnValue({
       data: [{ id: 'lim1', texto: 'Limitação Teste', ativo: true, ordem: 1, createdAt: new Date() }],
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useItensServicoAtivosPorCategoria).mockReturnValue({
       data: [],
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useConfiguracoesGerais).mockReturnValue({
       data: {
@@ -198,7 +198,7 @@ describe('OrcamentoModal', () => {
         taxaJurosPadrao: 0,
         limiteParcelas: 12,
       },
-      isLoading: false,
+      isPending: false,
     } as any);
   });
 
@@ -1071,7 +1071,7 @@ describe('OrcamentoModal', () => {
           pages: [{ items: [], total: 0, hasMore: false }],
           pageParams: [1],
         },
-        isLoading: false,
+        isPending: false,
         isFetchingNextPage: false,
         hasNextPage: false,
         fetchNextPage: vi.fn(),
@@ -1114,7 +1114,7 @@ describe('OrcamentoModal', () => {
     it('deve preencher campo de busca ao editar orçamento existente', () => {
       vi.mocked(useCliente).mockReturnValue({
         data: mockClientes[0],
-        isLoading: false,
+        isPending: false,
       } as any);
 
       render(
@@ -1146,7 +1146,7 @@ describe('OrcamentoModal', () => {
       const mockCriarCliente = vi.fn().mockResolvedValue(novoCliente);
       vi.mocked(useCriarCliente).mockReturnValue({
         mutateAsync: mockCriarCliente,
-        isLoading: false,
+        isPending: false,
       } as any);
 
       render(
@@ -1212,7 +1212,7 @@ describe('OrcamentoModal', () => {
     it('deve mostrar loading inicial quando clientes estão carregando', async () => {
       vi.mocked(useClientesInfiniteScroll).mockReturnValue({
         data: undefined,
-        isLoading: true,
+        isPending: true,
         isFetchingNextPage: false,
         hasNextPage: false,
         fetchNextPage: vi.fn(),
@@ -1241,7 +1241,7 @@ describe('OrcamentoModal', () => {
           pages: [{ items: mockClientes, total: 10, hasMore: true }],
           pageParams: [1],
         },
-        isLoading: false,
+        isPending: false,
         isFetchingNextPage: true,
         hasNextPage: true,
         fetchNextPage: vi.fn(),
@@ -1323,7 +1323,7 @@ describe('OrcamentoModal', () => {
           pages: [{ items: mockClientes, total: 50, hasMore: true }],
           pageParams: [1],
         },
-        isLoading: false,
+        isPending: false,
         isFetchingNextPage: false,
         hasNextPage: true,
         fetchNextPage: vi.fn(),

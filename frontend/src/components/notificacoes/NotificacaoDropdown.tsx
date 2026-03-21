@@ -267,7 +267,7 @@ export function NotificacaoDropdown() {
   // Usar notificações ativas paginadas (10 por página)
   const {
     data: paginatedData,
-    isLoading,
+    isPending,
     isError,
     refetch,
     fetchNextPage,
@@ -349,14 +349,14 @@ export function NotificacaoDropdown() {
           <DropdownTitle>Notificações</DropdownTitle>
           <MarkAllButton
             onClick={handleMarcarTodasLidas}
-            disabled={ativas === 0 || marcarTodasLidas.isLoading}
+            disabled={ativas === 0 || marcarTodasLidas.isPending}
           >
             Marcar todas como lidas
           </MarkAllButton>
         </DropdownHeader>
 
         <NotificacaoList ref={listRef} onScroll={handleScroll}>
-          {isLoading ? (
+          {isPending ? (
             <EmptyState>Carregando...</EmptyState>
           ) : isError ? (
             <EmptyState>Erro ao carregar notificações</EmptyState>

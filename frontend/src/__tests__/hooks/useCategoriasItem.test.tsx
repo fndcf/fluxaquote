@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from 'react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
   useCategoriasItem,
   useCategoriasItemAtivas,
@@ -88,7 +88,7 @@ describe('useCategoriasItem hooks', () => {
         wrapper: createWrapper(),
       });
 
-      expect(result.current.isLoading).toBe(true);
+      expect(result.current.isPending).toBe(true);
     });
 
     it('deve retornar erro quando falhar', async () => {

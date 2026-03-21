@@ -73,7 +73,7 @@ export function ItensCompleto({
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-    isLoading,
+    isPending,
   } = useInfiniteItensServicoAtivos(categoriaAtiva, debouncedSearch, 10);
 
   // Todos os itens carregados (flatten das páginas)
@@ -266,7 +266,7 @@ export function ItensCompleto({
                       onScroll={handleScroll}
                       style={{ maxHeight: '250px', overflowY: 'auto' }}
                     >
-                      {isLoading ? (
+                      {isPending ? (
                         <DescricaoLoadingMore>Carregando...</DescricaoLoadingMore>
                       ) : itensPredefinidos.length > 0 ? (
                         <>

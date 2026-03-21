@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import styled from 'styled-components';
 
 const PaginationContainer = styled.div`
@@ -72,7 +73,7 @@ interface PaginationProps {
   onPageChange: (page: number) => void;
 }
 
-export function Pagination({
+export const Pagination = memo(function Pagination({
   currentPage,
   totalPages,
   totalItems,
@@ -157,4 +158,4 @@ export function Pagination({
       </PaginationButtons>
     </PaginationContainer>
   );
-}
+});

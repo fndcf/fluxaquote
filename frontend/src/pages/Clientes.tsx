@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import styled from "styled-components";
 import { Cliente } from "../types";
 import {
   useClientesPaginados,
@@ -36,72 +35,12 @@ import { ClienteModal } from "../components/clientes/ClienteModal";
 import { HistoricoOrcamentosModal } from "../components/clientes/HistoricoOrcamentosModal";
 import { formatDocument, formatPhone } from "../utils/constants";
 import Footer from "@/components/layout/Footer";
-
-const Container = styled.div`
-  padding: 24px;
-
-  @media (max-width: 768px) {
-    padding: 16px;
-  }
-`;
-
-const ClienteInfo = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  cursor: pointer;
-
-  &:hover .nome {
-    color: var(--primary);
-  }
-
-  .nome {
-    font-weight: 500;
-    transition: color 0.2s;
-  }
-
-  .fantasia {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-  }
-
-  @media (max-width: 768px) {
-    .nome {
-      font-size: 0.9rem;
-    }
-
-    .fantasia {
-      font-size: 0.75rem;
-    }
-  }
-`;
-
-const ConfirmDialog = styled.div`
-  text-align: center;
-
-  p {
-    margin-bottom: 20px;
-    color: var(--text-secondary);
-  }
-
-  strong {
-    color: var(--text-primary);
-  }
-`;
-
-const DialogButtons = styled.div`
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-
-  @media (max-width: 768px) {
-    flex-direction: column-reverse;
-
-    button {
-      width: 100%;
-    }
-  }
-`;
+import {
+  Container,
+  ClienteInfo,
+  ConfirmDialog,
+  DialogButtons,
+} from "./Clientes.styles";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -125,7 +64,7 @@ export function Clientes() {
   }, [searchTerm]);
 
   // Usa paginação do backend
-  const { data: paginatedData, isLoading, isFetching } = useClientesPaginados(
+  const { data: paginatedData, isPending, isFetching } = useClientesPaginados(
     currentPage,
     ITEMS_PER_PAGE,
     {
@@ -199,7 +138,7 @@ export function Clientes() {
         />
       </SearchBar>
 
-      {isLoading || isFetching ? (
+      {isPending || isFetching ? (
         <Loading />
       ) : clientesPaginados && clientesPaginados.length > 0 ? (
         <>
@@ -378,7 +317,7 @@ export function Clientes() {
         onClose={() => setModalOpen(false)}
         onSave={handleSaveCliente}
         cliente={clienteEdit}
-        loading={criarCliente.isLoading || atualizarCliente.isLoading}
+        loading={criarCliente.isPending || atualizarCliente.isPending}
       />
 
       <HistoricoOrcamentosModal
@@ -427,9 +366,9 @@ export function Clientes() {
                 <Button
                   $variant="danger"
                   onClick={handleDeleteCliente}
-                  disabled={excluirCliente.isLoading}
+                  disabled={excluirCliente.isPending}
                 >
-                  {excluirCliente.isLoading ? "Excluindo..." : "Excluir"}
+                  {excluirCliente.isPending ? "Excluindo..." : "Excluir"}
                 </Button>
               </DialogButtons>
             </ConfirmDialog>

@@ -93,7 +93,7 @@ export function CategoriasTab() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-    isLoading: loadingItensServico,
+    isPending: loadingItensServico,
   } = useInfiniteItensServicoPorCategoria(
     categoriaExpandida || undefined,
     debouncedSearch,
@@ -310,7 +310,7 @@ export function CategoriasTab() {
   };
 
   const isSavingCategoria =
-    criarCategoria.isLoading || atualizarCategoria.isLoading;
+    criarCategoria.isPending || atualizarCategoria.isPending;
   const isSaveDisabled =
     !nome.trim() || nome.trim().length < 3 || isSavingCategoria;
 

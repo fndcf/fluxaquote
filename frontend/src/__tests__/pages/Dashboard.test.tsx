@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from 'react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Dashboard } from '../../pages/Dashboard';
 import { useOrcamentos, useDashboardStats } from '../../hooks/useOrcamentos';
 import { useClientes } from '../../hooks/useClientes';
@@ -131,22 +131,22 @@ describe('Dashboard', () => {
     // Mock padrão para useDashboardStats
     vi.mocked(useDashboardStats).mockReturnValue({
       data: mockDashboardStats,
-      isLoading: false,
+      isPending: false,
     } as any);
   });
 
   it('deve mostrar loading quando está carregando orçamentos', () => {
     vi.mocked(useOrcamentos).mockReturnValue({
       data: undefined,
-      isLoading: true,
+      isPending: true,
     } as any);
     vi.mocked(useClientes).mockReturnValue({
       data: mockClientes,
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useDashboardStats).mockReturnValue({
       data: undefined,
-      isLoading: true,
+      isPending: true,
     } as any);
 
     render(<Dashboard />, { wrapper: createWrapper() });
@@ -158,15 +158,15 @@ describe('Dashboard', () => {
   it('deve mostrar loading quando dashboardStats está carregando', () => {
     vi.mocked(useOrcamentos).mockReturnValue({
       data: mockOrcamentos,
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useClientes).mockReturnValue({
       data: mockClientes,
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useDashboardStats).mockReturnValue({
       data: undefined,
-      isLoading: true,
+      isPending: true,
     } as any);
 
     render(<Dashboard />, { wrapper: createWrapper() });
@@ -177,15 +177,15 @@ describe('Dashboard', () => {
   it('deve mostrar mensagem quando não há dados', () => {
     vi.mocked(useOrcamentos).mockReturnValue({
       data: [],
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useClientes).mockReturnValue({
       data: [],
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useDashboardStats).mockReturnValue({
       data: undefined,
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Dashboard />, { wrapper: createWrapper() });
@@ -196,11 +196,11 @@ describe('Dashboard', () => {
   it('deve renderizar estatísticas corretamente', () => {
     vi.mocked(useOrcamentos).mockReturnValue({
       data: mockOrcamentos,
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useClientes).mockReturnValue({
       data: mockClientes,
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Dashboard />, { wrapper: createWrapper() });
@@ -217,11 +217,11 @@ describe('Dashboard', () => {
   it('deve renderizar gráficos', () => {
     vi.mocked(useOrcamentos).mockReturnValue({
       data: mockOrcamentos,
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useClientes).mockReturnValue({
       data: mockClientes,
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Dashboard />, { wrapper: createWrapper() });
@@ -234,11 +234,11 @@ describe('Dashboard', () => {
   it('deve renderizar orçamentos recentes', () => {
     vi.mocked(useOrcamentos).mockReturnValue({
       data: mockOrcamentos,
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useClientes).mockReturnValue({
       data: mockClientes,
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Dashboard />, { wrapper: createWrapper() });
@@ -252,11 +252,11 @@ describe('Dashboard', () => {
   it('deve abrir modal ao clicar em orçamento recente', async () => {
     vi.mocked(useOrcamentos).mockReturnValue({
       data: mockOrcamentos,
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useClientes).mockReturnValue({
       data: mockClientes,
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Dashboard />, { wrapper: createWrapper() });
@@ -275,11 +275,11 @@ describe('Dashboard', () => {
   it('deve fechar modal ao clicar em fechar', async () => {
     vi.mocked(useOrcamentos).mockReturnValue({
       data: mockOrcamentos,
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useClientes).mockReturnValue({
       data: mockClientes,
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Dashboard />, { wrapper: createWrapper() });
@@ -304,11 +304,11 @@ describe('Dashboard', () => {
   it('deve calcular taxa de conversão corretamente', () => {
     vi.mocked(useOrcamentos).mockReturnValue({
       data: mockOrcamentos,
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useClientes).mockReturnValue({
       data: mockClientes,
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Dashboard />, { wrapper: createWrapper() });
@@ -320,11 +320,11 @@ describe('Dashboard', () => {
   it('deve mostrar mensagem quando não há orçamentos cadastrados', () => {
     vi.mocked(useOrcamentos).mockReturnValue({
       data: [],
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useClientes).mockReturnValue({
       data: [],
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Dashboard />, { wrapper: createWrapper() });
@@ -336,11 +336,11 @@ describe('Dashboard', () => {
   it('deve renderizar badges de status corretos', () => {
     vi.mocked(useOrcamentos).mockReturnValue({
       data: mockOrcamentos,
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useClientes).mockReturnValue({
       data: mockClientes,
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Dashboard />, { wrapper: createWrapper() });

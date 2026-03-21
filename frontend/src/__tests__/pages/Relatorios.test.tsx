@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Relatorios } from "../../pages/Relatorios";
 import { useOrcamentosPorPeriodo } from "../../hooks/useOrcamentos";
 import { useItensServico } from "../../hooks/useItensServico";
@@ -24,8 +24,8 @@ vi.mock("../../hooks/useConfiguracoesGerais", () => ({
 }));
 
 vi.mock("../../hooks/useHistoricoValores", () => ({
-  useHistoricoItens: vi.fn(() => ({ data: [], isLoading: false })),
-  useHistoricoConfiguracoes: vi.fn(() => ({ data: [], isLoading: false })),
+  useHistoricoItens: vi.fn(() => ({ data: [], isPending: false })),
+  useHistoricoConfiguracoes: vi.fn(() => ({ data: [], isPending: false })),
 }));
 
 // Mock do recharts
@@ -270,13 +270,13 @@ describe("Relatorios", () => {
     // Mock padrão para configurações gerais
     vi.mocked(useConfiguracoesGerais).mockReturnValue({
       data: mockConfiguracoesGerais,
-      isLoading: false,
+      isPending: false,
     } as any);
 
     // Mock padrão para useOrcamentosPorPeriodo
     vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
       data: [],
-      isLoading: false,
+      isPending: false,
     } as any);
   });
 
@@ -287,11 +287,11 @@ describe("Relatorios", () => {
   it("deve mostrar loading quando está carregando", () => {
     vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
       data: undefined,
-      isLoading: true,
+      isPending: true,
     } as any);
     vi.mocked(useItensServico).mockReturnValue({
       data: undefined,
-      isLoading: true,
+      isPending: true,
     } as any);
 
     render(<Relatorios />, { wrapper: createWrapper() });
@@ -303,11 +303,11 @@ describe("Relatorios", () => {
   it("deve renderizar página com filtros de data", () => {
     vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
       data: mockOrcamentos,
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useItensServico).mockReturnValue({
       data: mockItensServico,
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Relatorios />, { wrapper: createWrapper() });
@@ -321,11 +321,11 @@ describe("Relatorios", () => {
   it("deve renderizar KPIs corretamente", () => {
     vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
       data: mockOrcamentos,
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useItensServico).mockReturnValue({
       data: mockItensServico,
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Relatorios />, { wrapper: createWrapper() });
@@ -353,11 +353,11 @@ describe("Relatorios", () => {
   it("deve renderizar gráficos", () => {
     vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
       data: mockOrcamentos,
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useItensServico).mockReturnValue({
       data: mockItensServico,
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Relatorios />, { wrapper: createWrapper() });
@@ -374,11 +374,11 @@ describe("Relatorios", () => {
   it("deve renderizar ranking de clientes", () => {
     vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
       data: mockOrcamentos,
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useItensServico).mockReturnValue({
       data: mockItensServico,
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Relatorios />, { wrapper: createWrapper() });
@@ -393,11 +393,11 @@ describe("Relatorios", () => {
   it("deve renderizar ranking de produtos", () => {
     vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
       data: mockOrcamentos,
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useItensServico).mockReturnValue({
       data: mockItensServico,
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Relatorios />, { wrapper: createWrapper() });
@@ -410,11 +410,11 @@ describe("Relatorios", () => {
   it("deve filtrar por data quando alterado", () => {
     vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
       data: mockOrcamentos,
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useItensServico).mockReturnValue({
       data: mockItensServico,
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Relatorios />, { wrapper: createWrapper() });
@@ -435,11 +435,11 @@ describe("Relatorios", () => {
   it("deve exportar CSV ao clicar no botão", () => {
     vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
       data: mockOrcamentos,
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useItensServico).mockReturnValue({
       data: mockItensServico,
-      isLoading: false,
+      isPending: false,
     } as any);
 
     // Mock do click no link
@@ -467,11 +467,11 @@ describe("Relatorios", () => {
   it("deve mostrar mensagem quando não há orçamentos", () => {
     vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
       data: [],
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useItensServico).mockReturnValue({
       data: [],
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Relatorios />, { wrapper: createWrapper() });
@@ -488,11 +488,11 @@ describe("Relatorios", () => {
   it("deve calcular taxa de conversão como 0 quando não há orçamentos", () => {
     vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
       data: [],
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useItensServico).mockReturnValue({
       data: [],
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Relatorios />, { wrapper: createWrapper() });
@@ -503,11 +503,11 @@ describe("Relatorios", () => {
   it("deve mostrar quantidade correta no ranking de clientes", () => {
     vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
       data: mockOrcamentos,
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useItensServico).mockReturnValue({
       data: mockItensServico,
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Relatorios />, { wrapper: createWrapper() });
@@ -522,11 +522,11 @@ describe("Relatorios", () => {
   it("deve ter inputs de data com valores padrão", () => {
     vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
       data: mockOrcamentos,
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useItensServico).mockReturnValue({
       data: mockItensServico,
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Relatorios />, { wrapper: createWrapper() });
@@ -544,11 +544,11 @@ describe("Relatorios", () => {
   it("deve renderizar análise de lucro quando há itens de serviço", () => {
     vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
       data: mockOrcamentos,
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useItensServico).mockReturnValue({
       data: mockItensServico,
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Relatorios />, { wrapper: createWrapper() });
@@ -563,11 +563,11 @@ describe("Relatorios", () => {
   it("deve processar orçamentos completos na análise de lucro", () => {
     vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
       data: [...mockOrcamentos, mockOrcamentoCompleto],
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useItensServico).mockReturnValue({
       data: mockItensServico,
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Relatorios />, { wrapper: createWrapper() });
@@ -580,11 +580,11 @@ describe("Relatorios", () => {
   it("deve mostrar lucro positivo em verde", () => {
     vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
       data: mockOrcamentos,
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useItensServico).mockReturnValue({
       data: mockItensServico,
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Relatorios />, { wrapper: createWrapper() });
@@ -596,11 +596,11 @@ describe("Relatorios", () => {
   it("não deve mostrar análise de lucro quando não há itens de serviço", () => {
     vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
       data: mockOrcamentos,
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useItensServico).mockReturnValue({
       data: [],
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Relatorios />, { wrapper: createWrapper() });
@@ -614,11 +614,11 @@ describe("Relatorios", () => {
   it("deve processar produtos de orçamentos aceitos", () => {
     vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
       data: mockOrcamentos,
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useItensServico).mockReturnValue({
       data: mockItensServico,
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Relatorios />, { wrapper: createWrapper() });
@@ -633,11 +633,11 @@ describe("Relatorios", () => {
   it("deve processar itens completos na contagem de produtos", () => {
     vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
       data: [mockOrcamentoCompleto],
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useItensServico).mockReturnValue({
       data: mockItensServico,
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Relatorios />, { wrapper: createWrapper() });
@@ -664,11 +664,11 @@ describe("Relatorios", () => {
 
     vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
       data: [orcamentoSemCusto],
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useItensServico).mockReturnValue({
       data: mockItensServico,
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Relatorios />, { wrapper: createWrapper() });
@@ -680,11 +680,11 @@ describe("Relatorios", () => {
   it("deve calcular evolução diária corretamente", () => {
     vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
       data: mockOrcamentos,
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useItensServico).mockReturnValue({
       data: mockItensServico,
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Relatorios />, { wrapper: createWrapper() });
@@ -704,11 +704,11 @@ describe("Relatorios", () => {
 
     vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
       data: [orcamentoExpirado],
-      isLoading: false,
+      isPending: false,
     } as any);
     vi.mocked(useItensServico).mockReturnValue({
       data: mockItensServico,
-      isLoading: false,
+      isPending: false,
     } as any);
 
     render(<Relatorios />, { wrapper: createWrapper() });
@@ -720,11 +720,11 @@ describe("Relatorios", () => {
     it("deve mostrar ranking de clientes com dados quando há orçamentos aceitos", () => {
       vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
         data: mockOrcamentos,
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useItensServico).mockReturnValue({
         data: mockItensServico,
-        isLoading: false,
+        isPending: false,
       } as any);
 
       render(<Relatorios />, { wrapper: createWrapper() });
@@ -741,11 +741,11 @@ describe("Relatorios", () => {
     it("deve mostrar ranking de produtos com dados quando há orçamentos aceitos", () => {
       vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
         data: mockOrcamentos,
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useItensServico).mockReturnValue({
         data: mockItensServico,
-        isLoading: false,
+        isPending: false,
       } as any);
 
       render(<Relatorios />, { wrapper: createWrapper() });
@@ -764,11 +764,11 @@ describe("Relatorios", () => {
     it("deve ordenar clientes por valor (maior primeiro)", () => {
       vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
         data: mockOrcamentos,
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useItensServico).mockReturnValue({
         data: mockItensServico,
-        isLoading: false,
+        isPending: false,
       } as any);
 
       render(<Relatorios />, { wrapper: createWrapper() });
@@ -790,11 +790,11 @@ describe("Relatorios", () => {
     it("deve abrir modal ao clicar em um orçamento da tabela de detalhamento", () => {
       vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
         data: [mockOrcamentoCompleto],
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useItensServico).mockReturnValue({
         data: mockItensServico,
-        isLoading: false,
+        isPending: false,
       } as any);
 
       render(<Relatorios />, { wrapper: createWrapper() });
@@ -813,11 +813,11 @@ describe("Relatorios", () => {
     it("deve mostrar informações do orçamento no modal", () => {
       vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
         data: [mockOrcamentoCompleto],
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useItensServico).mockReturnValue({
         data: mockItensServico,
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useConfiguracoesGerais).mockReturnValue({
         data: {
@@ -825,7 +825,7 @@ describe("Relatorios", () => {
           impostoMaterial: 10,
           impostoServico: 15,
         },
-        isLoading: false,
+        isPending: false,
       } as any);
 
       render(<Relatorios />, { wrapper: createWrapper() });
@@ -839,11 +839,11 @@ describe("Relatorios", () => {
     it("deve abrir modal e mostrar impostos e lucro ao clicar em linha da tabela", () => {
       vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
         data: [mockOrcamentoCompleto],
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useItensServico).mockReturnValue({
         data: mockItensServico,
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useConfiguracoesGerais).mockReturnValue({
         data: {
@@ -851,7 +851,7 @@ describe("Relatorios", () => {
           impostoMaterial: 10,
           impostoServico: 15,
         },
-        isLoading: false,
+        isPending: false,
       } as any);
 
       render(<Relatorios />, { wrapper: createWrapper() });
@@ -901,7 +901,7 @@ describe("Relatorios", () => {
 
       vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
         data: [orcamentoLucroNegativo],
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useItensServico).mockReturnValue({
         data: [
@@ -911,7 +911,7 @@ describe("Relatorios", () => {
             valorMaoDeObraCusto: 30000,
           },
         ],
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useConfiguracoesGerais).mockReturnValue({
         data: {
@@ -919,7 +919,7 @@ describe("Relatorios", () => {
           impostoMaterial: 50,
           impostoServico: 50,
         },
-        isLoading: false,
+        isPending: false,
       } as any);
 
       render(<Relatorios />, { wrapper: createWrapper() });
@@ -938,11 +938,11 @@ describe("Relatorios", () => {
     it("deve mostrar margem positiva em verde e negativa em vermelho", () => {
       vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
         data: [mockOrcamentoCompleto],
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useItensServico).mockReturnValue({
         data: mockItensServico,
-        isLoading: false,
+        isPending: false,
       } as any);
 
       render(<Relatorios />, { wrapper: createWrapper() });
@@ -954,11 +954,11 @@ describe("Relatorios", () => {
     it("deve mostrar impostos no modal quando configurados", () => {
       vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
         data: [mockOrcamentoCompleto],
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useItensServico).mockReturnValue({
         data: mockItensServico,
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useConfiguracoesGerais).mockReturnValue({
         data: {
@@ -966,7 +966,7 @@ describe("Relatorios", () => {
           impostoMaterial: 10,
           impostoServico: 15,
         },
-        isLoading: false,
+        isPending: false,
       } as any);
 
       render(<Relatorios />, { wrapper: createWrapper() });
@@ -980,11 +980,11 @@ describe("Relatorios", () => {
     it("deve mostrar seção de impostos na análise de lucro quando impostos configurados", () => {
       vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
         data: [mockOrcamentoCompleto],
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useItensServico).mockReturnValue({
         data: mockItensServico,
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useConfiguracoesGerais).mockReturnValue({
         data: {
@@ -992,7 +992,7 @@ describe("Relatorios", () => {
           impostoMaterial: 10,
           impostoServico: 15,
         },
-        isLoading: false,
+        isPending: false,
       } as any);
 
       render(<Relatorios />, { wrapper: createWrapper() });
@@ -1008,11 +1008,11 @@ describe("Relatorios", () => {
     it("deve mostrar card de impostos totais quando impostos configurados", () => {
       vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
         data: [mockOrcamentoCompleto],
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useItensServico).mockReturnValue({
         data: mockItensServico,
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useConfiguracoesGerais).mockReturnValue({
         data: {
@@ -1020,7 +1020,7 @@ describe("Relatorios", () => {
           impostoMaterial: 10,
           impostoServico: 15,
         },
-        isLoading: false,
+        isPending: false,
       } as any);
 
       render(<Relatorios />, { wrapper: createWrapper() });
@@ -1032,11 +1032,11 @@ describe("Relatorios", () => {
     it("não deve mostrar seção de impostos quando não há impostos configurados", () => {
       vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
         data: [mockOrcamentoCompleto],
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useItensServico).mockReturnValue({
         data: mockItensServico,
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useConfiguracoesGerais).mockReturnValue({
         data: {
@@ -1044,7 +1044,7 @@ describe("Relatorios", () => {
           impostoMaterial: 0,
           impostoServico: 0,
         },
-        isLoading: false,
+        isPending: false,
       } as any);
 
       render(<Relatorios />, { wrapper: createWrapper() });
@@ -1059,11 +1059,11 @@ describe("Relatorios", () => {
     it("deve mostrar seção de lucro líquido quando impostos configurados (mesmo sem custo fixo)", () => {
       vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
         data: [mockOrcamentoCompleto],
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useItensServico).mockReturnValue({
         data: mockItensServico,
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useConfiguracoesGerais).mockReturnValue({
         data: {
@@ -1072,7 +1072,7 @@ describe("Relatorios", () => {
           impostoMaterial: 10,
           impostoServico: 15,
         },
-        isLoading: false,
+        isPending: false,
       } as any);
 
       render(<Relatorios />, { wrapper: createWrapper() });
@@ -1084,11 +1084,11 @@ describe("Relatorios", () => {
     it("não deve mostrar seção de lucro líquido quando não há custo fixo nem impostos", () => {
       vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
         data: [mockOrcamentoCompleto],
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useItensServico).mockReturnValue({
         data: mockItensServico,
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useConfiguracoesGerais).mockReturnValue({
         data: {
@@ -1097,7 +1097,7 @@ describe("Relatorios", () => {
           impostoMaterial: 0,
           impostoServico: 0,
         },
-        isLoading: false,
+        isPending: false,
       } as any);
 
       render(<Relatorios />, { wrapper: createWrapper() });
@@ -1111,11 +1111,11 @@ describe("Relatorios", () => {
     it("deve mostrar informações de impostos na explicação do cálculo", () => {
       vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
         data: [mockOrcamentoCompleto],
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useItensServico).mockReturnValue({
         data: mockItensServico,
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useConfiguracoesGerais).mockReturnValue({
         data: {
@@ -1124,7 +1124,7 @@ describe("Relatorios", () => {
           impostoMaterial: 10,
           impostoServico: 15,
         },
-        isLoading: false,
+        isPending: false,
       } as any);
 
       render(<Relatorios />, { wrapper: createWrapper() });
@@ -1138,11 +1138,11 @@ describe("Relatorios", () => {
     it("deve calcular lucro considerando impostos na fórmula", () => {
       vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
         data: [mockOrcamentoCompleto],
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useItensServico).mockReturnValue({
         data: mockItensServico,
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useConfiguracoesGerais).mockReturnValue({
         data: {
@@ -1150,7 +1150,7 @@ describe("Relatorios", () => {
           impostoMaterial: 10,
           impostoServico: 15,
         },
-        isLoading: false,
+        isPending: false,
       } as any);
 
       render(<Relatorios />, { wrapper: createWrapper() });
@@ -1165,11 +1165,11 @@ describe("Relatorios", () => {
     it("deve mostrar subvalue correto indicando que impostos estão incluídos", () => {
       vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
         data: [mockOrcamentoCompleto],
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useItensServico).mockReturnValue({
         data: mockItensServico,
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useConfiguracoesGerais).mockReturnValue({
         data: {
@@ -1177,7 +1177,7 @@ describe("Relatorios", () => {
           impostoMaterial: 10,
           impostoServico: 15,
         },
-        isLoading: false,
+        isPending: false,
       } as any);
 
       render(<Relatorios />, { wrapper: createWrapper() });
@@ -1189,11 +1189,11 @@ describe("Relatorios", () => {
     it("deve mostrar card de impostos no Total Geral quando configurados", () => {
       vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
         data: [mockOrcamentoCompleto],
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useItensServico).mockReturnValue({
         data: mockItensServico,
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useConfiguracoesGerais).mockReturnValue({
         data: {
@@ -1201,7 +1201,7 @@ describe("Relatorios", () => {
           impostoMaterial: 10,
           impostoServico: 15,
         },
-        isLoading: false,
+        isPending: false,
       } as any);
 
       render(<Relatorios />, { wrapper: createWrapper() });
@@ -1213,11 +1213,11 @@ describe("Relatorios", () => {
     it("deve considerar impostos zerados corretamente", () => {
       vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
         data: [mockOrcamentoCompleto],
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useItensServico).mockReturnValue({
         data: mockItensServico,
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useConfiguracoesGerais).mockReturnValue({
         data: {
@@ -1225,7 +1225,7 @@ describe("Relatorios", () => {
           impostoMaterial: 0,
           impostoServico: 0,
         },
-        isLoading: false,
+        isPending: false,
       } as any);
 
       render(<Relatorios />, { wrapper: createWrapper() });
@@ -1240,11 +1240,11 @@ describe("Relatorios", () => {
     it("deve funcionar com custo fixo e impostos combinados", () => {
       vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
         data: [mockOrcamentoCompleto],
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useItensServico).mockReturnValue({
         data: mockItensServico,
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useConfiguracoesGerais).mockReturnValue({
         data: {
@@ -1253,7 +1253,7 @@ describe("Relatorios", () => {
           impostoMaterial: 8,
           impostoServico: 12,
         },
-        isLoading: false,
+        isPending: false,
       } as any);
 
       render(<Relatorios />, { wrapper: createWrapper() });
@@ -1268,11 +1268,11 @@ describe("Relatorios", () => {
     it("deve mostrar explicação do cálculo de impostos no lucro líquido", () => {
       vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
         data: [mockOrcamentoCompleto],
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useItensServico).mockReturnValue({
         data: mockItensServico,
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useConfiguracoesGerais).mockReturnValue({
         data: {
@@ -1281,7 +1281,7 @@ describe("Relatorios", () => {
           impostoMaterial: 10,
           impostoServico: 15,
         },
-        isLoading: false,
+        isPending: false,
       } as any);
 
       render(<Relatorios />, { wrapper: createWrapper() });
@@ -1331,11 +1331,11 @@ describe("Relatorios", () => {
     it("deve mostrar lucro líquido simplificado quando itens não têm custo cadastrado", () => {
       vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
         data: [orcamentoCompletoSemCusto],
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useItensServico).mockReturnValue({
         data: mockItensServico,
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useConfiguracoesGerais).mockReturnValue({
         data: {
@@ -1344,7 +1344,7 @@ describe("Relatorios", () => {
           impostoMaterial: 10,
           impostoServico: 15,
         },
-        isLoading: false,
+        isPending: false,
       } as any);
 
       render(<Relatorios />, { wrapper: createWrapper() });
@@ -1364,11 +1364,11 @@ describe("Relatorios", () => {
     it("deve mostrar card de impostos quando temAnaliseLucro é false e há impostos", () => {
       vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
         data: [orcamentoCompletoSemCusto],
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useItensServico).mockReturnValue({
         data: mockItensServico,
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useConfiguracoesGerais).mockReturnValue({
         data: {
@@ -1377,7 +1377,7 @@ describe("Relatorios", () => {
           impostoMaterial: 10,
           impostoServico: 15,
         },
-        isLoading: false,
+        isPending: false,
       } as any);
 
       render(<Relatorios />, { wrapper: createWrapper() });
@@ -1404,16 +1404,16 @@ describe("Relatorios", () => {
             createdAt: "2024-06-01T00:00:00.000Z",
           },
         ],
-        isLoading: false,
+        isPending: false,
       } as any);
 
       vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
         data: [mockOrcamentoCompleto],
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useItensServico).mockReturnValue({
         data: mockItensServico,
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useConfiguracoesGerais).mockReturnValue({
         data: {
@@ -1422,7 +1422,7 @@ describe("Relatorios", () => {
           impostoMaterial: 10,
           impostoServico: 15,
         },
-        isLoading: false,
+        isPending: false,
       } as any);
 
       render(<Relatorios />, { wrapper: createWrapper() });
@@ -1444,16 +1444,16 @@ describe("Relatorios", () => {
             createdAt: "2024-06-01T00:00:00.000Z",
           },
         ],
-        isLoading: false,
+        isPending: false,
       } as any);
 
       vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
         data: [mockOrcamentoCompleto],
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useItensServico).mockReturnValue({
         data: mockItensServico,
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useConfiguracoesGerais).mockReturnValue({
         data: {
@@ -1461,7 +1461,7 @@ describe("Relatorios", () => {
           impostoMaterial: 10,
           impostoServico: 15,
         },
-        isLoading: false,
+        isPending: false,
       } as any);
 
       render(<Relatorios />, { wrapper: createWrapper() });
@@ -1482,7 +1482,7 @@ describe("Relatorios", () => {
             createdAt: "2024-06-01T00:00:00.000Z",
           },
         ],
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useHistoricoConfiguracoes).mockReturnValue({
         data: [
@@ -1495,16 +1495,16 @@ describe("Relatorios", () => {
             createdAt: "2024-06-01T00:00:00.000Z",
           },
         ],
-        isLoading: false,
+        isPending: false,
       } as any);
 
       vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
         data: [mockOrcamentoCompleto],
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useItensServico).mockReturnValue({
         data: mockItensServico,
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useConfiguracoesGerais).mockReturnValue({
         data: {
@@ -1512,7 +1512,7 @@ describe("Relatorios", () => {
           impostoMaterial: 10,
           impostoServico: 15,
         },
-        isLoading: false,
+        isPending: false,
       } as any);
 
       // Mock link click
@@ -1542,11 +1542,11 @@ describe("Relatorios", () => {
     it("deve fechar modal ao clicar no botão fechar", () => {
       vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
         data: [mockOrcamentoCompleto],
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useItensServico).mockReturnValue({
         data: mockItensServico,
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useConfiguracoesGerais).mockReturnValue({
         data: {
@@ -1554,7 +1554,7 @@ describe("Relatorios", () => {
           impostoMaterial: 10,
           impostoServico: 15,
         },
-        isLoading: false,
+        isPending: false,
       } as any);
 
       render(<Relatorios />, { wrapper: createWrapper() });
@@ -1605,11 +1605,11 @@ describe("Relatorios", () => {
 
       vi.mocked(useOrcamentosPorPeriodo).mockReturnValue({
         data: [orcamentoSemMaterial],
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useItensServico).mockReturnValue({
         data: mockItensServico,
-        isLoading: false,
+        isPending: false,
       } as any);
       vi.mocked(useConfiguracoesGerais).mockReturnValue({
         data: {
@@ -1617,7 +1617,7 @@ describe("Relatorios", () => {
           impostoMaterial: 10,
           impostoServico: 15,
         },
-        isLoading: false,
+        isPending: false,
       } as any);
 
       render(<Relatorios />, { wrapper: createWrapper() });

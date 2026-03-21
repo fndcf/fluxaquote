@@ -136,7 +136,7 @@ export function PalavrasChaveTab() {
   };
 
   const isSaving =
-    criarPalavraChave.isLoading || atualizarPalavraChave.isLoading;
+    criarPalavraChave.isPending || atualizarPalavraChave.isPending;
   const isSaveDisabled =
     !palavra.trim() || !prazoDias || parseInt(prazoDias, 10) < 1 || isSaving;
 
