@@ -168,7 +168,7 @@ describe('Register', () => {
           telefone: '11999999999',
           senha: '123456',
         });
-        expect(mockNavigate).toHaveBeenCalledWith('/login');
+        expect(mockNavigate).toHaveBeenCalledWith('/login', { state: { registroSucesso: true } });
       });
     });
 
