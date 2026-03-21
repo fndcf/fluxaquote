@@ -104,6 +104,7 @@ interface OrcamentoAnalise {
   lucroMaoDeObra: number;
   lucroTotal: number;
   margem: number;
+  desconto: number;
 }
 
 // Função auxiliar para obter valores vigentes de um item na data de emissão do orçamento
@@ -593,6 +594,7 @@ export function Relatorios() {
           lucroMaoDeObra,
           lucroTotal,
           margem,
+          desconto: orc.descontoAVista?.valorDesconto ?? 0,
         });
       } else {
         orcamentosSemCustoCompleto++;
@@ -634,6 +636,11 @@ export function Relatorios() {
       totalVendaMaoDeObra - totalCustoMaoDeObra - totalLucroMaoDeObra;
     const totalImpostos = totalImpostoMaterial + totalImpostoServico;
 
+    const totalDescontos = orcamentosComCustoCompleto.reduce(
+      (sum, o) => sum + o.desconto,
+      0
+    );
+
     const lucroTotal = totalLucroMaterial + totalLucroMaoDeObra;
     const valorTotalVenda = totalVendaMaterial + totalVendaMaoDeObra;
     const margemLucro =
@@ -650,6 +657,7 @@ export function Relatorios() {
       totalImpostoMaterial,
       totalImpostoServico,
       totalImpostos,
+      totalDescontos,
       impostoMaterialPercent: impostoMaterialPercentAtual,
       impostoServicoPercent: impostoServicoPercentAtual,
       totalLucroMaterial,
@@ -1522,6 +1530,14 @@ export function Relatorios() {
                   )}
                 </div>
               </StatCard>
+              {analiseLucro.totalDescontos > 0 && (
+                <StatCard $color="#f39c12">
+                  <div className="label">Descontos</div>
+                  <div className="value">
+                    {formatCurrency(analiseLucro.totalDescontos)}
+                  </div>
+                </StatCard>
+              )}
               <StatCard $color="#e74c3c">
                 <div className="label">Custo</div>
                 <div className="value">
@@ -1599,6 +1615,7 @@ export function Relatorios() {
                               <th className="value">Custo Mat.</th>
                               <th className="value">Venda M.O.</th>
                               <th className="value">Custo M.O.</th>
+                              <th className="value">Desconto</th>
                               <th className="value">Lucro</th>
                               <th className="value">Margem</th>
                             </tr>
@@ -1628,6 +1645,9 @@ export function Relatorios() {
                                 </td>
                                 <td className="value">
                                   {formatCurrency(orc.custoMaoDeObra)}
+                                </td>
+                                <td className="value">
+                                  {orc.desconto > 0 ? formatCurrency(orc.desconto) : "-"}
                                 </td>
                                 <td className="value">
                                   {orc.lucroTotal >= 0 ? (
@@ -1699,6 +1719,16 @@ export function Relatorios() {
                               </span>
                             </div>
                           </div>
+                          {orc.desconto > 0 && (
+                            <div className="values-list">
+                              <div className="value-row">
+                                <span className="label">Desconto</span>
+                                <span className="value">
+                                  {formatCurrency(orc.desconto)}
+                                </span>
+                              </div>
+                            </div>
+                          )}
                           <div className="lucro-row">
                             <span className="lucro-label">Lucro Total</span>
                             <span className="lucro-value">
