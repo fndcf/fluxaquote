@@ -1,0 +1,945 @@
+{
+  "info": {
+    "name": "FluxaQuote API",
+    "description": "Collection completa da API FluxaQuote.\n\n**Setup:**\n1. Configure a variável `baseUrl` (ex: http://localhost:5000/api/v1)\n2. Faça login no app e copie o token JWT do Firebase\n3. Cole na variável `authToken`\n\nTodas as rotas protegidas usam o header `Authorization: Bearer {{authToken}}`.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "clienteId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "orcamentoId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "servicoId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "categoriaId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "itemServicoId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "limitacaoId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "palavraChaveId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "notificacaoId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/health",
+            "auth": { "type": "noauth" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Registrar Empresa",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/register",
+            "auth": { "type": "noauth" },
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nomeEmpresa\": \"Minha Empresa\",\n  \"email\": \"admin@empresa.com\",\n  \"telefone\": \"11999999999\",\n  \"senha\": \"123456\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Verificar Slug",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/auth/check-slug/minha-empresa",
+            "auth": { "type": "noauth" }
+          }
+        },
+        {
+          "name": "Dados do Usuário Logado",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/auth/me"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Clientes",
+      "item": [
+        {
+          "name": "Listar Todos",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/clientes"
+          }
+        },
+        {
+          "name": "Listar Paginado",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/clientes/paginated?page=1&limit=10&busca=",
+              "host": ["{{baseUrl}}"],
+              "path": ["clientes", "paginated"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "busca", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Pesquisar",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/clientes/pesquisar?termo=empresa",
+              "host": ["{{baseUrl}}"],
+              "path": ["clientes", "pesquisar"],
+              "query": [
+                { "key": "termo", "value": "empresa" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar por Documento",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/clientes/documento/12345678000199"
+          }
+        },
+        {
+          "name": "Buscar por ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/clientes/{{clienteId}}"
+          }
+        },
+        {
+          "name": "Criar Cliente",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/clientes",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"razaoSocial\": \"Empresa Teste LTDA\",\n  \"nomeFantasia\": \"Empresa Teste\",\n  \"cnpj\": \"12345678000199\",\n  \"tipoPessoa\": \"juridica\",\n  \"endereco\": \"Rua Teste, 123\",\n  \"cidade\": \"São Paulo\",\n  \"estado\": \"SP\",\n  \"cep\": \"01234-567\",\n  \"telefone\": \"11999999999\",\n  \"email\": \"contato@empresateste.com\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Atualizar Cliente",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/clientes/{{clienteId}}",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"razaoSocial\": \"Empresa Teste Atualizada LTDA\",\n  \"telefone\": \"11988888888\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Excluir Cliente",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/clientes/{{clienteId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orçamentos",
+      "item": [
+        {
+          "name": "Listar Todos",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/orcamentos"
+          }
+        },
+        {
+          "name": "Listar Paginado",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/orcamentos/paginated?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["orcamentos", "paginated"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "status", "value": "aberto", "disabled": true },
+                { "key": "clienteId", "value": "", "disabled": true },
+                { "key": "busca", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Estatísticas",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/orcamentos/estatisticas"
+          }
+        },
+        {
+          "name": "Dashboard Stats",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/orcamentos/dashboard-stats"
+          }
+        },
+        {
+          "name": "Por Cliente",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/orcamentos/cliente/{{clienteId}}"
+          }
+        },
+        {
+          "name": "Histórico do Cliente",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/orcamentos/cliente/{{clienteId}}/historico?limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["orcamentos", "cliente", "{{clienteId}}", "historico"],
+              "query": [
+                { "key": "limit", "value": "5" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Por Status",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/orcamentos/status/aberto"
+          }
+        },
+        {
+          "name": "Por Período",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/orcamentos/periodo?dataInicio=2026-01-01&dataFim=2026-12-31",
+              "host": ["{{baseUrl}}"],
+              "path": ["orcamentos", "periodo"],
+              "query": [
+                { "key": "dataInicio", "value": "2026-01-01" },
+                { "key": "dataFim", "value": "2026-12-31" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar por ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/orcamentos/{{orcamentoId}}"
+          }
+        },
+        {
+          "name": "Criar Orçamento",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/orcamentos",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"completo\",\n  \"clienteId\": \"{{clienteId}}\",\n  \"clienteNome\": \"Empresa Teste\",\n  \"clienteCnpj\": \"12345678000199\",\n  \"servicoId\": \"{{servicoId}}\",\n  \"servicoDescricao\": \"Serviço de Teste\",\n  \"status\": \"aberto\",\n  \"dataEmissao\": \"2026-03-21\",\n  \"dataValidade\": \"2026-04-21\",\n  \"condicaoPagamento\": \"a_vista\",\n  \"mostrarValoresDetalhados\": true,\n  \"itensCompleto\": [\n    {\n      \"etapa\": \"comercial\",\n      \"categoriaId\": \"{{categoriaId}}\",\n      \"categoriaNome\": \"Categoria Teste\",\n      \"descricao\": \"Item de teste\",\n      \"unidade\": \"un\",\n      \"quantidade\": 1,\n      \"valorUnitarioMaoDeObra\": 100,\n      \"valorUnitarioMaterial\": 50,\n      \"valorTotalMaoDeObra\": 100,\n      \"valorTotalMaterial\": 50,\n      \"valorTotal\": 150\n    }\n  ],\n  \"valorTotal\": 150,\n  \"valorTotalMaoDeObra\": 100,\n  \"valorTotalMaterial\": 50\n}"
+            }
+          }
+        },
+        {
+          "name": "Atualizar Orçamento",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/orcamentos/{{orcamentoId}}",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"observacoes\": \"Observação atualizada\",\n  \"valorTotal\": 200\n}"
+            }
+          }
+        },
+        {
+          "name": "Alterar Status",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/orcamentos/{{orcamentoId}}/status",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"aceito\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Duplicar Orçamento",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/orcamentos/{{orcamentoId}}/duplicar"
+          }
+        },
+        {
+          "name": "Verificar Expirados",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/orcamentos/verificar-expirados"
+          }
+        },
+        {
+          "name": "Excluir Orçamento",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/orcamentos/{{orcamentoId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Serviços",
+      "item": [
+        {
+          "name": "Listar Todos",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/servicos"
+          }
+        },
+        {
+          "name": "Listar Ativos",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/servicos/ativos"
+          }
+        },
+        {
+          "name": "Buscar por ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/servicos/{{servicoId}}"
+          }
+        },
+        {
+          "name": "Criar Serviço",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/servicos",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"descricao\": \"Serviço de Teste\",\n  \"ativo\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Atualizar Serviço",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/servicos/{{servicoId}}",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"descricao\": \"Serviço Atualizado\",\n  \"ordem\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "Toggle Ativo/Inativo",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/servicos/{{servicoId}}/toggle"
+          }
+        },
+        {
+          "name": "Excluir Serviço",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/servicos/{{servicoId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Categorias de Item",
+      "item": [
+        {
+          "name": "Listar Todas",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/categorias-item"
+          }
+        },
+        {
+          "name": "Listar Ativas",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/categorias-item/ativas"
+          }
+        },
+        {
+          "name": "Buscar por ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/categorias-item/{{categoriaId}}"
+          }
+        },
+        {
+          "name": "Criar Categoria",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/categorias-item",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Categoria de Teste\",\n  \"ativo\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Atualizar Categoria",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/categorias-item/{{categoriaId}}",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Categoria Atualizada\",\n  \"ordem\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "Toggle Ativo/Inativo",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/categorias-item/{{categoriaId}}/toggle"
+          }
+        },
+        {
+          "name": "Excluir Categoria",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/categorias-item/{{categoriaId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Itens de Serviço",
+      "item": [
+        {
+          "name": "Listar Todos",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/itens-servico"
+          }
+        },
+        {
+          "name": "Por Categoria",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/itens-servico/categoria/{{categoriaId}}"
+          }
+        },
+        {
+          "name": "Ativos por Categoria",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/itens-servico/categoria/{{categoriaId}}/ativos"
+          }
+        },
+        {
+          "name": "Ativos por Categoria (Paginado)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/itens-servico/categoria/{{categoriaId}}/ativos/paginado?limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["itens-servico", "categoria", "{{categoriaId}}", "ativos", "paginado"],
+              "query": [
+                { "key": "limit", "value": "10" },
+                { "key": "cursor", "value": "", "disabled": true },
+                { "key": "search", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Por Categoria (Paginado)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/itens-servico/categoria/{{categoriaId}}/paginado?limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["itens-servico", "categoria", "{{categoriaId}}", "paginado"],
+              "query": [
+                { "key": "limit", "value": "10" },
+                { "key": "cursor", "value": "", "disabled": true },
+                { "key": "search", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar por ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/itens-servico/{{itemServicoId}}"
+          }
+        },
+        {
+          "name": "Criar Item",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/itens-servico",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"categoriaId\": \"{{categoriaId}}\",\n  \"descricao\": \"Item de Serviço Teste\",\n  \"unidade\": \"un\",\n  \"ativo\": true,\n  \"valorUnitario\": 100.00,\n  \"valorMaoDeObraUnitario\": 80.00,\n  \"valorCusto\": 50.00,\n  \"valorMaoDeObraCusto\": 40.00\n}"
+            }
+          }
+        },
+        {
+          "name": "Atualizar Item",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/itens-servico/{{itemServicoId}}",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"descricao\": \"Item Atualizado\",\n  \"valorUnitario\": 120.00\n}"
+            }
+          }
+        },
+        {
+          "name": "Toggle Ativo/Inativo",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/itens-servico/{{itemServicoId}}/toggle"
+          }
+        },
+        {
+          "name": "Excluir Item",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/itens-servico/{{itemServicoId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Limitações / Observações",
+      "item": [
+        {
+          "name": "Listar Todas",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/limitacoes"
+          }
+        },
+        {
+          "name": "Listar Ativas",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/limitacoes/ativas"
+          }
+        },
+        {
+          "name": "Buscar por ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/limitacoes/{{limitacaoId}}"
+          }
+        },
+        {
+          "name": "Criar Limitação",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/limitacoes",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"texto\": \"Não inclui pintura externa\",\n  \"ativo\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Atualizar Limitação",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/limitacoes/{{limitacaoId}}",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"texto\": \"Limitação atualizada\",\n  \"ordem\": 2\n}"
+            }
+          }
+        },
+        {
+          "name": "Toggle Ativo/Inativo",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/limitacoes/{{limitacaoId}}/toggle"
+          }
+        },
+        {
+          "name": "Excluir Limitação",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/limitacoes/{{limitacaoId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Palavras-Chave",
+      "item": [
+        {
+          "name": "Listar Todas",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/palavras-chave"
+          }
+        },
+        {
+          "name": "Listar Ativas",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/palavras-chave/ativas"
+          }
+        },
+        {
+          "name": "Buscar por ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/palavras-chave/{{palavraChaveId}}"
+          }
+        },
+        {
+          "name": "Criar Palavra-Chave",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/palavras-chave",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"palavra\": \"extintor\",\n  \"prazoDias\": 365,\n  \"ativo\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Atualizar Palavra-Chave",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/palavras-chave/{{palavraChaveId}}",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"palavra\": \"extintor CO2\",\n  \"prazoDias\": 345\n}"
+            }
+          }
+        },
+        {
+          "name": "Toggle Ativo/Inativo",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/palavras-chave/{{palavraChaveId}}/toggle"
+          }
+        },
+        {
+          "name": "Excluir Palavra-Chave",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/palavras-chave/{{palavraChaveId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Configurações Gerais",
+      "item": [
+        {
+          "name": "Obter Configurações",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/configuracoes-gerais"
+          }
+        },
+        {
+          "name": "Atualizar Configurações",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/configuracoes-gerais",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nomeEmpresa\": \"Minha Empresa\",\n  \"cnpjEmpresa\": \"12345678000199\",\n  \"enderecoEmpresa\": \"Rua Teste, 123\",\n  \"telefoneEmpresa\": \"11999999999\",\n  \"emailEmpresa\": \"contato@empresa.com\",\n  \"diasValidadeOrcamento\": 30,\n  \"parcelamentoMaxParcelas\": 6,\n  \"parcelamentoValorMinimo\": 1000,\n  \"parcelamentoJurosAPartirDe\": 3,\n  \"parcelamentoTaxaJuros\": 2.5,\n  \"custoFixoMensal\": 5000,\n  \"impostoMaterial\": 10,\n  \"impostoServico\": 15,\n  \"corPrimaria\": \"#1a5276\",\n  \"corSecundaria\": \"#2ecc71\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notificações",
+      "item": [
+        {
+          "name": "Resumo",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/notificacoes/resumo"
+          }
+        },
+        {
+          "name": "Contagem Não Lidas",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/notificacoes/nao-lidas/count"
+          }
+        },
+        {
+          "name": "Todas (Paginado)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/notificacoes/paginado?pageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["notificacoes", "paginado"],
+              "query": [
+                { "key": "pageSize", "value": "10" },
+                { "key": "cursor", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Não Lidas (Paginado)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/notificacoes/nao-lidas/paginado?pageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["notificacoes", "nao-lidas", "paginado"],
+              "query": [
+                { "key": "pageSize", "value": "10" },
+                { "key": "cursor", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Vencidas (Paginado)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/notificacoes/vencidas/paginado?pageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["notificacoes", "vencidas", "paginado"],
+              "query": [
+                { "key": "pageSize", "value": "10" },
+                { "key": "cursor", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Ativas (Paginado)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/notificacoes/ativas/paginado?dias=60&pageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["notificacoes", "ativas", "paginado"],
+              "query": [
+                { "key": "dias", "value": "60" },
+                { "key": "pageSize", "value": "10" },
+                { "key": "cursor", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Próximas a Vencer (Paginado)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/notificacoes/proximas/paginado?dias=30&pageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["notificacoes", "proximas", "paginado"],
+              "query": [
+                { "key": "dias", "value": "30" },
+                { "key": "pageSize", "value": "10" },
+                { "key": "cursor", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar por ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/notificacoes/{{notificacaoId}}"
+          }
+        },
+        {
+          "name": "Marcar como Lida",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/notificacoes/{{notificacaoId}}/lida"
+          }
+        },
+        {
+          "name": "Marcar Todas como Lidas",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/notificacoes/marcar-todas-lidas"
+          }
+        },
+        {
+          "name": "Excluir Notificação",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/notificacoes/{{notificacaoId}}"
+          }
+        },
+        {
+          "name": "Gerar para Orçamento",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/notificacoes/gerar/{{orcamentoId}}"
+          }
+        },
+        {
+          "name": "Processar Todos Aceitos",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/notificacoes/processar-todos"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Histórico de Valores",
+      "item": [
+        {
+          "name": "Histórico de Itens",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/historico-valores/itens?dataInicio=2026-01-01&dataFim=2026-12-31",
+              "host": ["{{baseUrl}}"],
+              "path": ["historico-valores", "itens"],
+              "query": [
+                { "key": "dataInicio", "value": "2026-01-01" },
+                { "key": "dataFim", "value": "2026-12-31" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Histórico de Configurações",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/historico-valores/configuracoes?dataInicio=2026-01-01&dataFim=2026-12-31",
+              "host": ["{{baseUrl}}"],
+              "path": ["historico-valores", "configuracoes"],
+              "query": [
+                { "key": "dataInicio", "value": "2026-01-01" },
+                { "key": "dataFim", "value": "2026-12-31" }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

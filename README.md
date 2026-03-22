@@ -24,8 +24,9 @@ Sistema multi-tenant de gestão de orçamentos com personalização visual por e
 ### Gestão de Orçamentos
 
 - **Orçamento Completo**: Detalhamento por serviços, categorias, separação de mão de obra e materiais, limites de escopo selecionáveis e observações, formas de pagamento com parcelamentos, opções de entrada personalizada, **desconto por percentual ou valor em R$** (à vista e parcelado) e prazos de execução
+- **Valor efetivo com desconto**: Listagem, dashboard, relatórios e histórico exibem o valor final com desconto aplicado
 - **Versionamento**: Controle de versões dos orçamentos
-- **Status**: Acompanhamento (aberto, aceito, recusado, expirado)
+- **Status**: Acompanhamento (aberto, aceito, recusado, expirado) com máquina de estados
 - **Duplicação**: Criação de novos orçamentos baseados em existentes
 - **Geração de PDF**: Exportação profissional com cores e logo da empresa
 
@@ -63,40 +64,42 @@ Sistema multi-tenant de gestão de orçamentos com personalização visual por e
 
 ### Relatórios e Dashboard
 
-- Estatísticas de orçamentos
+- Estatísticas de orçamentos (com valores efetivos considerando descontos)
 - Gráficos de desempenho
 - Filtros por período
-- Estudo de lucro para propostas aceitas
+- Estudo de lucro para propostas aceitas (com card de descontos)
 - Histórico de valores de itens e configurações
 
 ## Tecnologias
 
 ### Backend
 
-| Tecnologia         | Versão | Uso                      |
-| ------------------ | ------ | ------------------------ |
-| Node.js            | 20+    | Runtime                  |
-| Express            | 4.18   | Framework HTTP           |
-| TypeScript         | 5.3    | Tipagem estática         |
-| Firebase Admin SDK | 12.0   | Autenticação e Firestore |
-| Zod                | 3.22   | Validação de schemas     |
-| Jest               | 29.7   | Testes unitários         |
+| Tecnologia           | Versão | Uso                          |
+| -------------------- | ------ | ---------------------------- |
+| Node.js              | 20+    | Runtime                      |
+| Express              | 4.18   | Framework HTTP               |
+| TypeScript           | 5.3    | Tipagem estática             |
+| Firebase Admin SDK   | 12.0   | Autenticação e Firestore     |
+| Zod                  | 3.22   | Validação de schemas         |
+| express-rate-limit   | 7.x    | Rate limiting                |
+| Jest                 | 29.7   | Testes unitários             |
+| Supertest            | 7.x    | Testes de integração de API  |
 
 ### Frontend
 
-| Tecnologia         | Versão | Uso                     |
-| ------------------ | ------ | ----------------------- |
-| React              | 18.2   | UI Library              |
-| TypeScript         | 5.3    | Tipagem estática        |
-| Vite               | 5.0    | Build tool              |
-| React Router       | 6.21   | Roteamento              |
-| Styled Components  | 6.1    | Estilização             |
-| Axios              | 1.6    | HTTP Client             |
-| React Query        | 3.39   | Cache e estado servidor |
-| Firebase           | 10.7   | Autenticação cliente    |
-| React PDF Renderer | 3.1    | Geração de PDFs         |
-| Recharts           | 2.15   | Gráficos e relatórios   |
-| Vitest             | 1.6    | Testes unitários        |
+| Tecnologia              | Versão | Uso                     |
+| ----------------------- | ------ | ----------------------- |
+| React                   | 18.2   | UI Library              |
+| TypeScript              | 5.3    | Tipagem estática        |
+| Vite                    | 5.0    | Build tool              |
+| React Router            | 6.21   | Roteamento              |
+| Styled Components       | 6.1    | Estilização             |
+| Axios                   | 1.6    | HTTP Client             |
+| @tanstack/react-query   | 5.x    | Cache e estado servidor |
+| Firebase                | 10.7   | Autenticação cliente    |
+| React PDF Renderer      | 3.1    | Geração de PDFs         |
+| Recharts                | 2.15   | Gráficos e relatórios   |
+| Vitest                  | 1.6    | Testes unitários        |
 
 ### Infraestrutura
 
@@ -105,6 +108,7 @@ Sistema multi-tenant de gestão de orçamentos com personalização visual por e
 - Firebase Hosting (com rewrites para Cloud Run)
 - Firebase Cloud Functions (Gen 2)
 - Cloud Run (backend API)
+- Firebase Emulator Suite (testes de integração)
 
 ## Estrutura do Projeto
 
@@ -112,52 +116,62 @@ Sistema multi-tenant de gestão de orçamentos com personalização visual por e
 fluxaquote/
 ├── backend/
 │   └── src/
-│       ├── __tests__/          # Testes unitários (Jest)
-│       │   ├── controllers/    # Testes de controllers
-│       │   ├── services/       # Testes de services
-│       │   ├── utils/          # Testes de utilitários
-│       │   ├── validations/    # Testes de validações
-│       │   └── mocks/          # Dados mock para testes
-│       ├── config/             # Configuração do Firebase
-│       ├── controllers/        # Controladores HTTP
-│       ├── events/             # Sistema de eventos (EventBus)
-│       ├── middlewares/        # CORS, auth, errors
-│       ├── models/             # Interfaces TypeScript
-│       ├── repositories/       # Acesso a dados (Firestore, factory por tenant)
-│       ├── routes/             # Definição de rotas
-│       ├── services/           # Lógica de negócio (factory por tenant)
-│       ├── utils/              # Utilitários (logger, errors, tenantDb)
-│       └── validations/        # Schemas Zod
+│       ├── __tests__/
+│       │   ├── controllers/        # Testes unitários de controllers
+│       │   ├── services/           # Testes unitários de services
+│       │   ├── middlewares/        # Testes de middlewares
+│       │   ├── events/             # Testes do EventBus
+│       │   ├── utils/              # Testes de utilitários
+│       │   ├── validations/        # Testes de validações
+│       │   ├── integration/        # Testes de integração (Supertest + Emulator)
+│       │   │   ├── api/            # Testes de endpoints (auth, clientes, orcamentos)
+│       │   │   ├── rules/          # Testes de isolamento multi-tenant
+│       │   │   └── setup.ts        # Helpers (criarUsuarioTeste, gerarTokenTeste, etc.)
+│       │   ├── mocks/              # Dados mock para testes unitários
+│       │   └── setup.ts            # Setup global de testes unitários
+│       ├── config/                 # Configuração do Firebase (dev/test/prod)
+│       ├── controllers/            # Controladores HTTP
+│       ├── events/                 # Sistema de eventos (EventBus)
+│       ├── middlewares/            # auth, validate, rateLimiter, requestLogger, errorHandler
+│       ├── models/                 # Interfaces TypeScript + DTOs (1 arquivo por domínio)
+│       ├── repositories/           # Acesso a dados (Firestore, factory por tenant)
+│       ├── routes/                 # Definição de rotas (com validação Zod)
+│       ├── services/               # Lógica de negócio (factory por tenant)
+│       │   ├── orcamentoCalculator.ts      # Cálculos de valores
+│       │   ├── orcamentoStatusMachine.ts   # Máquina de estados
+│       │   └── orcamentoDashboardService.ts # Estatísticas
+│       ├── utils/                  # logger, errors, constants, tenantDb, requestContext
+│       └── validations/            # Schemas Zod (1 arquivo por domínio)
 │
 ├── frontend/
 │   └── src/
-│       ├── __tests__/          # Testes unitários (Vitest)
-│       │   ├── components/     # Testes de componentes
-│       │   ├── contexts/       # Testes de contextos
-│       │   ├── pages/          # Testes de páginas
-│       │   ├── services/       # Testes de serviços
-│       │   ├── styles/         # Testes de tema
-│       │   └── utils/          # Testes de utilitários
-│       ├── components/         # Componentes React
-│       │   ├── auth/           # Autenticação (PrivateRoute)
-│       │   ├── clientes/       # Componentes de clientes
-│       │   ├── layout/         # Layout administrativo (slug-aware)
-│       │   ├── notificacoes/   # Notificações
-│       │   ├── orcamentos/     # Orçamentos, Modal e PDF
-│       │   └── ui/             # Componentes genéricos
-│       ├── contexts/           # Contextos React (Auth, Tenant)
-│       ├── hooks/              # Hooks customizados
-│       ├── pages/              # Páginas da aplicação
-│       │   ├── Configuracoes/  # Tabs: Empresa, Layout, Serviços, etc.
-│       │   └── ...             # Home, Login, Register, Dashboard, etc.
-│       ├── services/           # Comunicação com API
-│       ├── styles/             # Estilos globais e tema
-│       ├── types/              # Tipos TypeScript
-│       └── utils/              # Utilitários (colorUtils, constants)
+│       ├── __tests__/              # Testes unitários (Vitest + Testing Library)
+│       ├── components/
+│       │   ├── auth/               # PrivateRoute
+│       │   ├── clientes/           # ClienteModal, HistoricoOrcamentosModal
+│       │   ├── layout/             # AdminLayout (slug-aware, white-label)
+│       │   ├── notificacoes/       # NotificacaoDropdown
+│       │   ├── orcamentos/         # OrcamentoModal/, OrcamentoPDF, ViewModal
+│       │   └── ui/                 # Button, Card, Input, Modal, Table, Pagination, Loading
+│       ├── contexts/               # AuthContext, TenantContext
+│       ├── hooks/                  # Hooks customizados (1 por domínio, React Query v5)
+│       ├── pages/                  # Páginas (cada uma com .styles.ts separado)
+│       │   ├── Home/               # Landing page (dividida em seções)
+│       │   ├── Configuracoes/      # Tabs: Empresa, Layout, Serviços, etc.
+│       │   └── *.tsx + *.styles.ts # Dashboard, Orcamentos, Clientes, etc.
+│       ├── services/               # Comunicação com API (Axios)
+│       ├── styles/                 # GlobalStyles, theme
+│       ├── types/                  # Interfaces TypeScript
+│       └── utils/                  # constants (getValorEfetivo), colorUtils, logger
 │
-├── firebase.json               # Configuração Firebase
-├── firestore.rules             # Regras de segurança (tenant-scoped)
-└── .firebaserc                 # Projeto Firebase
+├── docs/
+│   ├── ARCHITECTURE.md             # Guia de padrões e templates para novas entidades
+│   └── FluxaQuote.postman_collection.json  # Collection Postman (80+ requests)
+│
+├── firebase.json                   # Hosting, Functions, Firestore, Emulators
+├── firestore.rules                 # Regras de segurança (12 collections explícitas)
+├── firestore.indexes.json          # 14 índices compostos
+└── .firebaserc                     # Projeto Firebase
 ```
 
 ## Instalação
@@ -168,6 +182,7 @@ fluxaquote/
 - npm ou yarn
 - Conta no Firebase com projeto configurado
 - Firebase CLI (`npm install -g firebase-tools`)
+- Java Runtime (para Firebase Emulators)
 
 ### Backend
 
@@ -176,15 +191,16 @@ cd backend
 npm install
 ```
 
-Crie o arquivo `.env` com as variáveis:
+Crie o arquivo `.env.local` com as variáveis:
 
 ```env
-PORT=3001
+PORT=5000
 NODE_ENV=development
 FRONTEND_URL=http://localhost:5173
+FIREBASE_PROJECT_ID=seu_projeto
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@seu_projeto.iam.gserviceaccount.com
 ```
-
-Configure as credenciais do Firebase Admin SDK.
 
 ### Frontend
 
@@ -196,7 +212,7 @@ npm install
 Crie o arquivo `.env` com as variáveis:
 
 ```env
-VITE_API_URL=http://localhost:3001/api
+VITE_API_URL=http://localhost:5000/api/v1
 VITE_FIREBASE_API_KEY=sua_api_key
 VITE_FIREBASE_AUTH_DOMAIN=seu_projeto.firebaseapp.com
 VITE_FIREBASE_PROJECT_ID=seu_projeto
@@ -209,38 +225,23 @@ VITE_FIREBASE_APP_ID=seu_app_id
 
 ### Desenvolvimento
 
-**Backend:**
-
 ```bash
-cd backend
-npm run dev
+# Terminal 1 - Backend
+cd backend && npm run dev
+
+# Terminal 2 - Frontend
+cd frontend && npm run dev
 ```
 
-**Frontend:**
+O frontend estará disponível em `http://localhost:5173` e o backend em `http://localhost:5000`.
+
+### Firebase Emulators (para testes)
 
 ```bash
-cd frontend
-npm run dev
-```
+# Iniciar emulators (Firestore, Auth, UI)
+cd backend && npm run emulators
 
-O frontend estará disponível em `http://localhost:5173` e o backend em `http://localhost:3001`.
-
-### Produção
-
-**Build do Backend:**
-
-```bash
-cd backend
-npm run build
-npm start
-```
-
-**Build do Frontend:**
-
-```bash
-cd frontend
-npm run build
-npm run preview
+# UI do Emulator disponível em http://localhost:4040
 ```
 
 ### Deploy no Firebase
@@ -253,36 +254,16 @@ cd ../frontend && npm run build
 # Deploy completo
 firebase deploy
 
-# Deploy apenas hosting
-firebase deploy --only hosting
-
-# Deploy apenas functions
-firebase deploy --only functions
-```
-
-### Configuração Firebase (Cloud Functions Gen 2)
-
-O projeto utiliza Cloud Functions Gen 2, que roda no Cloud Run. A configuração do `firebase.json` usa `run` ao invés de `function` para o rewrite:
-
-```json
-{
-  "hosting": {
-    "rewrites": [
-      {
-        "source": "/api/**",
-        "run": {
-          "serviceId": "api",
-          "region": "us-central1"
-        }
-      }
-    ]
-  }
-}
+# Deploy parcial
+firebase deploy --only hosting          # Frontend
+firebase deploy --only functions        # Backend
+firebase deploy --only firestore:rules  # Regras de segurança
+firebase deploy --only firestore:indexes # Índices
 ```
 
 ## Testes
 
-### Backend (Jest)
+### Backend — Unitários (Jest)
 
 ```bash
 cd backend
@@ -290,6 +271,18 @@ npm test                    # Executar testes
 npm run test:watch          # Modo watch
 npm run test:coverage       # Com cobertura
 ```
+
+### Backend — Integração (Supertest + Firebase Emulator)
+
+```bash
+cd backend
+npm run test:integration    # Inicia emulators, roda testes, encerra
+```
+
+Testa endpoints HTTP reais contra Express + Firestore emulado. Inclui:
+- Testes de API (auth, clientes, orçamentos)
+- Testes de isolamento multi-tenant
+- Validação de autenticação e rate limiting
 
 ### Frontend (Vitest)
 
@@ -302,25 +295,22 @@ npm run test:coverage       # Com cobertura
 
 ## Cobertura de Testes
 
-O projeto mantém uma cobertura de testes abrangente:
+### Backend
 
-### Backend (600 testes, 31 suites)
+| Tipo        | Suites | Testes |
+| ----------- | ------ | ------ |
+| Unitários   | 31     | 600    |
+| Integração  | 4      | 24     |
+| **Total**   | **35** | **624**|
 
-| Métrica    | Cobertura |
-| ---------- | --------- |
-| Statements | 97.89%    |
-| Branches   | 88.94%    |
-| Functions  | 98.19%    |
-| Lines      | 98.38%    |
-
-- **Controllers**: 100% de cobertura (todos os endpoints, incluindo auth)
-- **Services**: 96%+ de cobertura (lógica de negócio, factory pattern)
-- **Middlewares**: 100% de cobertura (auth com tenant, error handling)
-- **Utils**: 100% de cobertura (logger, errors, constants, tenantDb, requestContext)
-- **Validations**: 100% de cobertura (Zod schemas)
+- **Controllers**: 100% de cobertura
+- **Services**: 96%+ de cobertura
+- **Middlewares**: 100% de cobertura (auth, validate, rateLimiter, requestLogger, errorHandler)
+- **Validations**: Zod schemas para todos os endpoints
 - **Events**: 100% de cobertura (EventBus)
+- **Integração**: Auth, CRUD clientes/orçamentos, isolamento multi-tenant
 
-### Frontend (1163 testes, 65 suites)
+### Frontend (1187 testes, 66 suites)
 
 | Métrica    | Cobertura |
 | ---------- | --------- |
@@ -329,87 +319,84 @@ O projeto mantém uma cobertura de testes abrangente:
 | Functions  | 84.91%    |
 | Lines      | 94.13%    |
 
-- **Componentes**: OrcamentoModal, OrcamentoCompletoSections, ClienteModal, NotificacaoDropdown, OrcamentoPDF, AdminLayout
-- **Páginas**: Home, Login, Register, Dashboard, Clientes, Orçamentos, Notificações, Relatórios, Configurações (todas as tabs)
-- **Contextos**: AuthContext, TenantContext
-- **Serviços**: Todos os serviços de API com 100% de cobertura (incluindo authService)
-- **Utils**: colorUtils, constants com 95%+ de cobertura
-- **Styles**: Theme com 100% de cobertura
-
 ## API Endpoints
 
-### Autenticação (público)
+Base URL: `/api/v1` (versionada, com retrocompatibilidade em `/api`)
 
-| Método | Endpoint                    | Descrição                   |
-| ------ | --------------------------- | --------------------------- |
-| POST   | `/api/auth/register`        | Registrar empresa + usuário |
-| GET    | `/api/auth/check-slug/:slug`| Verificar disponibilidade   |
-| GET    | `/api/auth/me`              | Dados do tenant do usuário  |
+### Autenticação (público, rate limited: 10 req/min)
 
-### Endpoints Principais (autenticado, tenant-scoped)
+| Método | Endpoint                         | Descrição                   |
+| ------ | -------------------------------- | --------------------------- |
+| POST   | `/api/v1/auth/register`          | Registrar empresa + usuário |
+| GET    | `/api/v1/auth/check-slug/:slug`  | Verificar disponibilidade   |
+| GET    | `/api/v1/auth/me`                | Dados do tenant do usuário  |
 
-| Método   | Endpoint                    | Descrição                |
-| -------- | --------------------------- | ------------------------ |
-| GET      | `/api/health`               | Health check             |
-| GET/POST | `/api/clientes`             | Gestão de clientes       |
-| GET/POST | `/api/orcamentos`           | Gestão de orçamentos     |
-| GET/POST | `/api/servicos`             | Configuração de serviços |
-| GET/POST | `/api/categorias-item`      | Categorias de itens      |
-| GET/POST | `/api/itens-servico`        | Itens de serviço         |
-| GET/POST | `/api/limitacoes`           | Observações padrão       |
-| GET/POST | `/api/palavras-chave`       | Palavras-chave           |
-| GET/PUT  | `/api/configuracoes-gerais` | Configurações gerais     |
-| GET      | `/api/historico-valores`    | Histórico de valores     |
+### Endpoints Principais (autenticado, tenant-scoped, rate limited: 300 req/min)
+
+| Método   | Endpoint                         | Descrição                |
+| -------- | -------------------------------- | ------------------------ |
+| GET      | `/api/v1/health`                 | Health check             |
+| GET/POST | `/api/v1/clientes`               | Gestão de clientes       |
+| GET/POST | `/api/v1/orcamentos`             | Gestão de orçamentos     |
+| GET/POST | `/api/v1/servicos`               | Configuração de serviços |
+| GET/POST | `/api/v1/categorias-item`        | Categorias de itens      |
+| GET/POST | `/api/v1/itens-servico`          | Itens de serviço         |
+| GET/POST | `/api/v1/limitacoes`             | Observações padrão       |
+| GET/POST | `/api/v1/palavras-chave`         | Palavras-chave           |
+| GET/PUT  | `/api/v1/configuracoes-gerais`   | Configurações gerais     |
+| GET      | `/api/v1/historico-valores`      | Histórico de valores     |
 
 ### Endpoints de Notificações (com Paginação)
 
-| Método | Endpoint                               | Descrição                    |
-| ------ | -------------------------------------- | ---------------------------- |
-| GET    | `/api/notificacoes/resumo`             | Resumo (totais por status)   |
-| GET    | `/api/notificacoes/nao-lidas/count`    | Contagem de não lidas        |
-| GET    | `/api/notificacoes/paginado`           | Todas (paginado)             |
-| GET    | `/api/notificacoes/nao-lidas/paginado` | Não lidas (paginado)         |
-| GET    | `/api/notificacoes/vencidas/paginado`  | Vencidas (paginado)          |
-| GET    | `/api/notificacoes/ativas/paginado`    | Ativas (paginado)            |
-| GET    | `/api/notificacoes/proximas/paginado`  | Próximas a vencer (paginado) |
-| GET    | `/api/notificacoes/:id`                | Buscar por ID                |
-| PATCH  | `/api/notificacoes/:id/lida`           | Marcar como lida             |
-| PATCH  | `/api/notificacoes/marcar-todas-lidas` | Marcar todas como lidas      |
-| DELETE | `/api/notificacoes/:id`                | Excluir notificação          |
+| Método | Endpoint                                    | Descrição                    |
+| ------ | ------------------------------------------- | ---------------------------- |
+| GET    | `/api/v1/notificacoes/resumo`               | Resumo (totais por status)   |
+| GET    | `/api/v1/notificacoes/nao-lidas/count`      | Contagem de não lidas        |
+| GET    | `/api/v1/notificacoes/paginado`             | Todas (paginado)             |
+| GET    | `/api/v1/notificacoes/nao-lidas/paginado`   | Não lidas (paginado)         |
+| GET    | `/api/v1/notificacoes/vencidas/paginado`    | Vencidas (paginado)          |
+| GET    | `/api/v1/notificacoes/ativas/paginado`      | Ativas (paginado)            |
+| GET    | `/api/v1/notificacoes/proximas/paginado`    | Próximas a vencer (paginado) |
+| PATCH  | `/api/v1/notificacoes/:id/lida`             | Marcar como lida             |
+| PATCH  | `/api/v1/notificacoes/marcar-todas-lidas`   | Marcar todas como lidas      |
+| DELETE | `/api/v1/notificacoes/:id`                  | Excluir notificação          |
 
-**Parâmetros de Paginação:**
-
-- `pageSize`: Número de itens por página (padrão: 10)
-- `cursor`: Cursor para próxima página
-- `dias`: Dias para filtro (ativas: 60, próximas: 30)
+**Collection Postman completa disponível em `docs/FluxaQuote.postman_collection.json`**
 
 ## Arquitetura
 
 ### Backend
 
+- **API Versionada**: `/api/v1/` com retrocompatibilidade em `/api/`
 - **Multi-Tenant Factory Pattern**: Repositories e Services criados por tenant via factory functions
 - **Subcollections**: Dados isolados em `tenants/{tenantId}/collection/{docId}`
 - **Repository Pattern**: Abstração do acesso a dados (scoped por tenant)
-- **Service Layer**: Separação da lógica de negócio
+- **Service Layer**: Separação da lógica de negócio (com modules: calculator, statusMachine, dashboardService)
 - **Controller Layer**: Tratamento de requisições HTTP com extração de tenantId
-- **Cursor-based Pagination**: Paginação eficiente com Firestore
-- **Event Bus**: Comunicação entre serviços (notificações com tenantId)
-- **Zod Validation**: Validação de schemas de entrada
-- **Error Handling**: Classes de erro customizadas
+- **Middlewares**: auth, validate (Zod), rateLimiter, requestLogger, errorHandler
+- **Validação Zod**: Schemas em todos os endpoints POST/PUT/PATCH
+- **Rate Limiting**: 10 req/min para rotas públicas, 300 req/min para autenticadas
+- **Request Logging**: method, path, status, duration, tenantId
+- **CORS configurável**: `ALLOWED_ORIGINS` env var (múltiplos domínios)
+- **Event Bus**: Comunicação desacoplada entre serviços
+- **Error Handling**: Hierarquia de erros customizados (AppError → ValidationError, NotFoundError, etc.)
 - **Custom Claims**: tenantId/slug/role no token Firebase Auth
+- **Models por domínio**: 14 arquivos com DTOs (CreateDTO, UpdateDTO)
 
 ### Frontend
 
+- **@tanstack/react-query v5**: Cache, staleTime por tipo de dado, invalidação automática
 - **Context API**: Estado global (AuthContext + TenantContext)
 - **Slug-aware Routing**: Todas as rotas internas prefixadas com `/:slug`
 - **CSS Variables Override**: Cores do tenant aplicadas via style no container
-- **Custom Hooks**: Lógica reutilizável (useTenant, useConfiguracoesGerais, etc.)
-- **React Query**: Cache e sincronização com servidor
-- **useInfiniteQuery**: Paginação infinita para notificações
-- **Styled Components**: Estilos encapsulados com theme system
-- **Discriminated Unions**: Tipos seguros para orçamentos (simples/completo)
+- **Custom Hooks**: 11 hooks por domínio com staleTime consistente
+- **Styled Components**: Estilos extraídos em `.styles.ts` por página
+- **React.memo**: Otimização em componentes de lista (Pagination, Loading)
+- **Home modular**: Landing page dividida em 6 seções
+- **Discriminated Unions**: Tipos seguros para orçamentos
+- **getValorEfetivo()**: Exibe valor com desconto em todo o sistema
 
-### Firestore - Estrutura de Dados
+### Firestore
 
 ```
 tenants/{tenantId}/clientes/{clienteId}
@@ -426,29 +413,39 @@ tenants/{tenantId}/historicoValoresItens/{historicoId}
 tenants/{tenantId}/historicoConfiguracoes/{historicoId}
 
 # Collections globais
-tenants/{tenantId}          # Dados do tenant (slug, nomeEmpresa, ownerId)
+tenants/{tenantId}          # Dados do tenant
 slugs/{slug}                # Lookup reverso slug → tenantId
-userTenants/{uid}           # Mapeamento userId → tenantId + slug + role
+userTenants/{uid}           # Mapeamento userId → tenantId
 ```
+
+### Segurança (Firestore Rules)
+
+- 12 collections explicitamente definidas (sem wildcards)
+- Isolamento por `isTenantOwner(tenantId)` via custom claims
+- Slugs: leitura pública, escrita bloqueada
+- UserTenants: leitura apenas do próprio UID
+- Regra padrão: deny all
 
 ## Scripts Disponíveis
 
 ### Backend
 
-| Script                  | Descrição                   |
-| ----------------------- | --------------------------- |
-| `npm run dev`           | Servidor de desenvolvimento |
-| `npm run build`         | Compilar TypeScript         |
-| `npm start`             | Executar versão compilada   |
-| `npm test`              | Executar testes             |
-| `npm run test:watch`    | Testes em modo watch        |
-| `npm run test:coverage` | Testes com cobertura        |
+| Script                     | Descrição                                        |
+| -------------------------- | ------------------------------------------------ |
+| `npm run dev`              | Servidor de desenvolvimento (porta 5000)         |
+| `npm run build`            | Compilar TypeScript                              |
+| `npm start`                | Executar versão compilada                        |
+| `npm test`                 | Executar testes unitários                        |
+| `npm run test:watch`       | Testes em modo watch                             |
+| `npm run test:coverage`    | Testes com cobertura                             |
+| `npm run test:integration` | Testes de integração (com Firebase Emulator)     |
+| `npm run emulators`        | Iniciar Firebase Emulators                       |
 
 ### Frontend
 
 | Script                  | Descrição                  |
 | ----------------------- | -------------------------- |
-| `npm run dev`           | Servidor Vite              |
+| `npm run dev`           | Servidor Vite (porta 5173) |
 | `npm run build`         | Build de produção          |
 | `npm run preview`       | Preview do build           |
 | `npm run lint`          | Verificação ESLint         |
@@ -456,28 +453,44 @@ userTenants/{uid}           # Mapeamento userId → tenantId + slug + role
 | `npm run test:ui`       | Interface visual de testes |
 | `npm run test:coverage` | Testes com cobertura       |
 
+## Documentação Adicional
+
+- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — Guia de padrões e templates para adicionar novas entidades (passo a passo com exemplos de código)
+- **[docs/FluxaQuote.postman_collection.json](docs/FluxaQuote.postman_collection.json)** — Collection Postman com 80+ requests organizadas
+
 ## Troubleshooting
 
 ### Porta já em uso
 
 ```bash
 # Windows
-netstat -ano | findstr :3001
+netstat -ano | findstr :5000
 taskkill /PID <PID> /F
 
 # Linux/Mac
-lsof -ti:3001 | xargs kill -9
+lsof -ti:5000 | xargs kill -9
 ```
 
 ### Erro de CORS
 
-Verificar se `FRONTEND_URL` no backend corresponde à URL do frontend.
+Verificar se `FRONTEND_URL` ou `ALLOWED_ORIGINS` no backend corresponde à URL do frontend.
 
 ### Firebase não conecta
 
 1. Verificar se as variáveis de ambiente estão corretas
 2. Verificar se o projeto Firebase existe
 3. Verificar se o Firestore está habilitado
+
+### Emulators não iniciam
+
+```bash
+# Verificar se Java está instalado
+java -version
+
+# Matar processos presos
+taskkill /F /IM java.exe    # Windows
+pkill -f java               # Linux/Mac
+```
 
 ## Licença
 

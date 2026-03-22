@@ -38,12 +38,12 @@ const descontoAVistaDadosSchema = z.object({
 export const createOrcamentoSchema = z.object({
   tipo: z.literal('completo').default('completo'),
   clienteId: z.string().min(1, 'Cliente é obrigatório'),
-  servicoId: z.string().min(1, 'Serviço é obrigatório'),
+  servicoId: z.string().optional(),
   servicoDescricao: z.string().optional(),
-  itensCompleto: z.array(orcamentoItemCompletoSchema).min(1, 'O orçamento deve ter pelo menos um item'),
+  itensCompleto: z.array(orcamentoItemCompletoSchema).optional(),
   limitacoesSelecionadas: z.array(z.string()).optional(),
   prazoExecucaoServicos: z.number().int().min(1).nullable().optional(),
-  prazoVistoriaBombeiros: z.number().int().min(1).optional(),
+  prazoVistoriaBombeiros: z.number().int().min(1).nullable().optional(),
   condicaoPagamento: z.enum(['a_vista', 'a_combinar', 'parcelado']).optional(),
   parcelamentoTexto: z.string().optional(),
   parcelamentoDados: parcelamentoDadosSchema.nullable().optional(),
@@ -57,7 +57,7 @@ export const createOrcamentoSchema = z.object({
   email: z.string().optional(),
   telefone: z.string().optional(),
   enderecoServico: z.string().optional(),
-});
+}).passthrough(); // Permite campos extras (clienteNome, clienteCnpj, etc.)
 
 export const updateOrcamentoSchema = z.object({
   servicoId: z.string().min(1).optional(),
@@ -79,7 +79,7 @@ export const updateOrcamentoSchema = z.object({
   email: z.string().optional(),
   telefone: z.string().optional(),
   enderecoServico: z.string().optional(),
-});
+}).passthrough(); // Permite campos extras
 
 export const updateOrcamentoStatusSchema = z.object({
   status: z.enum(['aberto', 'aceito', 'recusado', 'expirado'], {
