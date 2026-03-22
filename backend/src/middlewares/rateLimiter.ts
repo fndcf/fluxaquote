@@ -15,7 +15,7 @@ export const publicRateLimiter = rateLimit({
 // Rate limit geral para rotas autenticadas
 export const authenticatedRateLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minuto
-  max: 100,
+  max: 300,
   standardHeaders: true,
   legacyHeaders: false,
   message: {

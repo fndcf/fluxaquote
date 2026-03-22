@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { orcamentoController } from '../controllers/orcamentoController';
 import { authMiddleware } from '../middlewares/authMiddleware';
+import { validate } from '../middlewares/validate';
+import { createOrcamentoSchema, updateOrcamentoSchema, updateOrcamentoStatusSchema } from '../validations/orcamentoValidation';
 
 const router = Router();
 
@@ -38,16 +40,16 @@ router.post('/verificar-expirados', orcamentoController.verificarExpirados);
 router.get('/:id', orcamentoController.buscarPorId);
 
 // POST /api/orcamentos - Criar orçamento
-router.post('/', orcamentoController.criar);
+router.post('/', validate(createOrcamentoSchema), orcamentoController.criar);
 
 // POST /api/orcamentos/:id/duplicar - Duplicar orçamento
 router.post('/:id/duplicar', orcamentoController.duplicar);
 
 // PUT /api/orcamentos/:id - Atualizar orçamento
-router.put('/:id', orcamentoController.atualizar);
+router.put('/:id', validate(updateOrcamentoSchema), orcamentoController.atualizar);
 
 // PATCH /api/orcamentos/:id/status - Atualizar status
-router.patch('/:id/status', orcamentoController.atualizarStatus);
+router.patch('/:id/status', validate(updateOrcamentoStatusSchema), orcamentoController.atualizarStatus);
 
 // DELETE /api/orcamentos/:id - Excluir orçamento
 router.delete('/:id', orcamentoController.excluir);

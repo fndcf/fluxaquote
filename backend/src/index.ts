@@ -42,10 +42,7 @@ app.use("/api", routes);
 app.use(errorHandler);
 
 // Export para Firebase Cloud Functions
-export const api = functions.https.onRequest(
-  { minInstances: 1 },
-  app
-);
+export const api = functions.https.onRequest(app);
 
 /**
  * Trigger: desabilitar novos usuários automaticamente.

@@ -2,6 +2,7 @@ import { db } from '../config/firebase';
 import { getTenantDb } from '../utils/tenantDb';
 import { Orcamento, OrcamentoStatus, PaginatedResponse } from '../models';
 import { NotFoundError } from '../utils/errors';
+import { logger } from '../utils/logger';
 
 // Helper para mapear documento do Firestore para Orcamento
 function mapDocToOrcamento(doc: FirebaseFirestore.QueryDocumentSnapshot | FirebaseFirestore.DocumentSnapshot): Orcamento {
@@ -33,8 +34,9 @@ export function createOrcamentoRepository(tenantId: string) {
         createdAt: doc.data().createdAt?.toDate(),
         updatedAt: doc.data().updatedAt?.toDate(),
       })) as Orcamento[];
-    } catch {
+    } catch (error) {
       // Fallback sem ordenação
+      logger.warn('Fallback query em orcamentos.findAll - índice composto pode estar faltando', { error });
       const snapshot = await collection.get();
       const orcamentos = snapshot.docs.map(doc => ({
         id: doc.id,
@@ -83,8 +85,9 @@ export function createOrcamentoRepository(tenantId: string) {
         createdAt: doc.data().createdAt?.toDate(),
         updatedAt: doc.data().updatedAt?.toDate(),
       })) as Orcamento[];
-    } catch {
+    } catch (error) {
       // Fallback: buscar sem ordenação e filtrar/ordenar manualmente
+      logger.warn('Fallback query em orcamentos.findByClienteId - índice composto pode estar faltando', { error });
       const snapshot = await collection.where('clienteId', '==', clienteId).get();
       const orcamentos = snapshot.docs.map(doc => ({
         id: doc.id,
@@ -117,8 +120,9 @@ export function createOrcamentoRepository(tenantId: string) {
         createdAt: doc.data().createdAt?.toDate(),
         updatedAt: doc.data().updatedAt?.toDate(),
       })) as Orcamento[];
-    } catch {
+    } catch (error) {
       // Fallback: buscar todos e filtrar manualmente
+      logger.warn('Fallback query em orcamentos.findByPeriodo - índice composto pode estar faltando', { error });
       const snapshot = await collection.get();
       const orcamentos = snapshot.docs.map(doc => ({
         id: doc.id,
@@ -159,8 +163,9 @@ export function createOrcamentoRepository(tenantId: string) {
         createdAt: doc.data().createdAt?.toDate(),
         updatedAt: doc.data().updatedAt?.toDate(),
       })) as Orcamento[];
-    } catch {
+    } catch (error) {
       // Fallback: buscar sem ordenação e ordenar manualmente
+      logger.warn('Fallback query em orcamentos.findByStatus - índice composto pode estar faltando', { error });
       const snapshot = await collection.where('status', '==', status).get();
       const orcamentos = snapshot.docs.map(doc => ({
         id: doc.id,

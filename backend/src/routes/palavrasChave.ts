@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { palavraChaveController } from '../controllers/palavraChaveController';
 import { authMiddleware } from '../middlewares/authMiddleware';
+import { validate } from '../middlewares/validate';
+import { createPalavraChaveSchema, updatePalavraChaveSchema } from '../validations/palavraChaveValidation';
 
 const router = Router();
 
@@ -17,10 +19,10 @@ router.get('/ativas', palavraChaveController.listarAtivas);
 router.get('/:id', palavraChaveController.buscarPorId);
 
 // POST /api/palavras-chave - Criar
-router.post('/', palavraChaveController.criar);
+router.post('/', validate(createPalavraChaveSchema), palavraChaveController.criar);
 
 // PUT /api/palavras-chave/:id - Atualizar
-router.put('/:id', palavraChaveController.atualizar);
+router.put('/:id', validate(updatePalavraChaveSchema), palavraChaveController.atualizar);
 
 // PATCH /api/palavras-chave/:id/toggle - Ativar/Desativar
 router.patch('/:id/toggle', palavraChaveController.toggleAtivo);
